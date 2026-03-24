@@ -9,7 +9,7 @@ import { Users, Loader2 } from 'lucide-react'
 import { useCoauthors } from './useAuthors'
 
 interface Props {
-  authorId: string | null
+  authorId: number | null
   authorName: string | null
   onClose: () => void
 }
@@ -42,6 +42,9 @@ export default function CoauthorsDrawer({ authorId, authorName, onClose }: Props
               {coauthors.map((c) => (
                 <li key={c.id} className="flex items-center gap-2">
                   <Badge variant="secondary" className="font-normal">{c.name}</Badge>
+                  {c.on_watchlist && (
+                    <span className="text-xs text-muted-foreground">on watchlist</span>
+                  )}
                 </li>
               ))}
             </ul>

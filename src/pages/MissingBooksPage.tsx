@@ -23,14 +23,9 @@ export default function MissingBooksPage() {
   const params = filterToParams(filter)
   const { data, isLoading, isError } = useBooks(params)
 
-  // Live updates: invalidate books list when a relevant event arrives
+  // Live updates: invalidate books list when a scan completes
   useBookScoutSSE((event: BookScoutEvent) => {
-    const relevant: BookScoutEvent['event_type'][] = [
-      'missing_book_found',
-      'download_completed',
-      'scan_completed',
-    ]
-    if (relevant.includes(event.event_type)) {
+    if (event.event_type === 'scan.complete') {
       qc.invalidateQueries({ queryKey: bookKeys.all })
     }
   })
@@ -42,7 +37,7 @@ export default function MissingBooksPage() {
           <h1 className="text-xl font-semibold text-foreground">Missing Books</h1>
           {data && (
             <p className="text-sm text-muted-foreground mt-0.5">
-              {data.total} book{data.total !== 1 ? 's' : ''}
+              {data.length} book{data.length !== 1 ? 's' : ''}
             </p>
           )}
         </div>
@@ -63,7 +58,7 @@ export default function MissingBooksPage() {
         </div>
       )}
 
-      {data && <BooksTable books={data.items} />}
+      {data && <BooksTable books={data} />}
     </div>
   )
 }

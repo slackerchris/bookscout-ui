@@ -7,6 +7,28 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [1.2.0] — 2026-03-24
+
+### Fixed
+- **Books API** — `booksApi.list()` now returns `Book[]` (flat array) matching the actual BookScout response; removed the non-existent `Paginated<Book>` wrapper. All `data.total` references updated to `data.length` and `data.items` unwrapped to `data`.
+- **Scan endpoint** — author scan corrected from `POST /authors/{id}/scan` → `POST /scans/author/{id}`.
+- **SSE event types** — hook now normalises using the real `event` discriminator field; removed all fake types (`scan_completed`, `missing_book_found`, etc.); aligned to `scan.complete` and `coauthor.discovered`.
+- **`Book` type** — removed non-existent `author`, `missing`, `last_scan_at` fields; added `deleted`; `id` is now `number`.
+- **`Author` type** — `id` changed to `number`; field renamed `last_scan_at` → `last_scanned`; added `name_sort`, `active`.
+- **`Coauthor` type** — `id` changed to `number`; added `on_watchlist`, `book_count`.
+- **Dead endpoints removed** — `actionsApi` / `eventsApi` removed (no `/actions` or `/events` REST endpoints exist in BookScout).
+- **Dashboard** — removed `useRecentEvents` / `useActiveJobs` and the dead "Active Jobs" / "Recent Events" cards; flat-array count selects corrected.
+- **BooksTable** — removed `Author` and `Last scan` columns (fields absent from `BookOut`); `bookState` simplified to `have_it`.
+- **EventFeed** — event config updated to real SSE types.
+- **CoauthorsDrawer** — `on_watchlist` indicator shown per coauthor.
+- **AuthorsPage** — `last_scan_at` → `last_scanned`, ID state types changed to `number`.
+
+### Added
+- `src/lib/api/scans.ts` — `scansApi` with `scanAll()`, `scanAuthor(id)`, `jobStatus(jobId)`.
+- **Activity page** rewritten as a real-time SSE event log (up to 200 events in memory) with a "Scan all authors" button calling `POST /api/v1/scans/all`.
+
+---
+
 ## [1.1.0] — 2026-03-24
 
 ### Fixed

@@ -4,8 +4,8 @@ import { authorsApi } from '@/lib/api/authors'
 export const authorKeys = {
   all: ['authors'] as const,
   list: () => ['authors', 'list'] as const,
-  detail: (id: string) => ['authors', 'detail', id] as const,
-  coauthors: (id: string) => ['authors', 'coauthors', id] as const,
+  detail: (id: number) => ['authors', 'detail', id] as const,
+  coauthors: (id: number) => ['authors', 'coauthors', id] as const,
 }
 
 export function useAuthors() {
@@ -15,11 +15,11 @@ export function useAuthors() {
   })
 }
 
-export function useCoauthors(authorId: string | null) {
+export function useCoauthors(authorId: number | null) {
   return useQuery({
-    queryKey: authorKeys.coauthors(authorId ?? ''),
+    queryKey: authorKeys.coauthors(authorId ?? 0),
     queryFn: () => authorsApi.coauthors(authorId!),
-    enabled: !!authorId,
+    enabled: authorId !== null,
   })
 }
 

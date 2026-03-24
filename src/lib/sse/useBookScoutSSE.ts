@@ -24,8 +24,13 @@ export function useBookScoutSSE(onEvent: Handler) {
 
       es.onmessage = (e) => {
         try {
-          const data = JSON.parse(e.data) as BookScoutEvent
-          handlerRef.current(data)
+          const raw = JSON.parse(e.data) as Record<string, unknown>
+          // The real BookScout SSE payload uses `event` as the discriminator.
+          // Fall back to `event_type` / `type` for forward-compatibility.
+          const event_type = String(raw.event ?? raw.event_type ?? raw.type ?? 'unknown')
+          const timestamp = String(raw.timestamp ?? new Date().toISOString())
+          const event: BookScoutEvent = { event_type, timestamp, payload: raw }
+          handlerRef.current(event)
         } catch {
           // ignore malformed frames
         }

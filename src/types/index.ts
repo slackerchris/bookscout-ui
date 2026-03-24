@@ -1,76 +1,45 @@
 // ---- Books ----------------------------------------------------------------
 
 export interface Book {
-  id: string
+  id: number
   title: string
-  author: string
   score: number
   confidence_band: 'high' | 'medium' | 'low'
   have_it: boolean
-  missing: boolean
-  last_scan_at: string | null
+  deleted: boolean
 }
 
 // ---- Authors --------------------------------------------------------------
 
 export interface Author {
-  id: string
+  id: number
   name: string
-  last_scan_at: string | null
+  name_sort: string
+  active: boolean
+  /** ISO datetime string — field is `last_scanned` in the BookScout API */
+  last_scanned: string | null
 }
 
 export interface Coauthor {
-  id: string
+  id: number
   name: string
+  on_watchlist: boolean
+  book_count: number
 }
 
-// ---- Actions / Jobs -------------------------------------------------------
+// ---- SSE Events -----------------------------------------------------------
 
-export type ActionStatus = 'pending' | 'running' | 'success' | 'failed' | 'cancelled'
-export type ActionType =
-  | 'scan'
-  | 'search'
-  | 'download'
-  | 'ignore'
-  | 'mark_owned'
-  | 'retry'
-
-export interface Action {
-  id: string
-  type: ActionType
-  target_type: 'book' | 'author'
-  target_id: string
-  status: ActionStatus
-  message: string | null
-  external_ref: string | null
-  started_at: string
-  updated_at: string
-}
-
-// ---- Events ---------------------------------------------------------------
-
-export type EventType =
-  | 'scan_started'
-  | 'scan_completed'
-  | 'search_sent'
-  | 'download_queued'
-  | 'download_completed'
-  | 'action_failed'
-  | 'notification_sent'
-  | 'missing_book_found'
+/**
+ * Known real event types published by the BookScout SSE stream.
+ * Open string union keeps the UI forward-compatible with new event types.
+ */
+export type EventType = 'scan.complete' | 'coauthor.discovered' | (string & {})
 
 export interface BookScoutEvent {
-  id: string
+  /** Assigned client-side when accumulating events in component state. */
+  _clientId?: string
+  /** Normalised from the `event` field in the raw SSE payload. */
   event_type: EventType
   timestamp: string
   payload: Record<string, unknown>
-}
-
-// ---- Pagination -----------------------------------------------------------
-
-export interface Paginated<T> {
-  items: T[]
-  total: number
-  page: number
-  page_size: number
 }

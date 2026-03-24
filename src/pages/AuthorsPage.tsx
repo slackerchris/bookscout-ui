@@ -48,9 +48,9 @@ export default function AuthorsPage() {
 
   const [search, setSearch] = useState('')
   const [addOpen, setAddOpen] = useState(false)
-  const [coauthorTarget, setCoauthorTarget] = useState<{ id: string; name: string } | null>(null)
+  const [coauthorTarget, setCoauthorTarget] = useState<{ id: number; name: string } | null>(null)
   const [removeTarget, setRemoveTarget] = useState<Author | null>(null)
-  const [scanningId, setScanningId] = useState<string | null>(null)
+  const [scanningId, setScanningId] = useState<number | null>(null)
 
   const filtered = authors.filter((a) =>
     a.name.toLowerCase().includes(search.toLowerCase()),
@@ -150,7 +150,7 @@ export default function AuthorsPage() {
                     </button>
                   </TableCell>
                   <TableCell>
-                    <RelativeTime iso={author.last_scan_at} />
+                    <RelativeTime iso={author.last_scanned} />
                   </TableCell>
                   <TableCell>
                     <div className="flex items-center justify-end gap-1">

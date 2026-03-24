@@ -1,9 +1,10 @@
 import { Badge } from '@/components/ui/badge'
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip'
 import { cn } from '@/lib/utils'
-import type { ActionStatus } from '@/types'
 
 // ---- Download / action status badges -------------------------------------
+
+type ActionStatus = 'pending' | 'running' | 'success' | 'failed' | 'cancelled'
 
 const statusConfig: Record<ActionStatus, { label: string; className: string }> = {
   pending:   { label: 'Pending',   className: 'bg-yellow-500/15 text-yellow-600 dark:text-yellow-400 border-yellow-500/30' },

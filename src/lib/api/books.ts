@@ -1,9 +1,7 @@
-import type { Book, Paginated } from '@/types'
+import type { Book } from '@/types'
 import { api } from './client'
 
 export interface BooksParams {
-  page?: number
-  page_size?: number
   author_id?: string
   have_it?: boolean
   confidence_band?: 'high' | 'medium' | 'low'
@@ -12,13 +10,14 @@ export interface BooksParams {
 }
 
 export const booksApi = {
+  // BookScout returns a flat array — no pagination wrapper.
   list: (params: BooksParams = {}) => {
     const qs = new URLSearchParams(
       Object.entries(params)
         .filter(([, v]) => v !== undefined)
         .map(([k, v]) => [k, String(v)]),
     ).toString()
-    return api.get<Paginated<Book>>(`/books/${qs ? `?${qs}` : ''}`)
+    return api.get<Book[]>(`/books/${qs ? `?${qs}` : ''}`)
   },
 
   get: (id: string) => api.get<Book>(`/books/${id}`),
