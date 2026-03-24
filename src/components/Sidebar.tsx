@@ -20,12 +20,16 @@ const nav = [
 ]
 
 export default function Sidebar() {
-  const [dark, setDark] = useState(() =>
-    document.documentElement.classList.contains('dark'),
-  )
+  const [dark, setDark] = useState(() => {
+    const stored = localStorage.getItem('theme')
+    if (stored === 'dark') return true
+    if (stored === 'light') return false
+    return document.documentElement.classList.contains('dark')
+  })
 
   useEffect(() => {
     document.documentElement.classList.toggle('dark', dark)
+    localStorage.setItem('theme', dark ? 'dark' : 'light')
   }, [dark])
 
   return (

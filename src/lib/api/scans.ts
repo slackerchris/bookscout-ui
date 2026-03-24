@@ -13,6 +13,5 @@ export interface JobStatusResponse {
 
 export const scansApi = {
   scanAll: () => api.post<ScanQueuedResponse>('/scans/all'),
-  scanAuthor: (id: number) => api.post<ScanQueuedResponse>(`/scans/author/${id}`),
   jobStatus: (jobId: string) => api.get<JobStatusResponse>(`/scans/job/${jobId}`),
 }

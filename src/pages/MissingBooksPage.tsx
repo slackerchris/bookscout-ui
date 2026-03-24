@@ -10,7 +10,6 @@ import { Loader2 } from 'lucide-react'
 
 function filterToParams(f: BooksFilter): BooksParams {
   return {
-    q: f.q || undefined,
     confidence_band: f.confidence_band === 'all' ? undefined : f.confidence_band,
     missing_only: f.missing_only || undefined,
   }
@@ -21,6 +20,7 @@ export default function MissingBooksPage() {
   // Start with missing_only:true (page intent). Clear button resets to
   // DEFAULT_BOOKS_FILTER which has missing_only:false, showing all books.
   const [filter, setFilter] = useState<BooksFilter>({ ...DEFAULT_BOOKS_FILTER, missing_only: true })
+  const PAGE_DEFAULT: BooksFilter = { ...DEFAULT_BOOKS_FILTER, missing_only: true }
 
   const params = filterToParams(filter)
   const { data, isLoading, isError } = useBooks(params)
@@ -45,7 +45,7 @@ export default function MissingBooksPage() {
         </div>
       </div>
 
-      <BooksFilterBar filter={filter} onChange={setFilter} />
+      <BooksFilterBar filter={filter} onChange={setFilter} defaultFilter={PAGE_DEFAULT} />
 
       {isLoading && (
         <div className="flex items-center justify-center py-20 text-muted-foreground gap-2">

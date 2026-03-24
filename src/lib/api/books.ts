@@ -6,7 +6,6 @@ export interface BooksParams {
   have_it?: boolean
   confidence_band?: 'high' | 'medium' | 'low'
   missing_only?: boolean
-  q?: string
 }
 
 export const booksApi = {
@@ -14,7 +13,7 @@ export const booksApi = {
   list: (params: BooksParams = {}) => {
     const qs = new URLSearchParams(
       Object.entries(params)
-        .filter(([, v]) => v !== undefined && v !== '')
+        .filter(([, v]) => v !== undefined && v !== '' && String(v) !== 'undefined')
         .map(([k, v]) => [k, String(v)]),
     ).toString()
     return api.get<Book[]>(`/books/${qs ? `?${qs}` : ''}`)

@@ -7,7 +7,23 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
-## [1.2.1] — 2026-03-24
+## [1.2.2] — 2026-03-24
+
+### Fixed
+- **books.ts** — Added `String(v) !== 'undefined'` defensive guard to prevent the literal string `"undefined"` from being serialised into the query string if a param somehow slips through as an unresolved undefined.
+- **BooksFilterBar** — Removed the `q` search input entirely; `GET /api/v1/books/` has no `q` parameter so the field silently did nothing. `q` removed from `BooksFilter`, `BooksParams`, and `filterToParams`. Added optional `defaultFilter?: BooksFilter` prop: `isDirty` is now computed against `defaultFilter` (falling back to `DEFAULT_BOOKS_FILTER`), and the Clear button resets to that value.
+- **MissingBooksPage** — Passes `defaultFilter={{ ...DEFAULT_BOOKS_FILTER, missing_only: true }}` to `<BooksFilterBar>` so that Clear resets back to *missing books* view (not all-books), and the Clear button is only shown when the user has changed something relative to that page-level default.
+- **Dark mode** — Persistence added: a small inline script in `index.html` reads `localStorage.getItem('theme')` before React mounts (eliminates flash-of-wrong-theme). `Sidebar.tsx` toggle now writes `localStorage.setItem('theme', …)` on each change and initialises from `localStorage` rather than the DOM class.
+
+### Removed
+- **`scansApi.scanAuthor`** — Unused; `authorsApi.scan(id)` already covers the same `POST /scans/author/{id}` endpoint.
+- **`EventFeed.tsx`** — Dead code; not imported anywhere since v1.2.0.
+- **`ActiveJobsList.tsx`** — Dead stub; not imported anywhere.
+
+### Added
+- **`ErrorBoundary`** — New `src/components/ErrorBoundary.tsx` class component wrapping the route tree in `App.tsx`. Renders an inline error card with a "Try again" button on uncaught render errors; prevents a blank white screen.
+
+
 
 ### Fixed
 - **Singleton SSE** — replaced three independent `EventSource` connections (Dashboard, MissingBooks, Activity) with a single `<SSEProvider>` in `App.tsx` that fans events out to all subscribers via `useBookScoutSSE`. Eliminates triple Redis pub/sub subscriptions on the server.

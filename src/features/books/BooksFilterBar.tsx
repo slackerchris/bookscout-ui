@@ -1,4 +1,3 @@
-import { Input } from '@/components/ui/input'
 import { Button } from '@/components/ui/button'
 import {
   Select,
@@ -10,14 +9,12 @@ import {
 import { X } from 'lucide-react'
 
 export interface BooksFilter {
-  q: string
   confidence_band: 'all' | 'high' | 'medium' | 'low'
   missing_only: boolean
 }
 
 // "Cleared" state — no filters applied. Pages set their own initial state.
 export const DEFAULT_BOOKS_FILTER: BooksFilter = {
-  q: '',
   confidence_band: 'all',
   missing_only: false,
 }
@@ -25,26 +22,21 @@ export const DEFAULT_BOOKS_FILTER: BooksFilter = {
 interface Props {
   filter: BooksFilter
   onChange: (f: BooksFilter) => void
+  /** Override what Clear resets to (default: DEFAULT_BOOKS_FILTER) */
+  defaultFilter?: BooksFilter
 }
 
-export default function BooksFilterBar({ filter, onChange }: Props) {
+export default function BooksFilterBar({ filter, onChange, defaultFilter }: Props) {
   const set = <K extends keyof BooksFilter>(k: K, v: BooksFilter[K]) =>
     onChange({ ...filter, [k]: v })
 
+  const clearTarget = defaultFilter ?? DEFAULT_BOOKS_FILTER
   const isDirty =
-    filter.q !== '' ||
-    filter.confidence_band !== 'all' ||
-    filter.missing_only !== DEFAULT_BOOKS_FILTER.missing_only
+    filter.confidence_band !== clearTarget.confidence_band ||
+    filter.missing_only !== clearTarget.missing_only
 
   return (
     <div className="flex flex-wrap items-center gap-2">
-      <Input
-        placeholder="Search title or author…"
-        value={filter.q}
-        onChange={(e) => set('q', e.target.value)}
-        className="h-8 w-56 text-sm"
-      />
-
       <Select
         value={filter.confidence_band}
         onValueChange={(v) => set('confidence_band', v as BooksFilter['confidence_band'])}
@@ -75,7 +67,7 @@ export default function BooksFilterBar({ filter, onChange }: Props) {
           variant="ghost"
           size="sm"
           className="h-8 text-muted-foreground"
-          onClick={() => onChange(DEFAULT_BOOKS_FILTER)}
+          onClick={() => onChange(clearTarget)}
         >
           <X size={13} />
           Clear
