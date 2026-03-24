@@ -20,7 +20,7 @@ export function useBookScoutSSE(onEvent: Handler) {
     let destroyed = false
 
     function connect() {
-      es = new EventSource('/api/events/stream')
+      es = new EventSource('/api/v1/events')
 
       es.onmessage = (e) => {
         try {

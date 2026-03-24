@@ -4,10 +4,10 @@ export interface Book {
   id: string
   title: string
   author: string
-  confidence: number
-  owned: boolean
-  ignored: boolean
-  wanted: boolean
+  score: number
+  confidence_band: 'high' | 'medium' | 'low'
+  have_it: boolean
+  missing: boolean
   last_scan_at: string | null
 }
 
@@ -17,7 +17,11 @@ export interface Author {
   id: string
   name: string
   last_scan_at: string | null
-  coauthors: string[]
+}
+
+export interface Coauthor {
+  id: string
+  name: string
 }
 
 // ---- Actions / Jobs -------------------------------------------------------
@@ -60,33 +64,6 @@ export interface BookScoutEvent {
   event_type: EventType
   timestamp: string
   payload: Record<string, unknown>
-}
-
-// ---- Integrations ---------------------------------------------------------
-
-export type IntegrationService =
-  | 'audiobookshelf'
-  | 'prowlarr'
-  | 'downloader'
-  | 'bookscout'
-  | 'n8n'
-
-export interface IntegrationStatus {
-  service: IntegrationService
-  connected: boolean
-  last_checked_at: string | null
-  message: string | null
-}
-
-// ---- Dashboard stats ----------------------------------------------------
-
-export interface DashboardStats {
-  missing_books: number
-  high_confidence_missing: number
-  active_downloads: number
-  recent_failures: number
-  authors_tracked: number
-  last_scan_at: string | null
 }
 
 // ---- Pagination -----------------------------------------------------------

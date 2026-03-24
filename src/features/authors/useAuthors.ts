@@ -5,12 +5,21 @@ export const authorKeys = {
   all: ['authors'] as const,
   list: () => ['authors', 'list'] as const,
   detail: (id: string) => ['authors', 'detail', id] as const,
+  coauthors: (id: string) => ['authors', 'coauthors', id] as const,
 }
 
 export function useAuthors() {
   return useQuery({
     queryKey: authorKeys.list(),
     queryFn: authorsApi.list,
+  })
+}
+
+export function useCoauthors(authorId: string | null) {
+  return useQuery({
+    queryKey: authorKeys.coauthors(authorId ?? ''),
+    queryFn: () => authorsApi.coauthors(authorId!),
+    enabled: !!authorId,
   })
 }
 

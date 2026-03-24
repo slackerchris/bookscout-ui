@@ -10,10 +10,15 @@ import {
 import { X } from 'lucide-react'
 
 export interface BooksFilter {
-  search: string
-  owned: 'all' | 'no' | 'yes'
-  ignored: 'all' | 'no' | 'yes'
-  wanted: 'all' | 'no' | 'yes'
+  q: string
+  confidence_band: 'all' | 'high' | 'medium' | 'low'
+  missing_only: boolean
+}
+
+export const DEFAULT_BOOKS_FILTER: BooksFilter = {
+  q: '',
+  confidence_band: 'all',
+  missing_only: true,
 }
 
 interface Props {
@@ -26,61 +31,50 @@ export default function BooksFilterBar({ filter, onChange }: Props) {
     onChange({ ...filter, [k]: v })
 
   const isDirty =
-    filter.search !== '' ||
-    filter.owned !== 'all' ||
-    filter.ignored !== 'all' ||
-    filter.wanted !== 'all'
+    filter.q !== '' ||
+    filter.confidence_band !== 'all' ||
+    !filter.missing_only
 
   return (
     <div className="flex flex-wrap items-center gap-2">
       <Input
         placeholder="Search title or author…"
-        value={filter.search}
-        onChange={(e) => set('search', e.target.value)}
+        value={filter.q}
+        onChange={(e) => set('q', e.target.value)}
         className="h-8 w-56 text-sm"
       />
 
-      <Select value={filter.owned} onValueChange={(v) => set('owned', v as BooksFilter['owned'])}>
-        <SelectTrigger className="h-8 w-32 text-sm">
-          <SelectValue placeholder="Owned" />
+      <Select
+        value={filter.confidence_band}
+        onValueChange={(v) => set('confidence_band', v as BooksFilter['confidence_band'])}
+      >
+        <SelectTrigger className="h-8 w-36 text-sm">
+          <SelectValue placeholder="Confidence" />
         </SelectTrigger>
         <SelectContent>
-          <SelectItem value="all">All</SelectItem>
-          <SelectItem value="no">Not owned</SelectItem>
-          <SelectItem value="yes">Owned</SelectItem>
+          <SelectItem value="all">All confidence</SelectItem>
+          <SelectItem value="high">High</SelectItem>
+          <SelectItem value="medium">Medium</SelectItem>
+          <SelectItem value="low">Low</SelectItem>
         </SelectContent>
       </Select>
 
-      <Select value={filter.ignored} onValueChange={(v) => set('ignored', v as BooksFilter['ignored'])}>
-        <SelectTrigger className="h-8 w-32 text-sm">
-          <SelectValue placeholder="Ignored" />
-        </SelectTrigger>
-        <SelectContent>
-          <SelectItem value="all">All</SelectItem>
-          <SelectItem value="no">Not ignored</SelectItem>
-          <SelectItem value="yes">Ignored</SelectItem>
-        </SelectContent>
-      </Select>
-
-      <Select value={filter.wanted} onValueChange={(v) => set('wanted', v as BooksFilter['wanted'])}>
-        <SelectTrigger className="h-8 w-32 text-sm">
-          <SelectValue placeholder="Wanted" />
-        </SelectTrigger>
-        <SelectContent>
-          <SelectItem value="all">All</SelectItem>
-          <SelectItem value="no">Unwanted</SelectItem>
-          <SelectItem value="yes">Wanted</SelectItem>
-        </SelectContent>
-      </Select>
+      <label className="flex items-center gap-1.5 cursor-pointer select-none">
+        <input
+          type="checkbox"
+          checked={filter.missing_only}
+          onChange={(e) => set('missing_only', e.target.checked)}
+          className="accent-primary"
+        />
+        <span className="text-sm text-muted-foreground">Missing only</span>
+      </label>
 
       {isDirty && (
         <Button
           variant="ghost"
           size="sm"
           className="h-8 text-muted-foreground"
-          onClick={() =>
-            onChange({ search: '', owned: 'all', ignored: 'all', wanted: 'all' })
-          }
+          onClick={() => onChange(DEFAULT_BOOKS_FILTER)}
         >
           <X size={13} />
           Clear

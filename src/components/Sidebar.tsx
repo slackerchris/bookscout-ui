@@ -6,7 +6,10 @@ import {
   BookX,
   Activity,
   Plug,
+  Moon,
+  Sun,
 } from 'lucide-react'
+import { useState, useEffect } from 'react'
 
 const nav = [
   { to: '/', label: 'Dashboard', icon: LayoutDashboard },
@@ -17,6 +20,14 @@ const nav = [
 ]
 
 export default function Sidebar() {
+  const [dark, setDark] = useState(() =>
+    document.documentElement.classList.contains('dark'),
+  )
+
+  useEffect(() => {
+    document.documentElement.classList.toggle('dark', dark)
+  }, [dark])
+
   return (
     <aside className="flex flex-col w-56 shrink-0 border-r border-border bg-card h-full">
       <div className="px-4 py-5 border-b border-border">
@@ -44,6 +55,16 @@ export default function Sidebar() {
           </NavLink>
         ))}
       </nav>
+      <div className="border-t border-border p-2">
+        <button
+          onClick={() => setDark((d) => !d)}
+          className="flex w-full items-center gap-2.5 rounded-md px-3 py-2 text-sm text-muted-foreground hover:text-foreground hover:bg-accent/50 transition-colors"
+          title={dark ? 'Switch to light mode' : 'Switch to dark mode'}
+        >
+          {dark ? <Sun size={15} /> : <Moon size={15} />}
+          {dark ? 'Light mode' : 'Dark mode'}
+        </button>
+      </div>
     </aside>
   )
 }

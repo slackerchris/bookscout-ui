@@ -18,7 +18,6 @@ import {
   TooltipContent,
   TooltipTrigger,
 } from '@/components/ui/tooltip'
-import { Badge } from '@/components/ui/badge'
 import type { Author } from '@/types'
 import { Plus, ScanLine, Trash2, Users, Loader2 } from 'lucide-react'
 
@@ -49,7 +48,7 @@ export default function AuthorsPage() {
 
   const [search, setSearch] = useState('')
   const [addOpen, setAddOpen] = useState(false)
-  const [coauthorTarget, setCoauthorTarget] = useState<Author | null>(null)
+  const [coauthorTarget, setCoauthorTarget] = useState<{ id: string; name: string } | null>(null)
   const [removeTarget, setRemoveTarget] = useState<Author | null>(null)
   const [scanningId, setScanningId] = useState<string | null>(null)
 
@@ -142,18 +141,13 @@ export default function AuthorsPage() {
                     {author.name}
                   </TableCell>
                   <TableCell className="text-center">
-                    {author.coauthors.length > 0 ? (
-                      <button
-                        className="inline-flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground transition-colors"
-                        onClick={() => setCoauthorTarget(author)}
-                      >
-                        <Badge variant="secondary" className="font-normal tabular-nums">
-                          {author.coauthors.length}
-                        </Badge>
-                      </button>
-                    ) : (
-                      <span className="text-muted-foreground/40 text-xs">—</span>
-                    )}
+                    <button
+                      className="inline-flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground transition-colors"
+                      onClick={() => setCoauthorTarget({ id: author.id, name: author.name })}
+                      title="View coauthors"
+                    >
+                      <Users size={13} />
+                    </button>
                   </TableCell>
                   <TableCell>
                     <RelativeTime iso={author.last_scan_at} />
@@ -181,8 +175,7 @@ export default function AuthorsPage() {
                           <Button
                             variant="ghost"
                             size="icon-sm"
-                            disabled={author.coauthors.length === 0}
-                            onClick={() => setCoauthorTarget(author)}
+                            onClick={() => setCoauthorTarget({ id: author.id, name: author.name })}
                           >
                             <Users size={14} />
                           </Button>
@@ -228,7 +221,8 @@ export default function AuthorsPage() {
       />
 
       <CoauthorsDrawer
-        author={coauthorTarget}
+        authorId={coauthorTarget?.id ?? null}
+        authorName={coauthorTarget?.name ?? null}
         onClose={() => setCoauthorTarget(null)}
       />
 

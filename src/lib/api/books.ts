@@ -4,11 +4,11 @@ import { api } from './client'
 export interface BooksParams {
   page?: number
   page_size?: number
-  author?: string
-  owned?: boolean
-  ignored?: boolean
-  wanted?: boolean
-  search?: string
+  author_id?: string
+  have_it?: boolean
+  confidence_band?: 'high' | 'medium' | 'low'
+  missing_only?: boolean
+  q?: string
 }
 
 export const booksApi = {
@@ -18,13 +18,8 @@ export const booksApi = {
         .filter(([, v]) => v !== undefined)
         .map(([k, v]) => [k, String(v)]),
     ).toString()
-    return api.get<Paginated<Book>>(`/books${qs ? `?${qs}` : ''}`)
+    return api.get<Paginated<Book>>(`/books/${qs ? `?${qs}` : ''}`)
   },
 
   get: (id: string) => api.get<Book>(`/books/${id}`),
-
-  search: (id: string) => api.post<void>(`/books/${id}/search`),
-  download: (id: string) => api.post<void>(`/books/${id}/download`),
-  ignore: (id: string) => api.post<void>(`/books/${id}/ignore`),
-  markOwned: (id: string) => api.post<void>(`/books/${id}/mark-owned`),
 }

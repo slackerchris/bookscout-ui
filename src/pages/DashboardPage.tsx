@@ -1,6 +1,6 @@
 import { useQueryClient } from '@tanstack/react-query'
 import {
-  useDashboardStats,
+  useMissingCounts,
   useRecentEvents,
   useActiveJobs,
   useHighConfidenceMissing,
@@ -15,17 +15,16 @@ import { useBookScoutSSE } from '@/lib/sse/useBookScoutSSE'
 import type { BookScoutEvent } from '@/types'
 import {
   BookX,
-  Download,
-  XCircle,
-  Activity,
   Zap,
+  Users,
+  Activity,
 } from 'lucide-react'
 import { Link } from 'react-router-dom'
 import { Button } from '@/components/ui/button'
 
 export default function DashboardPage() {
   const qc = useQueryClient()
-  const stats = useDashboardStats()
+  const counts = useMissingCounts()
   const events = useRecentEvents()
   const jobs = useActiveJobs()
   const highConf = useHighConfidenceMissing()
@@ -39,7 +38,8 @@ export default function DashboardPage() {
       event.event_type === 'missing_book_found' ||
       event.event_type === 'download_completed'
     ) {
-      qc.invalidateQueries({ queryKey: dashboardKeys.stats })
+      qc.invalidateQueries({ queryKey: dashboardKeys.missingCount })
+      qc.invalidateQueries({ queryKey: dashboardKeys.highConfidenceCount })
       qc.invalidateQueries({ queryKey: dashboardKeys.highConfidence })
     }
 
@@ -61,33 +61,26 @@ export default function DashboardPage() {
       </div>
 
       {/* Stats row */}
-      <div className="grid grid-cols-2 gap-3 xl:grid-cols-4">
+      <div className="grid grid-cols-3 gap-3">
         <StatCard
           label="Missing books"
-          value={stats.data?.missing_books}
+          value={counts.missing.data}
           icon={BookX}
-          loading={stats.isLoading}
+          loading={counts.missing.isLoading}
         />
         <StatCard
           label="High confidence"
-          value={stats.data?.high_confidence_missing}
+          value={counts.highConf.data}
           icon={Zap}
-          loading={stats.isLoading}
+          loading={counts.highConf.isLoading}
           iconClassName="bg-orange-500/10"
         />
         <StatCard
-          label="Active downloads"
-          value={stats.data?.active_downloads}
-          icon={Download}
-          loading={stats.isLoading}
+          label="Authors tracked"
+          value={counts.authors.data}
+          icon={Users}
+          loading={counts.authors.isLoading}
           iconClassName="bg-blue-500/10"
-        />
-        <StatCard
-          label="Recent failures"
-          value={stats.data?.recent_failures}
-          icon={XCircle}
-          loading={stats.isLoading}
-          iconClassName="bg-red-500/10"
         />
       </div>
 
@@ -129,11 +122,11 @@ export default function DashboardPage() {
                       <td className="px-4 py-2.5 font-medium text-foreground">{book.title}</td>
                       <td className="px-4 py-2.5 text-muted-foreground">{book.author}</td>
                       <td className="px-4 py-2.5 text-center">
-                        <ConfidenceBadge value={book.confidence} />
+                        <ConfidenceBadge band={book.confidence_band} score={book.score} />
                       </td>
                       <td className="px-4 py-2.5">
                         <BookStateBadge
-                          state={book.owned ? 'owned' : book.ignored ? 'ignored' : book.wanted ? 'wanted' : 'missing'}
+                          state={book.have_it ? 'have_it' : book.missing ? 'missing' : 'unknown'}
                         />
                       </td>
                     </tr>

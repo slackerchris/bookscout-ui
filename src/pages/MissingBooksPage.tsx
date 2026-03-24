@@ -1,37 +1,27 @@
 import { useState } from 'react'
 import { useQueryClient } from '@tanstack/react-query'
-import { useBooks, useBookAction, bookKeys } from '@/features/books/useBooks'
-import BooksFilterBar, { type BooksFilter } from '@/features/books/BooksFilterBar'
+import { useBooks, bookKeys } from '@/features/books/useBooks'
+import BooksFilterBar, { type BooksFilter, DEFAULT_BOOKS_FILTER } from '@/features/books/BooksFilterBar'
 import BooksTable from '@/features/books/BooksTable'
 import { useBookScoutSSE } from '@/lib/sse/useBookScoutSSE'
 import type { BooksParams } from '@/lib/api/books'
 import type { BookScoutEvent } from '@/types'
 import { Loader2 } from 'lucide-react'
 
-const DEFAULT_FILTER: BooksFilter = {
-  search: '',
-  owned: 'all',
-  ignored: 'no',  // sensible default: hide ignored books
-  wanted: 'all',
-}
-
 function filterToParams(f: BooksFilter): BooksParams {
   return {
-    search: f.search || undefined,
-    owned:   f.owned   === 'all' ? undefined : f.owned   === 'yes',
-    ignored: f.ignored === 'all' ? undefined : f.ignored === 'yes',
-    wanted:  f.wanted  === 'all' ? undefined : f.wanted  === 'yes',
+    q: f.q || undefined,
+    confidence_band: f.confidence_band === 'all' ? undefined : f.confidence_band,
+    missing_only: f.missing_only || undefined,
   }
 }
 
 export default function MissingBooksPage() {
   const qc = useQueryClient()
-  const [filter, setFilter] = useState<BooksFilter>(DEFAULT_FILTER)
-  const [activeId, setActiveId] = useState<string | null>(null)
+  const [filter, setFilter] = useState<BooksFilter>(DEFAULT_BOOKS_FILTER)
 
   const params = filterToParams(filter)
   const { data, isLoading, isError } = useBooks(params)
-  const actions = useBookAction()
 
   // Live updates: invalidate books list when a relevant event arrives
   useBookScoutSSE((event: BookScoutEvent) => {
@@ -73,19 +63,7 @@ export default function MissingBooksPage() {
         </div>
       )}
 
-      {data && (
-        <BooksTable
-          books={data.items}
-          actions={{
-            search:    { isPending: actions.search.isPending,    mutate: actions.search.mutate },
-            download:  { isPending: actions.download.isPending,  mutate: actions.download.mutate },
-            ignore:    { isPending: actions.ignore.isPending,    mutate: actions.ignore.mutate },
-            markOwned: { isPending: actions.markOwned.isPending, mutate: actions.markOwned.mutate },
-          }}
-          activeId={activeId}
-          onActiveIdChange={setActiveId}
-        />
-      )}
+      {data && <BooksTable books={data.items} />}
     </div>
   )
 }
