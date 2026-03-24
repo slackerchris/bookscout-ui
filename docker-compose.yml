@@ -1,7 +1,6 @@
 services:
   bookscout-ui:
-    image: bookscout-ui:latest
-    build: .
+    image: ghcr.io/slackerchris/bookscout-ui:1.2.4
     container_name: bookscout-ui
     restart: unless-stopped
     ports:
