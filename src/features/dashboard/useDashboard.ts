@@ -24,7 +24,7 @@ export function useMissingCounts() {
   })
   const authors = useQuery({
     queryKey: dashboardKeys.authorsCount,
-    queryFn: authorsApi.list,
+    queryFn: () => authorsApi.list(),
     refetchInterval: 120_000,
     select: (d) => d.length,
   })

@@ -2,10 +2,22 @@ import type { Book } from '@/types'
 import { api } from './client'
 
 export interface BooksParams {
-  author_id?: string
+  author_id?: number
   have_it?: boolean
   confidence_band?: 'high' | 'medium' | 'low'
   missing_only?: boolean
+  include_deleted?: boolean
+}
+
+export interface BookUpdate {
+  have_it?: boolean
+  series_name?: string | null
+  series_position?: string | null
+  subtitle?: string | null
+  deleted?: boolean
+  asin?: string | null
+  isbn?: string | null
+  isbn13?: string | null
 }
 
 export const booksApi = {
@@ -19,5 +31,7 @@ export const booksApi = {
     return api.get<Book[]>(`/books/${qs ? `?${qs}` : ''}`)
   },
 
-  get: (id: string) => api.get<Book>(`/books/${id}`),
+  get: (id: number) => api.get<Book>(`/books/${id}`),
+  update: (id: number, patch: BookUpdate) => api.patch<Book>(`/books/${id}`, patch),
+  remove: (id: number) => api.delete<void>(`/books/${id}`),
 }

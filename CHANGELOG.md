@@ -7,7 +7,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
-## [1.2.2] — 2026-03-24
+## [1.2.3] — 2026-03-24
+
+### Fixed
+- **`Book` type** — Expanded to match the full `BookOut` schema: added `title_sort`, `subtitle`, `isbn`, `isbn13`, `asin`, `release_date`, `published_year`, `series_name`, `series_position`, `format`, `source`, `cover_url`, `description`, `match_method`, `created_at`, `updated_at`.
+- **`Author` type** — Added `asin` and `openlibrary_key` fields present in `AuthorOut`.
+- **`AuthorDetail` type** — New interface extending `Author` with `book_count` and `owned_count`; returned by `GET /authors/{id}` detail endpoint. `authorsApi.get()` now typed accordingly.
+- **`BooksParams.author_id`** — Corrected from `string` to `number` (backend takes an integer).
+- **`booksApi`** — Added `include_deleted?: boolean` param to `list()`; added `update(id, patch)` (`PATCH /books/{id}`) and `remove(id)` (`DELETE /books/{id}`) methods.
+- **`authorsApi.list()`** — Added `active_only?: boolean` param.
+- **`authorsApi`** — Added `update(id, patch)` (`PATCH /authors/{id}`) and `watchlist(id, settings)` (`PATCH /authors/{id}/watchlist`) methods.
+- **`useAuthors` / `useDashboard`** — Fixed `queryFn: authorsApi.list` → `queryFn: () => authorsApi.list()` to avoid TanStack Query passing its context object as the params argument after the signature change.
+
 
 ### Fixed
 - **books.ts** — Added `String(v) !== 'undefined'` defensive guard to prevent the literal string `"undefined"` from being serialised into the query string if a param somehow slips through as an unresolved undefined.

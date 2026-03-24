@@ -11,7 +11,7 @@ export const authorKeys = {
 export function useAuthors() {
   return useQuery({
     queryKey: authorKeys.list(),
-    queryFn: authorsApi.list,
+    queryFn: () => authorsApi.list(),
   })
 }
 
