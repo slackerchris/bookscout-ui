@@ -111,42 +111,4 @@ No runtime environment variables are required. The API base URL is resolved at t
 
 ## Changelog
 
-### v1.0.0 — 2026-03-24
-- Initial release
-- Dashboard with stats, active jobs, event feed, high-confidence missing books
-- Missing Books page with filtering and actions
-- Authors page with add/remove/scan/co-authors
-- Activity page with paginated jobs and events, live SSE updates
-- Integrations page with per-service health checks
-- Multi-stage Docker build (node → nginx:alpine)
-- nginx config with SSE support and SPA fallback
-```
-
-You can also install [eslint-plugin-react-x](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-x) and [eslint-plugin-react-dom](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-dom) for React-specific lint rules:
-
-```js
-// eslint.config.js
-import reactX from 'eslint-plugin-react-x'
-import reactDom from 'eslint-plugin-react-dom'
-
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-      // Enable lint rules for React
-      reactX.configs['recommended-typescript'],
-      // Enable lint rules for React DOM
-      reactDom.configs.recommended,
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
-```
+See [CHANGELOG.md](CHANGELOG.md) for the full history.

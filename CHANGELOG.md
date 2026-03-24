@@ -1,0 +1,72 @@
+# Changelog
+
+All notable changes to this project will be documented in this file.
+
+The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
+and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
+
+---
+
+## [1.1.0] — 2026-03-24
+
+### Fixed
+- API base URL corrected from `/api` to `/api/v1` to match BookScout's actual routing
+- SSE endpoint corrected from `/api/events/stream` → `/api/v1/events`
+- `authorsApi` list/add now use trailing slashes per FastAPI convention
+
+### Changed
+- `Book` type: replaced `confidence: number` (0–1 float) with `score: number` (raw int)
+  and `confidence_band: 'high' | 'medium' | 'low'` to match actual API response
+- `Book` type: `owned / ignored / wanted` fields replaced with `have_it / missing`
+- `Author` type: removed `coauthors: string[]` — coauthors are now fetched separately
+  via `GET /api/v1/authors/{id}/coauthors`
+- `BooksParams`: `owned / ignored / wanted / search` → `have_it / confidence_band /
+  missing_only / q` to match real query parameters
+- `BooksFilterBar`: redesigned — confidence band select and "Missing only" checkbox
+  replace the owned/ignored/wanted dropdowns
+- `ConfidenceBadge`: now shows band label (High / Medium / Low) with raw score in a
+  tooltip instead of a computed percentage
+- `BookStateBadge`: states are now `have_it / missing / unknown`
+- Dashboard stat cards: derived from live book count queries instead of the
+  non-existent `/api/v1/stats` endpoint — now shows Missing, High-confidence, Authors
+- `BooksTable`: action buttons removed (no book-level mutation endpoints in BookScout API)
+- `IntegrationsPage`: replaced live health-check cards with a static placeholder noting
+  that `/api/v1/integrations` does not yet exist in BookScout
+
+### Added
+- `Coauthor` type (`id`, `name`)
+- `authorsApi.coauthors(id)` — fetches co-authors for a single author
+- `useCoauthors(authorId)` hook — lazy query, only fires when the drawer is opened
+- `CoauthorsDrawer`: now fetches co-authors on demand instead of reading from the
+  author object
+- Dark mode: `prefers-color-scheme` is applied on first load; Moon / Sun toggle added
+  to the bottom of the sidebar
+
+### Removed
+- `statsApi` (`/api/v1/stats` endpoint does not exist)
+- `integrationsApi` (`/api/v1/integrations` endpoint does not exist)
+- `useBookAction` hook and all book-level mutations (search / download / ignore /
+  mark-owned endpoints do not exist)
+- `DashboardStats` and `IntegrationStatus` types
+
+---
+
+## [1.0.0] — 2026-03-24
+
+### Added
+- Full React 19 + Vite 8 + TypeScript 5.9 application scaffold
+- Tailwind v4 with shadcn/ui (New York style, zinc theme)
+- TanStack Query v5 for data fetching and cache management
+- React Router v7 with nested routes and `AppShell` sidebar layout
+- SSE hook (`useBookScoutSSE`) with automatic reconnect (3 s back-off)
+- **Dashboard** — stat cards, high-confidence missing books table, active jobs list,
+  live event feed
+- **Missing Books** page — filterable/searchable table, pagination
+- **Authors** page — add / remove / scan authors, co-authors drawer
+- **Activity** page — paginated jobs and events tables with live SSE invalidation
+- **Integrations** page — per-service status cards with health-check button
+- Multi-stage `Dockerfile` (node:22-alpine build → nginx:1.27-alpine runtime)
+- `nginx.conf` with `/api/` proxy to BookScout, SSE buffering disabled, SPA fallback,
+  and aggressive asset caching
+- `docker-compose.yml` for standalone deployment on a shared `bookscout` network
+- `.dockerignore` and `.gitignore`
