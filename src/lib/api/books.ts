@@ -14,7 +14,7 @@ export const booksApi = {
   list: (params: BooksParams = {}) => {
     const qs = new URLSearchParams(
       Object.entries(params)
-        .filter(([, v]) => v !== undefined)
+        .filter(([, v]) => v !== undefined && v !== '')
         .map(([k, v]) => [k, String(v)]),
     ).toString()
     return api.get<Book[]>(`/books/${qs ? `?${qs}` : ''}`)

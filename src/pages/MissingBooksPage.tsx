@@ -18,7 +18,9 @@ function filterToParams(f: BooksFilter): BooksParams {
 
 export default function MissingBooksPage() {
   const qc = useQueryClient()
-  const [filter, setFilter] = useState<BooksFilter>(DEFAULT_BOOKS_FILTER)
+  // Start with missing_only:true (page intent). Clear button resets to
+  // DEFAULT_BOOKS_FILTER which has missing_only:false, showing all books.
+  const [filter, setFilter] = useState<BooksFilter>({ ...DEFAULT_BOOKS_FILTER, missing_only: true })
 
   const params = filterToParams(filter)
   const { data, isLoading, isError } = useBooks(params)

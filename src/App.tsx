@@ -2,6 +2,7 @@ import { BrowserRouter, Routes, Route } from 'react-router-dom'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { TooltipProvider } from '@/components/ui/tooltip'
 import { useEffect } from 'react'
+import { SSEProvider } from '@/lib/sse/SSEContext'
 import AppShell from '@/components/AppShell'
 import DashboardPage from '@/pages/DashboardPage'
 import AuthorsPage from '@/pages/AuthorsPage'
@@ -28,17 +29,19 @@ export default function App() {
   return (
     <QueryClientProvider client={queryClient}>
       <TooltipProvider>
-        <BrowserRouter>
-          <Routes>
-            <Route element={<AppShell />}>
-              <Route index element={<DashboardPage />} />
-              <Route path="authors" element={<AuthorsPage />} />
-              <Route path="missing-books" element={<MissingBooksPage />} />
-              <Route path="activity" element={<ActivityPage />} />
-              <Route path="integrations" element={<IntegrationsPage />} />
-            </Route>
-          </Routes>
-        </BrowserRouter>
+        <SSEProvider>
+          <BrowserRouter>
+            <Routes>
+              <Route element={<AppShell />}>
+                <Route index element={<DashboardPage />} />
+                <Route path="authors" element={<AuthorsPage />} />
+                <Route path="missing-books" element={<MissingBooksPage />} />
+                <Route path="activity" element={<ActivityPage />} />
+                <Route path="integrations" element={<IntegrationsPage />} />
+              </Route>
+            </Routes>
+          </BrowserRouter>
+        </SSEProvider>
       </TooltipProvider>
     </QueryClientProvider>
   )

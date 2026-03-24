@@ -17,7 +17,9 @@ export function useAuthors() {
 
 export function useCoauthors(authorId: number | null) {
   return useQuery({
-    queryKey: authorKeys.coauthors(authorId ?? 0),
+    queryKey: authorId !== null
+      ? authorKeys.coauthors(authorId)
+      : (['authors', 'coauthors', '__disabled__'] as const),
     queryFn: () => authorsApi.coauthors(authorId!),
     enabled: authorId !== null,
   })

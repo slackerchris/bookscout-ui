@@ -1,4 +1,4 @@
-import { useState, useCallback } from 'react'
+import { useState, useCallback, useRef } from 'react'
 import { useMutation } from '@tanstack/react-query'
 import { useBookScoutSSE } from '@/lib/sse/useBookScoutSSE'
 import { scansApi } from '@/lib/api'
@@ -68,15 +68,14 @@ function RelativeTime({ iso }: { iso: string }) {
 
 // ---- Page -----------------------------------------------------------------
 
-let clientSeq = 0
-
 export default function ActivityPage() {
   const [events, setEvents] = useState<BookScoutEvent[]>([])
+  const clientSeq = useRef(0)
   const scanAll = useMutation({ mutationFn: scansApi.scanAll })
 
   const handleEvent = useCallback((event: BookScoutEvent) => {
     setEvents((prev) =>
-      [{ ...event, _clientId: String(++clientSeq) }, ...prev].slice(0, 200),
+      [{ ...event, _clientId: String(++clientSeq.current) }, ...prev].slice(0, 200),
     )
   }, [])
 

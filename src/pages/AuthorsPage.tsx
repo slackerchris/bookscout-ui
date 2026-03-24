@@ -21,27 +21,6 @@ import {
 import type { Author } from '@/types'
 import { Plus, ScanLine, Trash2, Users, Loader2 } from 'lucide-react'
 
-function RelativeTime({ iso }: { iso: string | null }) {
-  if (!iso) return <span className="text-muted-foreground/50">Never</span>
-  const diff = Date.now() - new Date(iso).getTime()
-  const m = Math.floor(diff / 60_000)
-  const h = Math.floor(diff / 3_600_000)
-  const d = Math.floor(diff / 86_400_000)
-  const label =
-    m < 1 ? 'just now'
-    : m < 60 ? `${m}m ago`
-    : h < 24 ? `${h}h ago`
-    : `${d}d ago`
-  return (
-    <Tooltip>
-      <TooltipTrigger asChild>
-        <span className="text-muted-foreground cursor-default">{label}</span>
-      </TooltipTrigger>
-      <TooltipContent>{new Date(iso).toLocaleString()}</TooltipContent>
-    </Tooltip>
-  )
-}
-
 export default function AuthorsPage() {
   const { data: authors = [], isLoading, isError } = useAuthors()
   const { add, remove, scan } = useAuthorMutations()
@@ -130,7 +109,6 @@ export default function AuthorsPage() {
               <TableRow className="hover:bg-transparent">
                 <TableHead>Name</TableHead>
                 <TableHead className="w-[100px] text-center">Coauthors</TableHead>
-                <TableHead className="w-[120px]">Last scan</TableHead>
                 <TableHead className="w-[120px] text-right">Actions</TableHead>
               </TableRow>
             </TableHeader>
@@ -148,9 +126,6 @@ export default function AuthorsPage() {
                     >
                       <Users size={13} />
                     </button>
-                  </TableCell>
-                  <TableCell>
-                    <RelativeTime iso={author.last_scanned} />
                   </TableCell>
                   <TableCell>
                     <div className="flex items-center justify-end gap-1">

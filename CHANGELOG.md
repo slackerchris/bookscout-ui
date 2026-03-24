@@ -7,6 +7,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [1.2.1] — 2026-03-24
+
+### Fixed
+- **Singleton SSE** — replaced three independent `EventSource` connections (Dashboard, MissingBooks, Activity) with a single `<SSEProvider>` in `App.tsx` that fans events out to all subscribers via `useBookScoutSSE`. Eliminates triple Redis pub/sub subscriptions on the server.
+- **books.ts** — `q: ''` no longer serialised into the query string; empty-string values are now filtered out alongside `undefined`.
+- **BooksFilterBar** — `DEFAULT_BOOKS_FILTER.missing_only` changed to `false` (the "cleared" state). `MissingBooksPage` explicitly initialises with `missing_only: true` so the page still opens showing missing books, but pressing Clear now correctly shows all books rather than snapping back to missing-only.
+- **useCoauthors** — null `authorId` no longer collides with `authorId = 0` in the React Query cache; uses `['authors', 'coauthors', '__disabled__']` as the sentinel key when disabled.
+- **AuthorsPage** — removed "Last scan" column; `list_authors()` returns bare `Author` objects with no watchlist join so `last_scanned` is always `null` from that endpoint. The column only ever showed "Never" which is misleading.
+- **ActivityPage** — `clientSeq` moved from a module-level mutable variable to `useRef` to prevent stale values across HMR reloads.
+
 ## [1.2.0] — 2026-03-24
 
 ### Fixed

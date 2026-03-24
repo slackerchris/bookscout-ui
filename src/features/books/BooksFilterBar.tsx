@@ -15,10 +15,11 @@ export interface BooksFilter {
   missing_only: boolean
 }
 
+// "Cleared" state — no filters applied. Pages set their own initial state.
 export const DEFAULT_BOOKS_FILTER: BooksFilter = {
   q: '',
   confidence_band: 'all',
-  missing_only: true,
+  missing_only: false,
 }
 
 interface Props {
@@ -33,7 +34,7 @@ export default function BooksFilterBar({ filter, onChange }: Props) {
   const isDirty =
     filter.q !== '' ||
     filter.confidence_band !== 'all' ||
-    !filter.missing_only
+    filter.missing_only !== DEFAULT_BOOKS_FILTER.missing_only
 
   return (
     <div className="flex flex-wrap items-center gap-2">
