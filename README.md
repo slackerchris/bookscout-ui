@@ -1,18 +1,17 @@
 # BookScout UI
 
-A React control panel for [BookScout](https://github.com/slackerchris/bookscout) — track missing audiobooks, manage authors, monitor download activity, and check integration health, all in one place.
+A React control panel for [BookScout](https://github.com/slackerchris/bookscout) — track missing audiobooks, manage authors, and monitor scan activity in real time.
 
-> **Optional sidecar** — BookScout runs fine without this UI. It's a convenience front-end that talks to the BookScout API.
+> **Optional sidecar** — BookScout runs fine without this UI. It's a convenience front-end that talks to the BookScout `/api/v1` REST + SSE API.
 
 ---
 
 ## Features
 
-- **Dashboard** — stats overview, high-confidence missing books, active jobs, live event feed
-- **Missing Books** — filterable table with search, download, ignore, and mark-owned actions
-- **Authors** — add/remove authors, trigger scans, manage co-authors
-- **Activity** — paginated jobs and events log with live SSE updates
-- **Integrations** — per-service health cards (Audiobookshelf, Prowlarr, Downloader, n8n)
+- **Dashboard** — stat cards (missing books, high-confidence missing, authors tracked) + high-confidence missing book table with live SSE refresh
+- **Missing Books** — filterable table (search, confidence band, missing-only toggle) backed by `GET /api/v1/books/`
+- **Authors** — add / remove authors, trigger scans (`POST /api/v1/scans/author/{id}`), view co-authors with watchlist status
+- **Activity** — real-time SSE event log (up to 200 events) with a "Scan all authors" button
 
 ## Tech Stack
 
@@ -24,7 +23,7 @@ A React control panel for [BookScout](https://github.com/slackerchris/bookscout)
 | shadcn/ui | New York style, zinc theme |
 | TanStack Query v5 | Data fetching + cache |
 | React Router v7 | Client-side routing |
-| Server-Sent Events | Live updates from BookScout API |
+| Server-Sent Events | Singleton connection, fan-out to all subscribers |
 
 ---
 
@@ -35,7 +34,7 @@ npm install
 npm run dev        # starts at http://localhost:5173
 ```
 
-The Vite dev server proxies `/api` and `/health` to `http://localhost:8765` (BookScout API).
+The Vite dev server proxies `/api` and `/health` to `http://localhost:8765` (BookScout API default port).
 
 ## Production Build
 
@@ -48,7 +47,13 @@ npm run preview    # preview the production build locally
 
 ## Docker
 
-### Build the image
+### Pull from registry
+
+```bash
+docker pull ghcr.io/slackerchris/bookscout-ui:latest
+```
+
+### Build locally
 
 ```bash
 docker build -t bookscout-ui:latest .
@@ -61,26 +66,7 @@ docker run -d \
   --name bookscout-ui \
   -p 8080:80 \
   --network bookscout \
-  bookscout-ui:latest
-```
-
-### docker compose (standalone)
-
-```yaml
-services:
-  bookscout-ui:
-    image: bookscout-ui:latest
-    build: .
-    container_name: bookscout-ui
-    restart: unless-stopped
-    ports:
-      - "8080:80"
-    networks:
-      - bookscout
-
-networks:
-  bookscout:
-    external: true
+  ghcr.io/slackerchris/bookscout-ui:latest
 ```
 
 ### Add to an existing BookScout compose stack
@@ -99,13 +85,30 @@ services:
       - bookscout
 ```
 
-nginx inside the container proxies `/api/` → `http://bookscout:8765` (the BookScout service on the same network). SSE buffering is disabled so live updates work correctly.
+nginx inside the container proxies `/api/` → `http://bookscout:8765` (the BookScout service on the same Docker network). `proxy_buffering off` is set so SSE live updates work correctly.
+
+---
+
+## API Compatibility
+
+Targets the BookScout `/api/v1` API. Key endpoints used:
+
+| Endpoint | Used by |
+|---|---|
+| `GET /api/v1/books/` | Missing Books page, Dashboard |
+| `GET /api/v1/authors/` | Authors page, Dashboard stat card |
+| `POST /api/v1/authors/` | Add author |
+| `DELETE /api/v1/authors/{id}` | Remove author |
+| `GET /api/v1/authors/{id}/coauthors` | Coauthors drawer |
+| `POST /api/v1/scans/author/{id}` | Scan author button |
+| `POST /api/v1/scans/all` | Scan all (Activity page) |
+| `GET /api/v1/events` | SSE live updates (singleton connection) |
 
 ---
 
 ## Environment
 
-No runtime environment variables are required. The API base URL is resolved at the nginx proxy layer — just make sure the UI container and the BookScout API container share the same Docker network.
+No runtime environment variables required. The API base URL is resolved at the nginx proxy layer — ensure the UI container and the BookScout API container share the same Docker network (`bookscout` by default).
 
 ---
 
