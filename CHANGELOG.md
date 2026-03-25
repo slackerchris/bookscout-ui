@@ -7,7 +7,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
-## [1.2.5] — 2026-03-24
+## [1.2.6] — 2026-03-24
+
+### Changed
+- **Favicon** — replaced generated SVG with custom icon set (ico, 16/32px PNG, Apple touch icon, 192/512px Android Chrome). Added `site.webmanifest` for PWA metadata.
+
 
 ### Changed
 - **Favicon** — replaced default Vite logo with a BookScout-themed SVG: open book (indigo) with a green radar sweep arc and dot.
