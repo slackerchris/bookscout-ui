@@ -7,6 +7,29 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [1.3.0] — 2026-03-25
+
+### Added
+- **Author sort** — Name column header on the Authors page is now clickable, toggling ascending/descending sort (uses `name_sort` so articles like "The" sort correctly).
+- **Version display in sidebar** — UI version baked in at build time from `package.json` via Vite `define`. BookScout API version fetched live from `GET /health`, refreshes every 60 seconds. Silently absent if the API is unreachable.
+- **Live Integrations status** — Prowlarr, Jackett, and the configured download client (SABnzbd / qBittorrent / Transmission) now show real-time connectivity status via `GET /api/v1/search/status`, polling every 30 seconds. States: not configured / connected (green dot + version) / unreachable (red dot + error detail). Download client card label resolves dynamically from the backend response key.
+- **`src/lib/api/search.ts`** — `searchApi.status()` typed against `ServiceStatus` / `SearchStatusResult`.
+- **`src/features/integrations/useSearchStatus.ts`** — `useQuery` hook for `/search/status`.
+- **`src/hooks/useHealth.ts`** — `useQuery` hook for `GET /health`.
+- **`src/vite-env.d.ts`** — TypeScript declaration for `__APP_VERSION__` Vite define constant.
+- **`ROADMAP.md`** — new file for tracking planned and in-progress work.
+
+### Fixed
+- **Confirm dialog stays open after delete** — `handleRemoveConfirm` now closes the dialog before mutating (close-first pattern), avoiding a TanStack Query v5 re-render race.
+- **Add author error handling** — `AddAuthorDialog` now shows inline error below the input. Mutation resets on dialog close so stale errors don't reappear on reopen.
+- **Remove / scan error handling** — Failed remove and scan mutations now surface a red error banner on the Authors page with the server error message.
+
+### Changed
+- **ABS import state refactored into hooks** — `IntegrationsPage` no longer manages `localStorage` directly. State is now owned by `useAbsImportResult` (`useQuery`, `staleTime: Infinity`, seeded from localStorage) and `useAbsImport` (`useMutation` that writes localStorage and syncs cache via `setQueryData` on success). Result is invalidatable via `absImportKeys.result`.
+- **`src/features/integrations/useAbsImport.ts`** — new feature hook encapsulating all ABS import state.
+
+---
+
 ## [1.2.6] — 2026-03-24
 
 ### Changed
