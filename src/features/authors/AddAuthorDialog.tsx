@@ -8,16 +8,17 @@ import {
 } from '@/components/ui/dialog'
 import { Input } from '@/components/ui/input'
 import { Button } from '@/components/ui/button'
-import { Loader2 } from 'lucide-react'
+import { AlertCircle, Loader2 } from 'lucide-react'
 
 interface Props {
   open: boolean
   onOpenChange: (open: boolean) => void
   onSubmit: (name: string) => void
   isPending: boolean
+  error?: string | null
 }
 
-export default function AddAuthorDialog({ open, onOpenChange, onSubmit, isPending }: Props) {
+export default function AddAuthorDialog({ open, onOpenChange, onSubmit, isPending, error }: Props) {
   const [name, setName] = useState('')
 
   function handleSubmit(e: React.FormEvent) {
@@ -46,6 +47,12 @@ export default function AddAuthorDialog({ open, onOpenChange, onSubmit, isPendin
             autoFocus
             disabled={isPending}
           />
+          {error && (
+            <div className="flex items-center gap-1.5 text-xs text-destructive -mt-2">
+              <AlertCircle size={13} />
+              {error}
+            </div>
+          )}
           <DialogFooter>
             <Button type="button" variant="outline" onClick={() => handleOpenChange(false)} disabled={isPending}>
               Cancel

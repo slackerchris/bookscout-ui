@@ -1,4 +1,3 @@
-import { useState } from 'react'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import {
@@ -10,23 +9,11 @@ import {
   CheckCircle2,
   Loader2,
   AlertCircle,
+  Circle,
 } from 'lucide-react'
-import { audiobookshelfApi, type AbsImportResult } from '@/lib/api/audiobookshelf'
-
-const STORAGE_KEY = 'abs_import_result'
-
-interface StoredResult extends AbsImportResult {
-  imported_at: string
-}
-
-function loadStored(): StoredResult | null {
-  try {
-    const raw = localStorage.getItem(STORAGE_KEY)
-    return raw ? (JSON.parse(raw) as StoredResult) : null
-  } catch {
-    return null
-  }
-}
+import { useAbsImport, useAbsImportResult } from '@/features/integrations/useAbsImport'
+import { useSearchStatus } from '@/features/integrations/useSearchStatus'
+import type { ServiceStatus } from '@/lib/api/search'
 
 function formatDate(iso: string) {
   return new Date(iso).toLocaleString(undefined, {
@@ -35,32 +22,58 @@ function formatDate(iso: string) {
   })
 }
 
-const otherServices = [
-  { id: 'prowlarr',    label: 'Prowlarr',      description: 'Indexer manager — used to search for audiobooks',    Icon: Search },
-  { id: 'downloader', label: 'Downloader',     description: 'Download client — handles queued downloads',          Icon: Download },
-  { id: 'bookscout',  label: 'BookScout API',  description: 'Core API — scan, match, and orchestrate',            Icon: Server },
-  { id: 'n8n',        label: 'n8n',            description: 'Workflow automation — webhooks and notifications',     Icon: Webhook },
+function ServiceStatusBadge({ svc, loading }: { svc?: ServiceStatus; loading: boolean }) {
+  if (loading) {
+    return <Loader2 size={12} className="animate-spin text-muted-foreground" />
+  }
+  if (!svc || !svc.configured) {
+    return <span className="text-xs text-muted-foreground/60">Not configured</span>
+  }
+  if (svc.status === 'ok') {
+    return (
+      <span className="flex items-center gap-1.5 text-xs text-emerald-500">
+        <Circle size={7} className="fill-emerald-500" />
+        Connected{svc.version ? ` · v${svc.version}` : ''}
+      </span>
+    )
+  }
+  return (
+    <span className="flex items-center gap-1.5 text-xs text-destructive">
+      <Circle size={7} className="fill-destructive" />
+      {svc.detail ?? 'Unreachable'}
+    </span>
+  )
+}
+
+const staticServices = [
+  { id: 'bookscout', label: 'BookScout API',  description: 'Core API — scan, match, and orchestrate',         Icon: Server },
+  { id: 'n8n',       label: 'n8n',            description: 'Workflow automation — webhooks and notifications', Icon: Webhook },
 ]
 
 export default function IntegrationsPage() {
-  const [stored, setStored] = useState<StoredResult | null>(loadStored)
-  const [loading, setLoading] = useState(false)
-  const [error, setError] = useState<string | null>(null)
+  const { data: stored } = useAbsImportResult()
+  const importMutation = useAbsImport()
+  const { data: searchStatus, isLoading: statusLoading } = useSearchStatus()
 
-  async function runImport() {
-    setLoading(true)
-    setError(null)
-    try {
-      const result = await audiobookshelfApi.importAuthors()
-      const stored: StoredResult = { ...result, imported_at: new Date().toISOString() }
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(stored))
-      setStored(stored)
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Import failed')
-    } finally {
-      setLoading(false)
-    }
+  function runImport() {
+    importMutation.mutate()
   }
+
+  const loading = importMutation.isPending
+  const error = importMutation.isError
+    ? (importMutation.error instanceof Error ? importMutation.error.message : 'Import failed')
+    : null
+
+  const prowlarr = searchStatus?.indexers.prowlarr
+  const jackett = searchStatus?.indexers.jackett
+  // download_client is a Record with a single key (sabnzbd | qbittorrent | transmission)
+  const dlEntry = searchStatus?.download_client
+    ? Object.entries(searchStatus.download_client)[0]
+    : null
+  const dlLabel = dlEntry
+    ? { sabnzbd: 'SABnzbd', qbittorrent: 'qBittorrent', transmission: 'Transmission' }[dlEntry[0]] ?? dlEntry[0]
+    : 'Downloader'
+  const dlStatus = dlEntry?.[1]
 
   return (
     <div className="flex flex-col gap-4 p-6">
@@ -141,9 +154,64 @@ export default function IntegrationsPage() {
         </CardContent>
       </Card>
 
-      {/* Other services — status not yet available */}
+      {/* Indexers + download client — live status */}
       <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-4">
-        {otherServices.map(({ id, label, description, Icon }) => (
+        {/* Prowlarr */}
+        <Card>
+          <CardHeader className="pb-2">
+            <div className="flex items-center gap-2.5">
+              <div className="flex size-8 items-center justify-center rounded-md bg-muted">
+                <Search size={15} className="text-muted-foreground" />
+              </div>
+              <div>
+                <CardTitle className="text-sm font-medium">Prowlarr</CardTitle>
+                <p className="text-xs text-muted-foreground">Indexer manager — used to search for audiobooks</p>
+              </div>
+            </div>
+          </CardHeader>
+          <CardContent className="pt-0">
+            <ServiceStatusBadge svc={prowlarr} loading={statusLoading} />
+          </CardContent>
+        </Card>
+
+        {/* Jackett */}
+        <Card>
+          <CardHeader className="pb-2">
+            <div className="flex items-center gap-2.5">
+              <div className="flex size-8 items-center justify-center rounded-md bg-muted">
+                <Search size={15} className="text-muted-foreground" />
+              </div>
+              <div>
+                <CardTitle className="text-sm font-medium">Jackett</CardTitle>
+                <p className="text-xs text-muted-foreground">Indexer proxy — alternative to Prowlarr</p>
+              </div>
+            </div>
+          </CardHeader>
+          <CardContent className="pt-0">
+            <ServiceStatusBadge svc={jackett} loading={statusLoading} />
+          </CardContent>
+        </Card>
+
+        {/* Download client — label resolves dynamically from config */}
+        <Card>
+          <CardHeader className="pb-2">
+            <div className="flex items-center gap-2.5">
+              <div className="flex size-8 items-center justify-center rounded-md bg-muted">
+                <Download size={15} className="text-muted-foreground" />
+              </div>
+              <div>
+                <CardTitle className="text-sm font-medium">{dlLabel}</CardTitle>
+                <p className="text-xs text-muted-foreground">Download client — handles queued downloads</p>
+              </div>
+            </div>
+          </CardHeader>
+          <CardContent className="pt-0">
+            <ServiceStatusBadge svc={dlStatus} loading={statusLoading} />
+          </CardContent>
+        </Card>
+
+        {/* Static cards — no status endpoint yet */}
+        {staticServices.map(({ id, label, description, Icon }) => (
           <Card key={id}>
             <CardHeader className="pb-2">
               <div className="flex items-center gap-2.5">

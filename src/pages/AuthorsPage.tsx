@@ -19,7 +19,7 @@ import {
   TooltipTrigger,
 } from '@/components/ui/tooltip'
 import type { Author } from '@/types'
-import { Plus, ScanLine, Trash2, Users, Loader2 } from 'lucide-react'
+import { Plus, ScanLine, Trash2, Users, Loader2, AlertCircle } from 'lucide-react'
 
 export default function AuthorsPage() {
   const { data: authors = [], isLoading, isError } = useAuthors()
@@ -35,6 +35,11 @@ export default function AuthorsPage() {
     a.name.toLowerCase().includes(search.toLowerCase()),
   )
 
+  function handleAddOpenChange(open: boolean) {
+    if (!open) add.reset()
+    setAddOpen(open)
+  }
+
   function handleAdd(name: string) {
     add.mutate(name, { onSuccess: () => setAddOpen(false) })
   }
@@ -46,7 +51,9 @@ export default function AuthorsPage() {
 
   function handleRemoveConfirm() {
     if (!removeTarget) return
-    remove.mutate(removeTarget.id, { onSuccess: () => setRemoveTarget(null) })
+    const id = removeTarget.id
+    setRemoveTarget(null)
+    remove.mutate(id)
   }
 
   return (
@@ -87,6 +94,20 @@ export default function AuthorsPage() {
       {isError && (
         <div className="rounded-md border border-destructive/30 bg-destructive/10 px-4 py-3 text-sm text-destructive">
           Failed to load authors. Is BookScout running?
+        </div>
+      )}
+
+      {/* Mutation errors */}
+      {remove.isError && (
+        <div className="rounded-md border border-destructive/30 bg-destructive/10 px-4 py-3 text-sm text-destructive flex items-center gap-2">
+          <AlertCircle size={14} className="shrink-0" />
+          Failed to remove author: {remove.error instanceof Error ? remove.error.message : 'Unknown error'}
+        </div>
+      )}
+      {scan.isError && (
+        <div className="rounded-md border border-destructive/30 bg-destructive/10 px-4 py-3 text-sm text-destructive flex items-center gap-2">
+          <AlertCircle size={14} className="shrink-0" />
+          Scan failed: {scan.error instanceof Error ? scan.error.message : 'Unknown error'}
         </div>
       )}
 
@@ -190,9 +211,10 @@ export default function AuthorsPage() {
       {/* Dialogs / drawers */}
       <AddAuthorDialog
         open={addOpen}
-        onOpenChange={setAddOpen}
+        onOpenChange={handleAddOpenChange}
         onSubmit={handleAdd}
         isPending={add.isPending}
+        error={add.isError ? (add.error instanceof Error ? add.error.message : 'Failed to add author') : null}
       />
 
       <CoauthorsDrawer
