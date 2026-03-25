@@ -7,7 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
-## [1.2.4] — 2026-03-24
+## [1.2.5] — 2026-03-24
+
+### Changed
+- **Favicon** — replaced default Vite logo with a BookScout-themed SVG: open book (indigo) with a green radar sweep arc and dot.
+- **Page title** — changed from `bookscout-ui` to `BookScout`.
+
 
 ### Added
 - **Audiobookshelf import** (`POST /api/v1/audiobookshelf/import-authors`) — new setup action on the Integrations page. The card shows a primary "Import authors from Audiobookshelf" button on first visit; after a successful run it switches to a success state showing the result counts (added / skipped / total) and the timestamp. A small "Re-import" button is available for subsequent runs without hiding the fact it's already been done. Result is persisted to `localStorage` so the state survives page reloads.
