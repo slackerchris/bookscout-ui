@@ -35,7 +35,7 @@ export default function AuthorsPage() {
   const filtered = authors
     .filter((a) => a.name.toLowerCase().includes(search.toLowerCase()))
     .sort((a, b) => {
-      const cmp = a.name_sort.localeCompare(b.name_sort)
+      const cmp = a.name.localeCompare(b.name)
       return sortDir === 'asc' ? cmp : -cmp
     })
 

@@ -7,6 +7,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [1.3.1] — 2026-03-25
+
+### Added
+- **Scan all authors button** — After a successful ABS import, the Integrations page now shows a **Scan all authors** button alongside Re-import. Clicking it calls `POST /api/v1/scans/all` to enqueue a full watchlist scan. Button transitions to "Queuing…" while pending, then "Scan queued" with a checkmark on success. Any error is shown inline below the buttons.
+
+### Fixed
+- **Author sort uses display name** — Sort on the Authors page now compares `name` ("First Last") instead of `name_sort` ("Last, First"), so ascending order matches what is visually displayed.
+
+---
+
 ## [1.3.0] — 2026-03-25
 
 ### Added

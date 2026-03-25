@@ -14,6 +14,8 @@ import {
 import { useAbsImport, useAbsImportResult } from '@/features/integrations/useAbsImport'
 import { useSearchStatus } from '@/features/integrations/useSearchStatus'
 import type { ServiceStatus } from '@/lib/api/search'
+import { useMutation } from '@tanstack/react-query'
+import { scansApi } from '@/lib/api/scans'
 
 function formatDate(iso: string) {
   return new Date(iso).toLocaleString(undefined, {
@@ -55,6 +57,10 @@ export default function IntegrationsPage() {
   const importMutation = useAbsImport()
   const { data: searchStatus, isLoading: statusLoading } = useSearchStatus()
 
+  const scanAllMutation = useMutation({
+    mutationFn: () => scansApi.scanAll(),
+  })
+
   function runImport() {
     importMutation.mutate()
   }
@@ -62,6 +68,10 @@ export default function IntegrationsPage() {
   const loading = importMutation.isPending
   const error = importMutation.isError
     ? (importMutation.error instanceof Error ? importMutation.error.message : 'Import failed')
+    : null
+
+  const scanError = scanAllMutation.isError
+    ? (scanAllMutation.error instanceof Error ? scanAllMutation.error.message : 'Scan failed')
     : null
 
   const prowlarr = searchStatus?.indexers.prowlarr
@@ -115,7 +125,7 @@ export default function IntegrationsPage() {
                   {error}
                 </div>
               )}
-              <div>
+              <div className="flex items-center gap-2">
                 <Button
                   variant="outline"
                   size="sm"
@@ -126,7 +136,27 @@ export default function IntegrationsPage() {
                   {loading && <Loader2 size={12} className="animate-spin" />}
                   Re-import
                 </Button>
+                <Button
+                  size="sm"
+                  className="h-7 text-xs"
+                  disabled={scanAllMutation.isPending || scanAllMutation.isSuccess}
+                  onClick={() => scanAllMutation.mutate()}
+                >
+                  {scanAllMutation.isPending ? (
+                    <><Loader2 size={12} className="animate-spin" />Queuing…</>
+                  ) : scanAllMutation.isSuccess ? (
+                    <><CheckCircle2 size={12} />Scan queued</>
+                  ) : (
+                    'Scan all authors'
+                  )}
+                </Button>
               </div>
+              {scanError && (
+                <div className="flex items-center gap-1.5 text-xs text-destructive">
+                  <AlertCircle size={13} />
+                  {scanError}
+                </div>
+              )}
             </>
           ) : (
             <>

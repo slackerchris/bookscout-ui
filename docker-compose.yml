@@ -141,7 +141,7 @@ services:
 
   # ── UI ────────────────────────────────────────────────────────────────────
   bookscout-ui:
-    image: ghcr.io/slackerchris/bookscout-ui:1.3.0
+    image: ghcr.io/slackerchris/bookscout-ui:1.3.1
     container_name: bookscout-ui
     restart: unless-stopped
     ports:
