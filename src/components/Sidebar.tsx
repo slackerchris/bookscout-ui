@@ -10,6 +10,9 @@ import {
   Sun,
 } from 'lucide-react'
 import { useState, useEffect } from 'react'
+import { useHealth } from '@/hooks/useHealth'
+
+const APP_VERSION = __APP_VERSION__
 
 const nav = [
   { to: '/', label: 'Dashboard', icon: LayoutDashboard },
@@ -26,6 +29,7 @@ export default function Sidebar() {
     if (stored === 'light') return false
     return document.documentElement.classList.contains('dark')
   })
+  const { data: health } = useHealth()
 
   useEffect(() => {
     document.documentElement.classList.toggle('dark', dark)
@@ -68,6 +72,12 @@ export default function Sidebar() {
           {dark ? <Sun size={15} /> : <Moon size={15} />}
           {dark ? 'Light mode' : 'Dark mode'}
         </button>
+        <div className="px-3 pt-1 pb-0.5 flex flex-col gap-0.5">
+          <span className="text-[10px] text-muted-foreground/50">UI v{APP_VERSION}</span>
+          {health?.version && (
+            <span className="text-[10px] text-muted-foreground/50">API v{health.version}</span>
+          )}
+        </div>
       </div>
     </aside>
   )

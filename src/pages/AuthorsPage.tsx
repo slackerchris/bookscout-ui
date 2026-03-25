@@ -19,21 +19,25 @@ import {
   TooltipTrigger,
 } from '@/components/ui/tooltip'
 import type { Author } from '@/types'
-import { Plus, ScanLine, Trash2, Users, Loader2, AlertCircle } from 'lucide-react'
+import { Plus, ScanLine, Trash2, Users, Loader2, AlertCircle, ArrowUp, ArrowDown } from 'lucide-react'
 
 export default function AuthorsPage() {
   const { data: authors = [], isLoading, isError } = useAuthors()
   const { add, remove, scan } = useAuthorMutations()
 
   const [search, setSearch] = useState('')
+  const [sortDir, setSortDir] = useState<'asc' | 'desc'>('asc')
   const [addOpen, setAddOpen] = useState(false)
   const [coauthorTarget, setCoauthorTarget] = useState<{ id: number; name: string } | null>(null)
   const [removeTarget, setRemoveTarget] = useState<Author | null>(null)
   const [scanningId, setScanningId] = useState<number | null>(null)
 
-  const filtered = authors.filter((a) =>
-    a.name.toLowerCase().includes(search.toLowerCase()),
-  )
+  const filtered = authors
+    .filter((a) => a.name.toLowerCase().includes(search.toLowerCase()))
+    .sort((a, b) => {
+      const cmp = a.name_sort.localeCompare(b.name_sort)
+      return sortDir === 'asc' ? cmp : -cmp
+    })
 
   function handleAddOpenChange(open: boolean) {
     if (!open) add.reset()
@@ -128,7 +132,17 @@ export default function AuthorsPage() {
           <Table>
             <TableHeader>
               <TableRow className="hover:bg-transparent">
-                <TableHead>Name</TableHead>
+                <TableHead>
+                  <button
+                    className="flex items-center gap-1 text-xs font-medium text-muted-foreground hover:text-foreground transition-colors"
+                    onClick={() => setSortDir((d) => d === 'asc' ? 'desc' : 'asc')}
+                  >
+                    Name
+                    {sortDir === 'asc'
+                      ? <ArrowUp size={12} />
+                      : <ArrowDown size={12} />}
+                  </button>
+                </TableHead>
                 <TableHead className="w-[100px] text-center">Coauthors</TableHead>
                 <TableHead className="w-[120px] text-right">Actions</TableHead>
               </TableRow>
