@@ -7,6 +7,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [1.3.2] — 2026-03-25
+
+### Fixed
+- **204 No Content on author delete** — `api` client now skips `res.json()` for 204 responses (and any response with `Content-Length: 0`), returning `undefined` instead of throwing "Unexpected end of JSON input". Affects author delete and any other endpoint that returns no body on success.
+
+---
+
 ## [1.3.1] — 2026-03-25
 
 ### Added
