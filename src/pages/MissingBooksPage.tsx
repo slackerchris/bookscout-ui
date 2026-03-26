@@ -1,29 +1,61 @@
-import { useState } from 'react'
-import { useQueryClient } from '@tanstack/react-query'
-import { useBooks, bookKeys } from '@/features/books/useBooks'
-import BooksFilterBar, { type BooksFilter, DEFAULT_BOOKS_FILTER } from '@/features/books/BooksFilterBar'
-import BooksTable from '@/features/books/BooksTable'
+import { useState, useMemo } from 'react'
+import { useQueries, useQueryClient } from '@tanstack/react-query'
+import { useAuthors } from '@/features/authors/useAuthors'
+import { bookKeys } from '@/features/books/useBooks'
+import BooksFilterBar, { type BooksFilter, DEFAULT_BOOKS_FILTER, isNonLatinTitle } from '@/features/books/BooksFilterBar'
+import BooksTable, { type BookRow } from '@/features/books/BooksTable'
+import { booksApi } from '@/lib/api/books'
 import { useBookScoutSSE } from '@/lib/sse/useBookScoutSSE'
-import type { BooksParams } from '@/lib/api/books'
 import type { BookScoutEvent } from '@/types'
 import { Loader2 } from 'lucide-react'
 
-function filterToParams(f: BooksFilter): BooksParams {
-  return {
-    confidence_band: f.confidence_band === 'all' ? undefined : f.confidence_band,
-    missing_only: f.missing_only || undefined,
-  }
-}
+const PAGE_DEFAULT: BooksFilter = { ...DEFAULT_BOOKS_FILTER, missing_only: true, english_only: true }
 
 export default function MissingBooksPage() {
   const qc = useQueryClient()
-  // Start with missing_only:true (page intent). Clear button resets to
-  // DEFAULT_BOOKS_FILTER which has missing_only:false, showing all books.
-  const [filter, setFilter] = useState<BooksFilter>({ ...DEFAULT_BOOKS_FILTER, missing_only: true })
-  const PAGE_DEFAULT: BooksFilter = { ...DEFAULT_BOOKS_FILTER, missing_only: true }
+  const [filter, setFilter] = useState<BooksFilter>(PAGE_DEFAULT)
 
-  const params = filterToParams(filter)
-  const { data, isLoading, isError } = useBooks(params)
+  // 1. Fetch all authors
+  const { data: authors, isLoading: authorsLoading, isError: authorsError } = useAuthors()
+
+  // 2. Fetch books per-author in parallel (author info isn't returned by /books/)
+  const bookQueries = useQueries({
+    queries: (authors ?? []).map((author) => ({
+      queryKey: bookKeys.list({ author_id: author.id, missing_only: filter.missing_only }),
+      queryFn: () =>
+        booksApi.list({ author_id: author.id, missing_only: filter.missing_only || undefined }),
+    })),
+  })
+
+  // 3. Flatten results and attach author info to each book
+  const bookRows = useMemo<BookRow[]>(() => {
+    if (!authors) return []
+    return authors.flatMap((author, i) =>
+      (bookQueries[i]?.data ?? []).map((book) => ({
+        ...book,
+        author_id: author.id,
+        author_name: author.name,
+      })),
+    )
+  }, [authors, bookQueries])
+
+  // 4. Apply client-side filters (confidence band, author, english_only)
+  const displayBooks = useMemo(() => {
+    let rows = bookRows
+    if (filter.confidence_band !== 'all') {
+      rows = rows.filter((b) => b.confidence_band === filter.confidence_band)
+    }
+    if (filter.author_id !== 'all') {
+      rows = rows.filter((b) => b.author_id === filter.author_id)
+    }
+    if (filter.english_only) {
+      rows = rows.filter((b) => !isNonLatinTitle(b.title))
+    }
+    return rows
+  }, [bookRows, filter.confidence_band, filter.author_id, filter.english_only])
+
+  const isLoading = authorsLoading || bookQueries.some((q) => q.isLoading)
+  const isError = !isLoading && (authorsError || bookQueries.some((q) => q.isError))
 
   // Live updates: invalidate books list when a scan completes
   useBookScoutSSE((event: BookScoutEvent) => {
@@ -37,15 +69,20 @@ export default function MissingBooksPage() {
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-xl font-semibold text-foreground">Missing Books</h1>
-          {data && (
+          {!isLoading && (
             <p className="text-sm text-muted-foreground mt-0.5">
-              {data.length} book{data.length !== 1 ? 's' : ''}
+              {displayBooks.length} book{displayBooks.length !== 1 ? 's' : ''}
             </p>
           )}
         </div>
       </div>
 
-      <BooksFilterBar filter={filter} onChange={setFilter} defaultFilter={PAGE_DEFAULT} />
+      <BooksFilterBar
+        filter={filter}
+        onChange={setFilter}
+        defaultFilter={PAGE_DEFAULT}
+        authors={authors}
+      />
 
       {isLoading && (
         <div className="flex items-center justify-center py-20 text-muted-foreground gap-2">
@@ -60,7 +97,7 @@ export default function MissingBooksPage() {
         </div>
       )}
 
-      {data && <BooksTable books={data} />}
+      {!isLoading && !isError && <BooksTable books={displayBooks} />}
     </div>
   )
 }

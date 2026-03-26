@@ -7,6 +7,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [1.4.0] — 2026-03-26
+
+### Added
+- **Missing Books — author & series context** — The Missing Books page now fetches books per-author in parallel and displays an **Author** column alongside each title. Series info (`series_name · #position`) is shown as a subtitle under the book title when present.
+- **Missing Books — author filter** — A new author dropdown in the filter bar lets you narrow the missing books list to a single author.
+- **Missing Books — English only filter** — A new "English only" checkbox (on by default on the Missing Books page) hides titles containing non-Latin script characters (Cyrillic, CJK, Arabic, Hebrew, etc.), reducing noise from foreign-language editions.
+
+---
+
 ## [1.3.2] — 2026-03-25
 
 ### Fixed
