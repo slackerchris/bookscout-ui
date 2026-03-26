@@ -7,6 +7,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [1.4.1] — 2026-03-26
+
+### Added
+- **Search & download drawer** — Every row in the Missing Books table now has a search icon button that opens a side drawer. The drawer auto-searches Prowlarr/Jackett using the book title (`POST /api/v1/search/`), displays results in a table (title, indexer, type NZB/Torrent, seeders, size), and lets you send any result directly to the configured download client (`POST /api/v1/search/download`). Per-row state transitions: idle → Sending… → Queued ✓ / Failed, preventing accidental double-sends.
+- **`searchApi.search()`** — `POST /api/v1/search/` returning `SearchResult[]`.
+- **`searchApi.download()`** — `POST /api/v1/search/download` accepting `DownloadRequest`.
+- **`searchApi.queue()`** — `GET /api/v1/search/download/queue` returning `DownloadQueueItem[]` (typed, ready for a future queue view).
+- **`SearchDownloadDrawer`** — new `src/features/books/SearchDownloadDrawer.tsx` component.
+- **New types** — `SearchResult`, `DownloadRequest`, `DownloadQueueItem` exported from `src/lib/api/search.ts`.
+
+---
+
 ## [1.4.0] — 2026-03-26
 
 ### Added
