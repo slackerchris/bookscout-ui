@@ -7,6 +7,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [1.4.2] — 2026-03-26
+
+### Added
+- **Dismiss button** — Every book row now has a trash icon button. Clicking it shows an inline Confirm / Cancel prompt; confirming soft-deletes the book via `DELETE /api/v1/books/{id}` so it won't reappear on re-scan.
+
+---
+
 ## [1.4.1] — 2026-03-26
 
 ### Added

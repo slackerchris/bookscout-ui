@@ -9,7 +9,10 @@ import {
 } from '@/components/ui/table'
 import { Button } from '@/components/ui/button'
 import { ConfidenceBadge, BookStateBadge } from '@/components/StatusBadge'
-import { Search } from 'lucide-react'
+import { Search, Trash2 } from 'lucide-react'
+import { useMutation, useQueryClient } from '@tanstack/react-query'
+import { booksApi } from '@/lib/api/books'
+import { bookKeys } from './useBooks'
 import type { Book } from '@/types'
 import SearchDownloadDrawer from './SearchDownloadDrawer'
 
@@ -25,6 +28,16 @@ function bookState(b: Book): 'have_it' | 'missing' {
 
 export default function BooksTable({ books }: Props) {
   const [selectedBook, setSelectedBook] = useState<BookRow | null>(null)
+  const [confirmDeleteId, setConfirmDeleteId] = useState<number | null>(null)
+  const queryClient = useQueryClient()
+
+  const deleteMutation = useMutation({
+    mutationFn: (id: number) => booksApi.remove(id),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: bookKeys.all })
+      setConfirmDeleteId(null)
+    },
+  })
 
   if (books.length === 0) {
     return (
@@ -46,7 +59,7 @@ export default function BooksTable({ books }: Props) {
               <TableHead>Title</TableHead>
               <TableHead className="w-[110px] text-center">Confidence</TableHead>
               <TableHead className="w-[90px]">Status</TableHead>
-              <TableHead className="w-[60px]"></TableHead>
+              <TableHead className="w-[80px]"></TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
@@ -73,15 +86,48 @@ export default function BooksTable({ books }: Props) {
                   <BookStateBadge state={bookState(book)} />
                 </TableCell>
                 <TableCell className="align-top">
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    className="h-7 w-7 p-0 text-muted-foreground hover:text-foreground"
-                    title="Find download"
-                    onClick={() => setSelectedBook(book)}
-                  >
-                    <Search size={13} />
-                  </Button>
+                  <div className="flex gap-1">
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      className="h-7 w-7 p-0 text-muted-foreground hover:text-foreground"
+                      title="Find download"
+                      onClick={() => setSelectedBook(book)}
+                    >
+                      <Search size={13} />
+                    </Button>
+                    {confirmDeleteId === book.id ? (
+                      <>
+                        <Button
+                          variant="destructive"
+                          size="sm"
+                          className="h-7 px-2 text-xs"
+                          onClick={() => deleteMutation.mutate(book.id)}
+                          disabled={deleteMutation.isPending}
+                        >
+                          Confirm
+                        </Button>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          className="h-7 px-2 text-xs"
+                          onClick={() => setConfirmDeleteId(null)}
+                        >
+                          Cancel
+                        </Button>
+                      </>
+                    ) : (
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        className="h-7 w-7 p-0 text-muted-foreground hover:text-destructive"
+                        title="Dismiss (soft-delete)"
+                        onClick={() => setConfirmDeleteId(book.id)}
+                      >
+                        <Trash2 size={13} />
+                      </Button>
+                    )}
+                  </div>
                 </TableCell>
               </TableRow>
             ))}
