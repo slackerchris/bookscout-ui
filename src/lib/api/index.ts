@@ -6,4 +6,10 @@ export { scansApi } from './scans'
 export { audiobookshelfApi } from './audiobookshelf'
 export type { AbsImportResult } from './audiobookshelf'
 export { searchApi } from './search'
-export type { SearchStatusResult, ServiceStatus } from './search'
+export type {
+  SearchStatusResult,
+  ServiceStatus,
+  SearchResult,
+  DownloadRequest,
+  DownloadQueueItem,
+} from './search'
