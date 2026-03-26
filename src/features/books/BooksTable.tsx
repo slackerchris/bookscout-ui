@@ -15,6 +15,47 @@ import { booksApi } from '@/lib/api/books'
 import { bookKeys } from './useBooks'
 import type { Book } from '@/types'
 import SearchDownloadDrawer from './SearchDownloadDrawer'
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from '@/components/ui/tooltip'
+
+const SOURCE_LABELS: Record<string, string> = {
+  openlibrary: 'OpenLibrary',
+  google_books: 'Google Books',
+  audnexus: 'Audnexus',
+  isbndb: 'ISBNdb',
+  audible: 'Audible',
+}
+
+function parseSources(raw: string | null): string[] {
+  if (!raw) return []
+  try {
+    const parsed = JSON.parse(raw)
+    if (Array.isArray(parsed)) return parsed.filter(Boolean)
+  } catch {
+    if (raw) return [raw]
+  }
+  return []
+}
+
+function SourceTooltip({ source, children }: { source: string | null; children: React.ReactNode }) {
+  const sources = parseSources(source)
+  if (sources.length === 0) return <>{children}</>
+  const label = sources.map((s) => SOURCE_LABELS[s] ?? s).join(', ')
+  return (
+    <TooltipProvider>
+      <Tooltip>
+        <TooltipTrigger asChild>{children}</TooltipTrigger>
+        <TooltipContent side="right" className="text-xs">
+          Sources: {label}
+        </TooltipContent>
+      </Tooltip>
+    </TooltipProvider>
+  )
+}
 
 export type BookRow = Book & { author_name: string; author_id: number }
 
@@ -71,7 +112,9 @@ export default function BooksTable({ books }: Props) {
                   </TableCell>
                 )}
                 <TableCell className="font-medium text-foreground">
-                  <div>{book.title}</div>
+                  <SourceTooltip source={book.source}>
+                    <div className="cursor-default w-fit">{book.title}</div>
+                  </SourceTooltip>
                   {book.series_name && (
                     <div className="text-xs text-muted-foreground mt-0.5">
                       {book.series_name}

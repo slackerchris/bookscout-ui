@@ -7,6 +7,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [1.4.3] — 2026-03-26
+
+### Added
+- **Source tooltip** — Hovering the book title shows a tooltip listing which metadata sources (OpenLibrary, Google Books, Audnexus, ISBNdb) contributed that record.
+
+---
+
 ## [1.4.2] — 2026-03-26
 
 ### Added
