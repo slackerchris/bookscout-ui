@@ -64,9 +64,9 @@ export default function BooksFilterBar({ filter, onChange, defaultFilter, author
           </SelectTrigger>
           <SelectContent>
             <SelectItem value="all">All authors</SelectItem>
-            {authors.map((a) => (
+            {[...authors].sort((a, b) => a.name_sort.localeCompare(b.name_sort)).map((a) => (
               <SelectItem key={a.id} value={String(a.id)}>
-                {a.name}
+                {a.name_sort}
               </SelectItem>
             ))}
           </SelectContent>
