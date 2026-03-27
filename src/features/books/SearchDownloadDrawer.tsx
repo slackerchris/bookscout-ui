@@ -40,10 +40,11 @@ export default function SearchDownloadDrawer({ book, onClose }: Props) {
   // Reset state and auto-search when the drawer opens for a new book
   useEffect(() => {
     if (book) {
-      setQuery(book.title)
+      const q = book.author_name ? `${book.title} ${book.author_name}` : book.title
+      setQuery(q)
       setResults([])
       setDlStates({})
-      mutateRef.current(book.title)
+      mutateRef.current(q)
     }
   }, [book?.id]) // eslint-disable-line react-hooks/exhaustive-deps
 

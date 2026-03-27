@@ -7,6 +7,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [1.4.5] — 2026-03-26
+
+### Fixed
+- **Search/Download drawer** — Query now pre-fills as `"Title Author"` instead of title-only, reducing false-positive results.
+- **Search/Download drawer** — Audiobook category filter (`3030`) is now passed to both Prowlarr and Jackett so results are scoped to audiobook indexers only.
+
+---
+
 ## [1.4.4] — 2026-03-26
 
 ### Changed
