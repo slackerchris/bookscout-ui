@@ -7,6 +7,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [1.4.7] — 2026-03-26
+
+### Fixed
+- **`english_only` filter — Polish/Czech/Latin-Extended titles** — Extended the
+  non-Latin fallback regex to include Latin Extended-A/B Unicode ranges
+  (U+0100–U+024F), catching diacritics like ą, ć, ę, ł, ś, ź, ż that are
+  common in Polish, Czech, Hungarian, Romanian etc. but never appear in
+  English book titles.
+
+---
+
 ## [1.4.6] — 2026-03-26
 
 ### Fixed
