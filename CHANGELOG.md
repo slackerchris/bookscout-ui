@@ -7,6 +7,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [1.4.4] — 2026-03-26
+
+### Changed
+- **Missing Books — grouped by author** — Books are now grouped under shaded author header rows (showing name and per-author count) instead of repeating the author name on every row. Rows are sorted by displayed author name (first last) so the visual order matches what you read.
+
+---
+
 ## [1.4.3] — 2026-03-26
 
 ### Added

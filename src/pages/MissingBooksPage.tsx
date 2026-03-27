@@ -51,6 +51,8 @@ export default function MissingBooksPage() {
     if (filter.english_only) {
       rows = rows.filter((b) => !isNonLatinTitle(b.title))
     }
+    // Sort by displayed name (first last) so visual order matches the column
+    rows = [...rows].sort((a, b) => a.author_name.localeCompare(b.author_name))
     return rows
   }, [bookRows, filter.confidence_band, filter.author_id, filter.english_only])
 
@@ -97,7 +99,7 @@ export default function MissingBooksPage() {
         </div>
       )}
 
-      {!isLoading && !isError && <BooksTable books={displayBooks} />}
+      {!isLoading && !isError && <BooksTable books={displayBooks} grouped />}
     </div>
   )
 }

@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, Fragment } from 'react'
 import {
   Table,
   TableBody,
@@ -61,13 +61,14 @@ export type BookRow = Book & { author_name: string; author_id: number }
 
 interface Props {
   books: BookRow[]
+  grouped?: boolean
 }
 
 function bookState(b: Book): 'have_it' | 'missing' {
   return b.have_it ? 'have_it' : 'missing'
 }
 
-export default function BooksTable({ books }: Props) {
+export default function BooksTable({ books, grouped }: Props) {
   const [selectedBook, setSelectedBook] = useState<BookRow | null>(null)
   const [confirmDeleteId, setConfirmDeleteId] = useState<number | null>(null)
   const queryClient = useQueryClient()
@@ -88,7 +89,91 @@ export default function BooksTable({ books }: Props) {
     )
   }
 
-  const showAuthor = books.some((b) => b.author_name)
+  const showAuthor = !grouped && books.some((b) => b.author_name)
+
+  // Build author groups when grouped mode is on (books are pre-sorted by author_name)
+  const groups: { author_name: string; author_id: number; books: BookRow[] }[] = []
+  if (grouped) {
+    for (const book of books) {
+      const last = groups[groups.length - 1]
+      if (last && last.author_id === book.author_id) {
+        last.books.push(book)
+      } else {
+        groups.push({ author_name: book.author_name, author_id: book.author_id, books: [book] })
+      }
+    }
+  }
+
+  const renderBookRow = (book: BookRow) => (
+    <TableRow key={book.id}>
+      {showAuthor && (
+        <TableCell className="text-sm text-foreground align-top">
+          {book.author_name}
+        </TableCell>
+      )}
+      <TableCell className="font-medium text-foreground">
+        <SourceTooltip source={book.source}>
+          <div className="cursor-default w-fit">{book.title}</div>
+        </SourceTooltip>
+        {book.series_name && (
+          <div className="text-xs text-muted-foreground mt-0.5">
+            {book.series_name}
+            {book.series_position ? ` · #${book.series_position}` : ''}
+          </div>
+        )}
+      </TableCell>
+      <TableCell className="text-center align-top">
+        <ConfidenceBadge band={book.confidence_band} score={book.score} />
+      </TableCell>
+      <TableCell className="align-top">
+        <BookStateBadge state={bookState(book)} />
+      </TableCell>
+      <TableCell className="align-top">
+        <div className="flex gap-1">
+          <Button
+            variant="ghost"
+            size="sm"
+            className="h-7 w-7 p-0 text-muted-foreground hover:text-foreground"
+            title="Find download"
+            onClick={() => setSelectedBook(book)}
+          >
+            <Search size={13} />
+          </Button>
+          {confirmDeleteId === book.id ? (
+            <>
+              <Button
+                variant="destructive"
+                size="sm"
+                className="h-7 px-2 text-xs"
+                onClick={() => deleteMutation.mutate(book.id)}
+                disabled={deleteMutation.isPending}
+              >
+                Confirm
+              </Button>
+              <Button
+                variant="ghost"
+                size="sm"
+                className="h-7 px-2 text-xs"
+                onClick={() => setConfirmDeleteId(null)}
+              >
+                Cancel
+              </Button>
+            </>
+          ) : (
+            <Button
+              variant="ghost"
+              size="sm"
+              className="h-7 w-7 p-0 text-muted-foreground hover:text-destructive"
+              title="Dismiss (soft-delete)"
+              onClick={() => setConfirmDeleteId(book.id)}
+            >
+              <Trash2 size={13} />
+            </Button>
+          )}
+        </div>
+      </TableCell>
+    </TableRow>
+  )
 
   return (
     <>
@@ -104,76 +189,21 @@ export default function BooksTable({ books }: Props) {
             </TableRow>
           </TableHeader>
           <TableBody>
-            {books.map((book) => (
-              <TableRow key={book.id}>
-                {showAuthor && (
-                  <TableCell className="text-sm text-foreground align-top">
-                    {book.author_name}
-                  </TableCell>
-                )}
-                <TableCell className="font-medium text-foreground">
-                  <SourceTooltip source={book.source}>
-                    <div className="cursor-default w-fit">{book.title}</div>
-                  </SourceTooltip>
-                  {book.series_name && (
-                    <div className="text-xs text-muted-foreground mt-0.5">
-                      {book.series_name}
-                      {book.series_position ? ` · #${book.series_position}` : ''}
-                    </div>
-                  )}
-                </TableCell>
-                <TableCell className="text-center align-top">
-                  <ConfidenceBadge band={book.confidence_band} score={book.score} />
-                </TableCell>
-                <TableCell className="align-top">
-                  <BookStateBadge state={bookState(book)} />
-                </TableCell>
-                <TableCell className="align-top">
-                  <div className="flex gap-1">
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      className="h-7 w-7 p-0 text-muted-foreground hover:text-foreground"
-                      title="Find download"
-                      onClick={() => setSelectedBook(book)}
-                    >
-                      <Search size={13} />
-                    </Button>
-                    {confirmDeleteId === book.id ? (
-                      <>
-                        <Button
-                          variant="destructive"
-                          size="sm"
-                          className="h-7 px-2 text-xs"
-                          onClick={() => deleteMutation.mutate(book.id)}
-                          disabled={deleteMutation.isPending}
-                        >
-                          Confirm
-                        </Button>
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          className="h-7 px-2 text-xs"
-                          onClick={() => setConfirmDeleteId(null)}
-                        >
-                          Cancel
-                        </Button>
-                      </>
-                    ) : (
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        className="h-7 w-7 p-0 text-muted-foreground hover:text-destructive"
-                        title="Dismiss (soft-delete)"
-                        onClick={() => setConfirmDeleteId(book.id)}
-                      >
-                        <Trash2 size={13} />
-                      </Button>
-                    )}
-                  </div>
-                </TableCell>
-              </TableRow>
-            ))}
+            {grouped
+              ? groups.map((group) => (
+                  <Fragment key={group.author_id}>
+                    <TableRow className="bg-muted/50 hover:bg-muted/50">
+                      <TableCell colSpan={4} className="py-1.5 text-sm font-semibold text-foreground">
+                        {group.author_name}
+                        <span className="ml-2 text-xs font-normal text-muted-foreground">
+                          {group.books.length} book{group.books.length !== 1 ? 's' : ''}
+                        </span>
+                      </TableCell>
+                    </TableRow>
+                    {group.books.map(renderBookRow)}
+                  </Fragment>
+                ))
+              : books.map(renderBookRow)}
           </TableBody>
         </Table>
       </div>
