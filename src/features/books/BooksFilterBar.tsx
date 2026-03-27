@@ -6,6 +6,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select'
+import { Combobox } from '@/components/ui/combobox'
 import { X } from 'lucide-react'
 import type { Author } from '@/types'
 
@@ -55,22 +56,18 @@ export default function BooksFilterBar({ filter, onChange, defaultFilter, author
   return (
     <div className="flex flex-wrap items-center gap-2">
       {authors && authors.length > 0 && (
-        <Select
+        <Combobox
+          options={[
+            { value: 'all', label: 'All authors' },
+            ...[...authors]
+              .sort((a, b) => a.name_sort.localeCompare(b.name_sort))
+              .map((a) => ({ value: String(a.id), label: a.name_sort })),
+          ]}
           value={String(filter.author_id)}
           onValueChange={(v) => set('author_id', v === 'all' ? 'all' : Number(v))}
-        >
-          <SelectTrigger className="h-8 w-44 text-sm">
-            <SelectValue placeholder="All authors" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="all">All authors</SelectItem>
-            {[...authors].sort((a, b) => a.name_sort.localeCompare(b.name_sort)).map((a) => (
-              <SelectItem key={a.id} value={String(a.id)}>
-                {a.name_sort}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
+          placeholder="All authors"
+          searchPlaceholder="Search authors…"
+        />
       )}
 
       <Select
@@ -80,7 +77,7 @@ export default function BooksFilterBar({ filter, onChange, defaultFilter, author
         <SelectTrigger className="h-8 w-36 text-sm">
           <SelectValue placeholder="Confidence" />
         </SelectTrigger>
-        <SelectContent>
+        <SelectContent position="popper">
           <SelectItem value="all">All confidence</SelectItem>
           <SelectItem value="high">High</SelectItem>
           <SelectItem value="medium">Medium</SelectItem>

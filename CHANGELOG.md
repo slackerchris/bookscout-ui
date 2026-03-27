@@ -7,6 +7,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [1.4.9] — 2026-03-27
+
+### Changed
+- **Missing Books — author filter** — Replaced the plain dropdown with a searchable combobox. Opens directly below the trigger (no more scroll-jump), auto-focuses a search input, and filters authors as you type.
+- **Missing Books — confidence filter default** — Now defaults to *High* instead of *All* on page load.
+
+### Fixed
+- **Missing Books — confidence dropdown** — Set `position="popper"` so it drops straight down instead of jumping to align with the selected item.
+
+---
+
 ## [1.4.8] — 2026-03-27
 
 ### Fixed

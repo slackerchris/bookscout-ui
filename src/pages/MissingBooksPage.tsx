@@ -9,7 +9,7 @@ import { useBookScoutSSE } from '@/lib/sse/useBookScoutSSE'
 import type { BookScoutEvent } from '@/types'
 import { Loader2 } from 'lucide-react'
 
-const PAGE_DEFAULT: BooksFilter = { ...DEFAULT_BOOKS_FILTER, missing_only: true, english_only: true }
+const PAGE_DEFAULT: BooksFilter = { ...DEFAULT_BOOKS_FILTER, missing_only: true, english_only: true, confidence_band: 'high' }
 
 export default function MissingBooksPage() {
   const qc = useQueryClient()
