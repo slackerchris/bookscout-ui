@@ -16,7 +16,7 @@ export interface BooksFilter {
   english_only: boolean
 }
 
-// Matches titles that contain characters from non-Latin scripts.
+// Matches titles that contain characters from non-Latin scripts (fallback for rows with no language set).
 const NON_LATIN_RE = /[\u0400-\u04FF\u0600-\u06FF\u0590-\u05FF\u4E00-\u9FFF\u3400-\u4DBF\u3040-\u30FF\uAC00-\uD7AF\u0E00-\u0E7F\u0900-\u097F]/
 
 export function isNonLatinTitle(title: string): boolean {

@@ -7,6 +7,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [1.4.6] — 2026-03-26
+
+### Fixed
+- **`english_only` filter — Latin-script non-English books** — Filter now uses
+  the book's stored `language` code when available. Previously it only checked
+  for non-Latin scripts, so Polish (and other Latin-diacritic) translations
+  slipped through. Books with no language value still fall back to the
+  non-Latin character regex.
+
+---
+
 ## [1.4.5] — 2026-03-26
 
 ### Fixed

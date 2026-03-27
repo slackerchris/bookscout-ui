@@ -49,7 +49,11 @@ export default function MissingBooksPage() {
       rows = rows.filter((b) => b.author_id === filter.author_id)
     }
     if (filter.english_only) {
-      rows = rows.filter((b) => !isNonLatinTitle(b.title))
+      // Prefer the stored language code; fall back to non-Latin script detection
+      // for rows that pre-date the language column (language === null).
+      rows = rows.filter((b) =>
+        b.language ? b.language === 'en' : !isNonLatinTitle(b.title)
+      )
     }
     // Sort by displayed name (first last) so visual order matches the column
     rows = [...rows].sort((a, b) => a.author_name.localeCompare(b.author_name))
