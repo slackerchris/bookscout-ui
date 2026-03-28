@@ -7,6 +7,36 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [0.61.2] — 2026-03-27
+
+### Changed
+- **Dashboard — stat cards use `/books/count` endpoint** — Previously the three
+  stat cards fetched the entire book list (potentially 20 000+ rows) and counted
+  client-side.  They now call `GET /books/count` which returns `{"count": N}` from
+  a single SQL aggregate — dramatically reducing payload on first load and on
+  background refetch.
+- **Author detail page — stat chips simplified** — "Total books" + "Owned"
+  chips replaced by a single **Confirmed** chip (`owned_count`), since total
+  includes unverified/low-confidence discoveries that aren't meaningful to the
+  user.  Missing is still shown as `book_count − owned_count`.
+
+### Fixed
+- **Dashboard — active downloads: item names now visible** — Download item rows
+  lacked `min-w-0` on the name span, causing the flex layout to crush the text
+  to zero width.  Names now truncate correctly with a hover tooltip.
+- **Dashboard — active downloads: raw status strings normalised** — qBittorrent
+  state strings such as `stalledUP`, `forcedUP`, and `uploading` are now mapped
+  to readable labels (Stalled, Forced, Seeding, etc.) with colour coding:
+  amber for stalled/error, green for downloading, sky for seeding.
+- **Dashboard — active downloads: unrealistic ETA hidden** — ETA is now
+  suppressed when `progress` is 100 %, the item is stalled, or the value exceeds
+  24 h, preventing `2400h 0m` entries for stalled torrents.
+- **Dashboard — active downloads: list capped at `max-h-72` with scroll** —
+  Large queues no longer push all other content off-screen.  Item count shown in
+  the card header.
+
+---
+
 ## [0.61.0] — 2026-03-27
 
 ### Added

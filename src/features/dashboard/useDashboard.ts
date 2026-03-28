@@ -12,17 +12,17 @@ export const dashboardKeys = {
 export function useMissingCounts() {
   const missing = useQuery({
     queryKey: dashboardKeys.missingCount,
-    queryFn: () => booksApi.list({ missing_only: true }),
-    refetchInterval: 5 * 60_000,  // 5 min — this is a large payload
+    queryFn: () => booksApi.count({ missing_only: true }),
+    refetchInterval: 5 * 60_000,
     staleTime: 4 * 60_000,
-    select: (d) => d.length,
+    select: (d) => d.count,
   })
   const highConf = useQuery({
     queryKey: dashboardKeys.highConfidenceCount,
-    queryFn: () => booksApi.list({ missing_only: true, confidence_band: 'high' }),
+    queryFn: () => booksApi.count({ missing_only: true, confidence_band: 'high' }),
     refetchInterval: 5 * 60_000,
     staleTime: 4 * 60_000,
-    select: (d) => d.length,
+    select: (d) => d.count,
   })
   const authors = useQuery({
     queryKey: dashboardKeys.authorsCount,

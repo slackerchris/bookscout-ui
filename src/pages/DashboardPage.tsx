@@ -56,6 +56,49 @@ function formatEta(seconds: number): string {
   return `${Math.floor(seconds / 3600)}h ${Math.round((seconds % 3600) / 60)}m`
 }
 
+// ── qBittorrent / SABnzbd status normaliser ────────────────────────────────
+
+const STATUS_LABEL: Record<string, string> = {
+  stalledup: 'Stalled',
+  stalledDL: 'Stalled (DL)',
+  forcedUP: 'Forced',
+  uploading: 'Seeding',
+  downloading: 'Downloading',
+  checkingUP: 'Checking',
+  checkingDL: 'Checking',
+  pausedUP: 'Paused',
+  pausedDL: 'Paused',
+  queuedUP: 'Queued',
+  queuedDL: 'Queued',
+  moving: 'Moving',
+  error: 'Error',
+  missingfiles: 'Missing Files',
+  // SABnzbd
+  Paused: 'Paused',
+  Downloading: 'Downloading',
+  Extracting: 'Extracting',
+  Completed: 'Done',
+}
+
+function normaliseStatus(raw: string): string {
+  return STATUS_LABEL[raw] ?? (raw.charAt(0).toUpperCase() + raw.slice(1))
+}
+
+function statusColor(raw: string): string {
+  const s = raw.toLowerCase()
+  if (s.includes('stalled') || s.includes('error') || s.includes('missing')) return 'text-amber-500'
+  if (s.includes('downloading') || s === 'extracting') return 'text-emerald-500'
+  if (s.includes('forced') || s === 'uploading') return 'text-sky-400'
+  return 'text-muted-foreground'
+}
+
+function barColor(raw: string): string {
+  const s = raw.toLowerCase()
+  if (s.includes('stalled') || s.includes('error')) return 'bg-amber-500'
+  if (s.includes('downloading')) return 'bg-emerald-500'
+  return 'bg-primary'
+}
+
 // ── Page ───────────────────────────────────────────────────────────────────
 
 export default function DashboardPage() {
@@ -135,42 +178,58 @@ export default function DashboardPage() {
       {/* Active downloads */}
       <Card>
         <CardHeader className="pb-2">
-          <div className="flex items-center gap-2">
-            <Download size={14} className="text-muted-foreground" />
-            <CardTitle className="text-sm font-medium">Active Downloads</CardTitle>
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <Download size={14} className="text-muted-foreground" />
+              <CardTitle className="text-sm font-medium">Active Downloads</CardTitle>
+            </div>
+            {!!queue?.length && (
+              <span className="text-xs text-muted-foreground">{queue.length} item{queue.length !== 1 ? 's' : ''}</span>
+            )}
           </div>
         </CardHeader>
         <CardContent className="pt-0">
           {queueLoading ? (
-            <div className="space-y-2">
-              {Array.from({ length: 2 }).map((_, i) => (
-                <div key={i} className="h-8 animate-pulse rounded bg-muted" />
+            <div className="space-y-3">
+              {Array.from({ length: 3 }).map((_, i) => (
+                <div key={i} className="space-y-1.5">
+                  <div className="h-3.5 w-3/4 animate-pulse rounded bg-muted" />
+                  <div className="h-1.5 w-full animate-pulse rounded-full bg-muted" />
+                </div>
               ))}
             </div>
           ) : !queue?.length ? (
             <p className="text-sm text-muted-foreground py-3">No active downloads.</p>
           ) : (
-            <div className="flex flex-col gap-3">
-              {queue.map((item, i) => (
-                <div key={i} className="flex flex-col gap-1">
-                  <div className="flex items-center justify-between gap-2">
-                    <span className="truncate text-sm text-foreground">{item.name}</span>
-                    <div className="flex shrink-0 items-center gap-2 text-xs text-muted-foreground">
-                      <span>{item.progress.toFixed(0)}%</span>
-                      {item.eta !== undefined && item.eta > 0 && (
-                        <span>{formatEta(item.eta)}</span>
-                      )}
-                      <span className="capitalize">{item.status}</span>
+            <div className="max-h-72 overflow-y-auto -mx-1 px-1">
+              <div className="flex flex-col gap-3">
+                {queue.map((item, i) => {
+                  const label = normaliseStatus(item.status)
+                  const showEta = item.eta !== undefined && item.eta > 0 && item.eta < 86_400 && item.progress < 100
+                  return (
+                    <div key={i} className="flex flex-col gap-1">
+                      <div className="flex min-w-0 items-center justify-between gap-3">
+                        <span className="min-w-0 flex-1 truncate text-sm text-foreground" title={item.name}>
+                          {item.name}
+                        </span>
+                        <div className="flex shrink-0 items-center gap-2 text-xs">
+                          <span className="tabular-nums text-muted-foreground">{item.progress.toFixed(0)}%</span>
+                          {showEta && (
+                            <span className="tabular-nums text-muted-foreground">{formatEta(item.eta!)}</span>
+                          )}
+                          <span className={statusColor(item.status)}>{label}</span>
+                        </div>
+                      </div>
+                      <div className="h-1 w-full overflow-hidden rounded-full bg-muted">
+                        <div
+                          className={`h-full rounded-full transition-all ${barColor(item.status)}`}
+                          style={{ width: `${item.progress}%` }}
+                        />
+                      </div>
                     </div>
-                  </div>
-                  <div className="h-1.5 w-full overflow-hidden rounded-full bg-muted">
-                    <div
-                      className="h-full rounded-full bg-primary transition-all"
-                      style={{ width: `${item.progress}%` }}
-                    />
-                  </div>
-                </div>
-              ))}
+                  )
+                })}
+              </div>
             </div>
           )}
         </CardContent>

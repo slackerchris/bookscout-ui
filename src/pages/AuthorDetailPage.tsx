@@ -14,7 +14,7 @@ import { Button } from '@/components/ui/button'
 import { cn } from '@/lib/utils'
 import {
   ArrowLeft, ScanLine, Star, Users, Trash2, Loader2, AlertCircle,
-  BookOpen, BookX, CheckCircle2,
+  BookX, CheckCircle2,
 } from 'lucide-react'
 
 // ── Avatar (same logic as AuthorsPage) ────────────────────────────────────
@@ -239,8 +239,7 @@ export default function AuthorDetailPage() {
 
           {/* Stat chips */}
           <div className="flex gap-3 flex-wrap">
-            <StatChip icon={BookOpen} label="Total books" value={author.book_count} />
-            <StatChip icon={CheckCircle2} label="Owned" value={author.owned_count} className="text-emerald-500" />
+            <StatChip icon={CheckCircle2} label="Confirmed" value={author.owned_count} className="text-emerald-500" />
             <StatChip icon={BookX} label="Missing" value={missing} className="text-orange-500" />
           </div>
 
