@@ -7,6 +7,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [1.4.10] — 2026-03-27
+
+### Added
+- **Missing Books — book ID** — Each book now shows its internal ID below the title to assist with debugging download hand-offs.
+
+---
+
 ## [1.4.9] — 2026-03-27
 
 ### Changed

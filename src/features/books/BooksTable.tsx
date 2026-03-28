@@ -121,6 +121,7 @@ export default function BooksTable({ books, grouped }: Props) {
             {book.series_position ? ` · #${book.series_position}` : ''}
           </div>
         )}
+        <div className="text-xs text-muted-foreground/60 mt-0.5 font-mono">ID: {book.id}</div>
       </TableCell>
       <TableCell className="text-center align-top">
         <ConfidenceBadge band={book.confidence_band} score={book.score} />
