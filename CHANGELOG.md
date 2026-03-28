@@ -7,6 +7,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [0.61.3] — 2026-03-27
+
+### Removed
+- **Missing Books page** — Removed `MissingBooksPage`, its `/missing-books` route,
+  and the sidebar nav entry.  Per-author missing books are available on each Author
+  detail page; the dashboard stat card shows the global missing count.  `BooksFilterBar`,
+  `BooksTable`, and `useBooks` are retained as they are used by the Author detail page.
+
+---
+
 ## [0.61.2] — 2026-03-27
 
 ### Changed

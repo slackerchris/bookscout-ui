@@ -3,7 +3,6 @@ import { cn } from '@/lib/utils'
 import {
   LayoutDashboard,
   Users,
-  BookX,
   Activity,
   Plug,
   Moon,
@@ -17,7 +16,6 @@ const APP_VERSION = __APP_VERSION__
 const nav = [
   { to: '/', label: 'Dashboard', icon: LayoutDashboard },
   { to: '/authors', label: 'Authors', icon: Users },
-  { to: '/missing-books', label: 'Missing Books', icon: BookX },
   { to: '/activity', label: 'Activity', icon: Activity },
   { to: '/integrations', label: 'Integrations', icon: Plug },
 ]

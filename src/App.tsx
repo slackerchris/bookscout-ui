@@ -7,7 +7,6 @@ import AppShell from '@/components/AppShell'
 import DashboardPage from '@/pages/DashboardPage'
 import AuthorsPage from '@/pages/AuthorsPage'
 import AuthorDetailPage from '@/pages/AuthorDetailPage'
-import MissingBooksPage from '@/pages/MissingBooksPage'
 import ActivityPage from '@/pages/ActivityPage'
 import IntegrationsPage from '@/pages/IntegrationsPage'
 
@@ -32,7 +31,6 @@ export default function App() {
                   <Route index element={<DashboardPage />} />
                   <Route path="authors" element={<AuthorsPage />} />
                   <Route path="authors/:id" element={<AuthorDetailPage />} />
-                  <Route path="missing-books" element={<MissingBooksPage />} />
                   <Route path="activity" element={<ActivityPage />} />
                   <Route path="integrations" element={<IntegrationsPage />} />
                 </Route>
