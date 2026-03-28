@@ -55,8 +55,25 @@ export default function MissingBooksPage() {
         b.language ? b.language === 'en' : !isNonLatinTitle(b.title)
       )
     }
-    // Sort by displayed name (first last) so visual order matches the column
-    rows = [...rows].sort((a, b) => a.author_name.localeCompare(b.author_name))
+    // Sort: author → series (standalones last) → series position → title
+    rows = [...rows].sort((a, b) => {
+      const authorCmp = a.author_name.localeCompare(b.author_name)
+      if (authorCmp !== 0) return authorCmp
+
+      const aHasSeries = !!a.series_name
+      const bHasSeries = !!b.series_name
+      if (aHasSeries !== bHasSeries) return aHasSeries ? -1 : 1
+
+      if (aHasSeries && bHasSeries) {
+        const seriesCmp = a.series_name!.localeCompare(b.series_name!)
+        if (seriesCmp !== 0) return seriesCmp
+        const aPos = parseFloat(a.series_position ?? '') || 0
+        const bPos = parseFloat(b.series_position ?? '') || 0
+        if (aPos !== bPos) return aPos - bPos
+      }
+
+      return a.title.localeCompare(b.title)
+    })
     return rows
   }, [bookRows, filter.confidence_band, filter.author_id, filter.english_only])
 

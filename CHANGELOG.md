@@ -7,6 +7,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [1.5.0] — 2026-03-27
+
+### Changed
+- **Missing Books — sort order** — Books are now sorted by author, then series name, then series position. Standalone books (no series) appear at the bottom within each author group.
+
+---
+
 ## [1.4.10] — 2026-03-27
 
 ### Added
