@@ -1,4 +1,4 @@
-import { useState, Fragment } from 'react'
+import { useState, useEffect, Fragment } from 'react'
 import {
   Table,
   TableBody,
@@ -9,7 +9,7 @@ import {
 } from '@/components/ui/table'
 import { Button } from '@/components/ui/button'
 import { ConfidenceBadge, BookStateBadge } from '@/components/StatusBadge'
-import { Search, Trash2 } from 'lucide-react'
+import { Search, Trash2, ChevronLeft, ChevronRight } from 'lucide-react'
 import { useMutation, useQueryClient } from '@tanstack/react-query'
 import { booksApi } from '@/lib/api/books'
 import { bookKeys } from './useBooks'
@@ -21,6 +21,8 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from '@/components/ui/tooltip'
+
+const PAGE_SIZE = 100
 
 const SOURCE_LABELS: Record<string, string> = {
   openlibrary: 'OpenLibrary',
@@ -71,7 +73,11 @@ function bookState(b: Book): 'have_it' | 'missing' {
 export default function BooksTable({ books, grouped }: Props) {
   const [selectedBook, setSelectedBook] = useState<BookRow | null>(null)
   const [confirmDeleteId, setConfirmDeleteId] = useState<number | null>(null)
+  const [page, setPage] = useState(0)
   const queryClient = useQueryClient()
+
+  // Reset to first page whenever the book list changes
+  useEffect(() => { setPage(0) }, [books])
 
   const deleteMutation = useMutation({
     mutationFn: (id: number) => booksApi.remove(id),
@@ -89,12 +95,14 @@ export default function BooksTable({ books, grouped }: Props) {
     )
   }
 
-  const showAuthor = !grouped && books.some((b) => b.author_name)
+  const totalPages = Math.ceil(books.length / PAGE_SIZE)
+  const pagedBooks = books.slice(page * PAGE_SIZE, (page + 1) * PAGE_SIZE)
+  const showAuthor = !grouped && pagedBooks.some((b) => b.author_name)
 
-  // Build author groups when grouped mode is on (books are pre-sorted by author_name)
+  // Build author groups from the current page's slice
   const groups: { author_name: string; author_id: number; books: BookRow[] }[] = []
   if (grouped) {
-    for (const book of books) {
+    for (const book of pagedBooks) {
       const last = groups[groups.length - 1]
       if (last && last.author_id === book.author_id) {
         last.books.push(book)
@@ -204,10 +212,39 @@ export default function BooksTable({ books, grouped }: Props) {
                     {group.books.map(renderBookRow)}
                   </Fragment>
                 ))
-              : books.map(renderBookRow)}
+              : pagedBooks.map(renderBookRow)}
           </TableBody>
         </Table>
       </div>
+
+      {totalPages > 1 && (
+        <div className="flex items-center justify-between px-1 text-xs text-muted-foreground">
+          <span>
+            {page * PAGE_SIZE + 1}–{Math.min((page + 1) * PAGE_SIZE, books.length)} of {books.length}
+          </span>
+          <div className="flex items-center gap-1">
+            <Button
+              variant="ghost"
+              size="sm"
+              className="h-7 w-7 p-0"
+              disabled={page === 0}
+              onClick={() => setPage((p) => p - 1)}
+            >
+              <ChevronLeft size={14} />
+            </Button>
+            <span>Page {page + 1} of {totalPages}</span>
+            <Button
+              variant="ghost"
+              size="sm"
+              className="h-7 w-7 p-0"
+              disabled={page >= totalPages - 1}
+              onClick={() => setPage((p) => p + 1)}
+            >
+              <ChevronRight size={14} />
+            </Button>
+          </div>
+        </div>
+      )}
 
       <SearchDownloadDrawer
         book={selectedBook}

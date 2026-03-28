@@ -7,6 +7,24 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [1.6.0] — 2026-03-27
+
+### Added
+- **Authors — card grid view** — Authors page redesigned from a table to a responsive card grid (2–6 columns). Each card shows a colour-coded avatar, name, watching/inactive status, and inline Scan / Coauthors / Remove actions.
+- **Authors — favorites** — Star any author to pin them to the top of the list and highlight their card with an amber ring. Favorites persist in localStorage. A *Favorites* filter button shows only starred authors. The header sub-text shows the favorited count.
+- **Authors — sort toggle** — A–Z / Z–A toggle button replaces the column header sort arrow.
+- **Dashboard — service health bar** — Compact row of status dots for BookScout API, Prowlarr, Jackett, and the active download client. Polls the same endpoints as the Integrations page.
+- **Dashboard — active downloads card** — Shows the current download queue (name, progress bar, %, ETA, status) polled every 15 s via `/search/download/queue`.
+- **Integrations — BookScout API live status** — Replaced the static "Status unavailable" card with a live status badge driven by `GET /health`.
+
+### Changed
+- **Dashboard — missing books table removed** — The high-confidence books table has been removed from the dashboard; the stat card count is sufficient.
+- **Dashboard — stat queries** — Refetch interval raised to 5 minutes (was 1 min) to reduce load with large libraries.
+- **Missing Books — confidence filter pushed server-side** — `confidence_band` is now sent as a query parameter instead of being applied client-side, cutting the data transferred for large libraries.
+- **Missing Books / Books table — pagination** — BooksTable now renders 100 rows at a time with prev/next controls, preventing browser crashes with 9 000+ book result sets.
+
+---
+
 ## [1.5.0] — 2026-03-27
 
 ### Changed

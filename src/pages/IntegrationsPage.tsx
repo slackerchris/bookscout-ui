@@ -16,6 +16,7 @@ import { useSearchStatus } from '@/features/integrations/useSearchStatus'
 import type { ServiceStatus } from '@/lib/api/search'
 import { useMutation } from '@tanstack/react-query'
 import { scansApi } from '@/lib/api/scans'
+import { useHealth } from '@/hooks/useHealth'
 
 function formatDate(iso: string) {
   return new Date(iso).toLocaleString(undefined, {
@@ -48,14 +49,18 @@ function ServiceStatusBadge({ svc, loading }: { svc?: ServiceStatus; loading: bo
 }
 
 const staticServices = [
-  { id: 'bookscout', label: 'BookScout API',  description: 'Core API — scan, match, and orchestrate',         Icon: Server },
-  { id: 'n8n',       label: 'n8n',            description: 'Workflow automation — webhooks and notifications', Icon: Webhook },
+  { id: 'n8n', label: 'n8n', description: 'Workflow automation — webhooks and notifications', Icon: Webhook },
 ]
 
 export default function IntegrationsPage() {
   const { data: stored } = useAbsImportResult()
   const importMutation = useAbsImport()
   const { data: searchStatus, isLoading: statusLoading } = useSearchStatus()
+  const { data: health, isLoading: healthLoading } = useHealth()
+
+  const bookscoutStatus: ServiceStatus | undefined = health
+    ? { configured: true, status: health.status === 'ok' ? 'ok' : 'error', version: health.version }
+    : undefined
 
   const scanAllMutation = useMutation({
     mutationFn: () => scansApi.scanAll(),
@@ -237,6 +242,24 @@ export default function IntegrationsPage() {
           </CardHeader>
           <CardContent className="pt-0">
             <ServiceStatusBadge svc={dlStatus} loading={statusLoading} />
+          </CardContent>
+        </Card>
+
+        {/* BookScout API — live status via /health */}
+        <Card>
+          <CardHeader className="pb-2">
+            <div className="flex items-center gap-2.5">
+              <div className="flex size-8 items-center justify-center rounded-md bg-muted">
+                <Server size={15} className="text-muted-foreground" />
+              </div>
+              <div>
+                <CardTitle className="text-sm font-medium">BookScout API</CardTitle>
+                <p className="text-xs text-muted-foreground">Core API — scan, match, and orchestrate</p>
+              </div>
+            </div>
+          </CardHeader>
+          <CardContent className="pt-0">
+            <ServiceStatusBadge svc={bookscoutStatus} loading={healthLoading} />
           </CardContent>
         </Card>
 

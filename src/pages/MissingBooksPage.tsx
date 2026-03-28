@@ -21,9 +21,17 @@ export default function MissingBooksPage() {
   // 2. Fetch books per-author in parallel (author info isn't returned by /books/)
   const bookQueries = useQueries({
     queries: (authors ?? []).map((author) => ({
-      queryKey: bookKeys.list({ author_id: author.id, missing_only: filter.missing_only }),
+      queryKey: bookKeys.list({
+        author_id: author.id,
+        missing_only: filter.missing_only,
+        confidence_band: filter.confidence_band !== 'all' ? filter.confidence_band : undefined,
+      }),
       queryFn: () =>
-        booksApi.list({ author_id: author.id, missing_only: filter.missing_only || undefined }),
+        booksApi.list({
+          author_id: author.id,
+          missing_only: filter.missing_only || undefined,
+          confidence_band: filter.confidence_band !== 'all' ? filter.confidence_band : undefined,
+        }),
     })),
   })
 
@@ -39,12 +47,10 @@ export default function MissingBooksPage() {
     )
   }, [authors, bookQueries])
 
-  // 4. Apply client-side filters (confidence band, author, english_only)
+  // 4. Apply remaining client-side filters (author, english_only)
+  // confidence_band is already filtered server-side
   const displayBooks = useMemo(() => {
     let rows = bookRows
-    if (filter.confidence_band !== 'all') {
-      rows = rows.filter((b) => b.confidence_band === filter.confidence_band)
-    }
     if (filter.author_id !== 'all') {
       rows = rows.filter((b) => b.author_id === filter.author_id)
     }
