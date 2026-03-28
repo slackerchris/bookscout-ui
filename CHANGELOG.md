@@ -7,10 +7,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
-## [1.6.0] — 2026-03-27
+## [0.61.0] — 2026-03-27
 
 ### Added
-- **Authors — card grid view** — Authors page redesigned from a table to a responsive card grid (2–6 columns). Each card shows a colour-coded avatar, name, watching/inactive status, and inline Scan / Coauthors / Remove actions.
+- **Author detail page** — Clicking an author card navigates to `/authors/:id` showing a full detail view: large avatar, active badge, last scanned timestamp, Total / Owned / Missing stat chips, and a filterable book table (same server-side confidence + missing filters, English-only toggle, series-sorted). Scan, Favorite, Coauthors, and Remove actions are all available inline. SSE refreshes the book list and counts live when a scan completes.
+- **Authors — card grid view** — Authors page redesigned from a table to a responsive card grid (2–6 columns). Each card shows a colour-coded avatar, name, watching/inactive status, and inline Scan / Coauthors / Remove actions. Avatar/name area is a clickable link to the detail page.
 - **Authors — favorites** — Star any author to pin them to the top of the list and highlight their card with an amber ring. Favorites persist in localStorage. A *Favorites* filter button shows only starred authors. The header sub-text shows the favorited count.
 - **Authors — sort toggle** — A–Z / Z–A toggle button replaces the column header sort arrow.
 - **Dashboard — service health bar** — Compact row of status dots for BookScout API, Prowlarr, Jackett, and the active download client. Polls the same endpoints as the Integrations page.
@@ -18,6 +19,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **Integrations — BookScout API live status** — Replaced the static "Status unavailable" card with a live status badge driven by `GET /health`.
 
 ### Changed
+- **Versioning scheme** — UI version numbers now track the BookScout backend (e.g. `0.61.0` aligns with BookScout `0.61.x`). Previous UI-only versions (1.x) are retained in this changelog for history.
 - **Dashboard — missing books table removed** — The high-confidence books table has been removed from the dashboard; the stat card count is sufficient.
 - **Dashboard — stat queries** — Refetch interval raised to 5 minutes (was 1 min) to reduce load with large libraries.
 - **Missing Books — confidence filter pushed server-side** — `confidence_band` is now sent as a query parameter instead of being applied client-side, cutting the data transferred for large libraries.

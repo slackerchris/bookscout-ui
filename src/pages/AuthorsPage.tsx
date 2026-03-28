@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { Link } from 'react-router-dom'
 import { useAuthors, useAuthorMutations } from '@/features/authors/useAuthors'
 import { useFavoriteAuthors } from '@/features/authors/useFavoriteAuthors'
 import AddAuthorDialog from '@/features/authors/AddAuthorDialog'
@@ -58,8 +59,11 @@ function AuthorCard({ author, isFavorite, isScanning, onFavorite, onScan, onCoau
       </button>
 
       <CardContent className="flex flex-col gap-3 p-4">
-        {/* Avatar + name */}
-        <div className="flex items-center gap-3 pr-5">
+        {/* Avatar + name — clickable link to detail page */}
+        <Link
+          to={`/authors/${author.id}`}
+          className="flex items-center gap-3 pr-5 group"
+        >
           <div className={cn(
             'flex size-10 shrink-0 items-center justify-center rounded-full text-white text-sm font-semibold select-none',
             avatarColor(author.name),
@@ -67,12 +71,12 @@ function AuthorCard({ author, isFavorite, isScanning, onFavorite, onScan, onCoau
             {initials(author.name)}
           </div>
           <div className="min-w-0">
-            <p className="truncate text-sm font-medium text-foreground leading-snug">{author.name}</p>
+            <p className="truncate text-sm font-medium text-foreground leading-snug group-hover:underline">{author.name}</p>
             <p className="text-xs text-muted-foreground/60 mt-0.5">
               {author.active ? 'Watching' : 'Inactive'}
             </p>
           </div>
-        </div>
+        </Link>
 
         {/* Actions */}
         <div className="flex items-center gap-1 border-t border-border pt-2.5">

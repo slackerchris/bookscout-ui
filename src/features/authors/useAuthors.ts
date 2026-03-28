@@ -15,6 +15,13 @@ export function useAuthors() {
   })
 }
 
+export function useAuthorDetail(id: number) {
+  return useQuery({
+    queryKey: authorKeys.detail(id),
+    queryFn: () => authorsApi.get(id),
+  })
+}
+
 export function useCoauthors(authorId: number | null) {
   return useQuery({
     queryKey: authorId !== null
