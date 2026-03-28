@@ -7,6 +7,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [0.61.5] — 2026-03-28
+
+### Removed
+- **Active Downloads section** — Removed from the dashboard entirely.
+
+---
+
 ## [0.61.4] — 2026-03-28
 
 ### Fixed
