@@ -61,42 +61,40 @@ function formatEta(seconds: number): string {
 const STATUS_LABEL: Record<string, string> = {
   stalledup: 'Stalled',
   stalledDL: 'Stalled (DL)',
-  forcedUP: 'Forced',
+  forcedup: 'Seeding',
   uploading: 'Seeding',
   downloading: 'Downloading',
-  checkingUP: 'Checking',
-  checkingDL: 'Checking',
-  pausedUP: 'Paused',
-  pausedDL: 'Paused',
-  queuedUP: 'Queued',
-  queuedDL: 'Queued',
+  checkingup: 'Checking',
+  checkingdl: 'Checking',
+  pausedup: 'Paused',
+  pauseddl: 'Paused',
+  queuedup: 'Queued',
+  queueddl: 'Queued',
   moving: 'Moving',
   error: 'Error',
   missingfiles: 'Missing Files',
   // SABnzbd
-  Paused: 'Paused',
-  Downloading: 'Downloading',
-  Extracting: 'Extracting',
-  Completed: 'Done',
+  paused: 'Paused',
+  extracting: 'Extracting',
+  completed: 'Done',
 }
 
 function normaliseStatus(raw: string): string {
-  return STATUS_LABEL[raw] ?? (raw.charAt(0).toUpperCase() + raw.slice(1))
+  return STATUS_LABEL[raw.toLowerCase()] ?? (raw.charAt(0).toUpperCase() + raw.slice(1))
 }
 
 function statusColor(raw: string): string {
   const s = raw.toLowerCase()
-  if (s.includes('stalled') || s.includes('error') || s.includes('missing')) return 'text-amber-500'
+  if (s === 'error' || s.includes('missing')) return 'text-destructive'
   if (s.includes('downloading') || s === 'extracting') return 'text-emerald-500'
-  if (s.includes('forced') || s === 'uploading') return 'text-sky-400'
   return 'text-muted-foreground'
 }
 
 function barColor(raw: string): string {
   const s = raw.toLowerCase()
-  if (s.includes('stalled') || s.includes('error')) return 'bg-amber-500'
-  if (s.includes('downloading')) return 'bg-emerald-500'
-  return 'bg-primary'
+  if (s === 'error' || s.includes('missing')) return 'bg-destructive/70'
+  if (s.includes('downloading') || s === 'extracting') return 'bg-emerald-500'
+  return 'bg-muted-foreground/30'
 }
 
 // ── Page ───────────────────────────────────────────────────────────────────

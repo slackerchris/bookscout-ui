@@ -7,6 +7,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [0.61.4] — 2026-03-28
+
+### Fixed
+- **Dashboard — download status labels** — Status strings like `stalledUP` now
+  correctly map to readable labels (`Stalled`, `Seeding`, etc.).  The lookup is
+  now case-insensitive so mixed-case variants from qBittorrent (`stalledUP`,
+  `forcedUP`, `pausedUP`) no longer fall through as raw text.
+- **Dashboard — download bar colors** — Removed amber/yellow from all states.
+  Active downloads show green, errors show red, stalled/seeding/complete items
+  show a neutral muted bar.  Status text follows the same neutral palette.
+
+---
+
 ## [0.61.3] — 2026-03-27
 
 ### Removed
