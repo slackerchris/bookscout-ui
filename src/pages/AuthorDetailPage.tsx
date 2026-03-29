@@ -148,6 +148,7 @@ export default function AuthorDetailPage() {
     if (event.event_type === 'scan.complete') {
       const payload = event.payload
       if (!payload.author_id || payload.author_id === authorId) {
+        setScanning(false)
         qc.invalidateQueries({ queryKey: bookKeys.counts() })
         qc.invalidateQueries({ queryKey: bookKeys.list(serverParams) })
         qc.invalidateQueries({ queryKey: authorKeys.detail(authorId) })
@@ -157,7 +158,12 @@ export default function AuthorDetailPage() {
 
   function handleScan() {
     setScanning(true)
-    scan.mutate(authorId, { onSettled: () => setScanning(false) })
+    // Don't reset on settle — scanning stays true until scan.complete SSE fires.
+    // Fallback: clear after 10 min in case SSE is unavailable.
+    scan.mutate(authorId, {
+      onError: () => setScanning(false),
+    })
+    setTimeout(() => setScanning(false), 10 * 60 * 1000)
   }
 
   function handleRemoveConfirm() {

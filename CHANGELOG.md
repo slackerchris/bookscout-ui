@@ -7,6 +7,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [0.63.4] — 2026-03-29
+
+### Changed
+- **Scan progress indicator stays active until scan completes** — the "Scan now" spinner on both the Authors page and Author Detail page now remains active until the `scan.complete` SSE event arrives, rather than clearing as soon as the scan job is queued.  This gives accurate visual feedback for long-running scans.  A 10-minute client-side timeout prevents the spinner from getting permanently stuck if SSE is unavailable.
+
+---
+
 ## [0.63.3] — 2026-03-29
 
 ### Added

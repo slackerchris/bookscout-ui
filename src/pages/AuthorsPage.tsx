@@ -2,6 +2,8 @@ import { useState, useMemo } from 'react'
 import { Link } from 'react-router-dom'
 import { useAuthors, useUnwatchedAuthors, useAuthorMutations } from '@/features/authors/useAuthors'
 import { useFavoriteAuthors } from '@/features/authors/useFavoriteAuthors'
+import { useBookScoutSSE } from '@/lib/sse/useBookScoutSSE'
+import type { BookScoutEvent } from '@/types'
 import AddAuthorDialog from '@/features/authors/AddAuthorDialog'
 import CoauthorsDrawer from '@/features/authors/CoauthorsDrawer'
 import ConfirmDialog from '@/components/ConfirmDialog'
@@ -250,9 +252,20 @@ export default function AuthorsPage() {
     add.mutate(name, { onSuccess: () => setAddOpen(false) })
   }
 
+  useBookScoutSSE((event: BookScoutEvent) => {
+    if (event.event_type === 'scan.complete') {
+      const aid = event.payload.author_id
+      setScanningId((cur) => (cur === aid ? null : cur))
+    }
+  })
+
   function handleScan(author: Author) {
     setScanningId(author.id)
-    scan.mutate(author.id, { onSettled: () => setScanningId(null) })
+    // Clear on error; otherwise wait for scan.complete SSE event.
+    scan.mutate(author.id, {
+      onError: () => setScanningId(null),
+    })
+    setTimeout(() => setScanningId((cur) => (cur === author.id ? null : cur)), 10 * 60 * 1000)
   }
 
   function handleWatch(author: Author) {
