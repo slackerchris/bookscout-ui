@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useMemo } from 'react'
 import { Link } from 'react-router-dom'
 import { useAuthors, useAuthorMutations } from '@/features/authors/useAuthors'
 import { useFavoriteAuthors } from '@/features/authors/useFavoriteAuthors'
@@ -141,17 +141,19 @@ export default function AuthorsPage() {
   const [removeTarget, setRemoveTarget] = useState<Author | null>(null)
   const [scanningId, setScanningId] = useState<number | null>(null)
 
-  const filtered = authors
-    .filter((a) => a.name.toLowerCase().includes(search.toLowerCase()))
-    .filter((a) => !favoritesOnly || favorites.has(a.id))
-    .sort((a, b) => {
-      // Favorites always first
-      const aFav = favorites.has(a.id) ? 0 : 1
-      const bFav = favorites.has(b.id) ? 0 : 1
-      if (aFav !== bFav) return aFav - bFav
-      const cmp = a.name.localeCompare(b.name)
-      return sortDir === 'asc' ? cmp : -cmp
-    })
+  const filtered = useMemo(() =>
+    authors
+      .filter((a) => a.name.toLowerCase().includes(search.toLowerCase()))
+      .filter((a) => !favoritesOnly || favorites.has(a.id))
+      .sort((a, b) => {
+        // Favorites always first
+        const aFav = favorites.has(a.id) ? 0 : 1
+        const bFav = favorites.has(b.id) ? 0 : 1
+        if (aFav !== bFav) return aFav - bFav
+        const cmp = a.name.localeCompare(b.name)
+        return sortDir === 'asc' ? cmp : -cmp
+      }),
+  [authors, search, favoritesOnly, favorites, sortDir])
 
   function handleAddOpenChange(open: boolean) {
     if (!open) add.reset()

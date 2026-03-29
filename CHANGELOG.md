@@ -7,6 +7,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [0.62.0] — 2026-03-28
+
+### Changed
+- **Server-side pagination for books** — `AuthorDetailPage` now fetches one page of 100 books at a time (`limit=100&offset=N`) instead of loading all books at once.  Fixes crashes and freezes when authors have thousands of missing books.
+- **Book count via dedicated endpoint** — uses `GET /books/count` to display the total book count, keeping the count accurate across pages without fetching all records.
+- **SSE invalidation scoped** — `scan.complete` events now invalidate only the current page and count queries instead of `bookKeys.all`, eliminating the cascade of full-catalog refetches that caused UI freezes during active scans.
+- **Authors count from count endpoint** — dashboard "Authors tracked" stat card now calls `GET /authors/count` instead of `GET /authors/` and discarding the payload.
+- **`useMemo` for filtered author list** — `AuthorsPage` now memoizes the filtered+sorted author array to avoid recomputing on every unrelated render.
+- **`useMemo` for combobox options** — `BooksFilterBar` memoizes the author dropdown options array (sorting 300 authors) so it is only rebuilt when the authors list changes.
+- **Removed `useHighConfidenceMissing`** — unused hook that fetched all high-confidence missing books unpaginated; deleted.
+
+---
+
 ## [0.61.5] — 2026-03-28
 
 ### Removed

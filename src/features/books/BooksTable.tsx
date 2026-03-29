@@ -1,4 +1,4 @@
-import { useState, useEffect, Fragment } from 'react'
+import { useState, Fragment } from 'react'
 import {
   Table,
   TableBody,
@@ -22,7 +22,7 @@ import {
   TooltipTrigger,
 } from '@/components/ui/tooltip'
 
-const PAGE_SIZE = 100
+export const PAGE_SIZE = 100
 
 const SOURCE_LABELS: Record<string, string> = {
   openlibrary: 'OpenLibrary',
@@ -64,25 +64,28 @@ export type BookRow = Book & { author_name: string; author_id: number }
 interface Props {
   books: BookRow[]
   grouped?: boolean
+  /** Total number of matching books across all pages (from the count endpoint). */
+  totalCount?: number
+  /** Current zero-based page index — managed by the parent. */
+  page?: number
+  /** Called when the user clicks prev/next. */
+  onPageChange?: (page: number) => void
 }
 
 function bookState(b: Book): 'have_it' | 'missing' {
   return b.have_it ? 'have_it' : 'missing'
 }
 
-export default function BooksTable({ books, grouped }: Props) {
+export default function BooksTable({ books, grouped, totalCount, page = 0, onPageChange }: Props) {
   const [selectedBook, setSelectedBook] = useState<BookRow | null>(null)
   const [confirmDeleteId, setConfirmDeleteId] = useState<number | null>(null)
-  const [page, setPage] = useState(0)
   const queryClient = useQueryClient()
-
-  // Reset to first page whenever the book list changes
-  useEffect(() => { setPage(0) }, [books])
 
   const deleteMutation = useMutation({
     mutationFn: (id: number) => booksApi.remove(id),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: bookKeys.all })
+      queryClient.invalidateQueries({ queryKey: bookKeys.lists() })
+      queryClient.invalidateQueries({ queryKey: bookKeys.counts() })
       setConfirmDeleteId(null)
     },
   })
@@ -95,14 +98,18 @@ export default function BooksTable({ books, grouped }: Props) {
     )
   }
 
-  const totalPages = Math.ceil(books.length / PAGE_SIZE)
-  const pagedBooks = books.slice(page * PAGE_SIZE, (page + 1) * PAGE_SIZE)
-  const showAuthor = !grouped && pagedBooks.some((b) => b.author_name)
+  // When totalCount is provided, pagination is driven externally (server-side).
+  // Otherwise fall back to slicing the provided array locally.
+  const isServerPaged = totalCount !== undefined && onPageChange !== undefined
+  const effectiveTotal = isServerPaged ? totalCount : books.length
+  const totalPages = Math.ceil(effectiveTotal / PAGE_SIZE)
+  const displayBooks = isServerPaged ? books : books.slice(page * PAGE_SIZE, (page + 1) * PAGE_SIZE)
+  const showAuthor = !grouped && displayBooks.some((b) => b.author_name)
 
-  // Build author groups from the current page's slice
+  // Build author groups from the visible slice
   const groups: { author_name: string; author_id: number; books: BookRow[] }[] = []
   if (grouped) {
-    for (const book of pagedBooks) {
+    for (const book of displayBooks) {
       const last = groups[groups.length - 1]
       if (last && last.author_id === book.author_id) {
         last.books.push(book)
@@ -212,7 +219,7 @@ export default function BooksTable({ books, grouped }: Props) {
                     {group.books.map(renderBookRow)}
                   </Fragment>
                 ))
-              : pagedBooks.map(renderBookRow)}
+              : displayBooks.map(renderBookRow)}
           </TableBody>
         </Table>
       </div>
@@ -220,7 +227,7 @@ export default function BooksTable({ books, grouped }: Props) {
       {totalPages > 1 && (
         <div className="flex items-center justify-between px-1 text-xs text-muted-foreground">
           <span>
-            {page * PAGE_SIZE + 1}–{Math.min((page + 1) * PAGE_SIZE, books.length)} of {books.length}
+            {page * PAGE_SIZE + 1}–{Math.min((page + 1) * PAGE_SIZE, effectiveTotal)} of {effectiveTotal}
           </span>
           <div className="flex items-center gap-1">
             <Button
@@ -228,7 +235,7 @@ export default function BooksTable({ books, grouped }: Props) {
               size="sm"
               className="h-7 w-7 p-0"
               disabled={page === 0}
-              onClick={() => setPage((p) => p - 1)}
+              onClick={() => onPageChange?.(page - 1)}
             >
               <ChevronLeft size={14} />
             </Button>
@@ -238,7 +245,7 @@ export default function BooksTable({ books, grouped }: Props) {
               size="sm"
               className="h-7 w-7 p-0"
               disabled={page >= totalPages - 1}
-              onClick={() => setPage((p) => p + 1)}
+              onClick={() => onPageChange?.(page + 1)}
             >
               <ChevronRight size={14} />
             </Button>
@@ -253,5 +260,3 @@ export default function BooksTable({ books, grouped }: Props) {
     </>
   )
 }
-
-

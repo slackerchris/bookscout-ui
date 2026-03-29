@@ -1,3 +1,4 @@
+import { useMemo } from 'react'
 import { Button } from '@/components/ui/button'
 import {
   Select,
@@ -53,16 +54,21 @@ export default function BooksFilterBar({ filter, onChange, defaultFilter, author
     filter.author_id !== clearTarget.author_id ||
     filter.english_only !== clearTarget.english_only
 
+  const authorOptions = useMemo(() => {
+    if (!authors || authors.length === 0) return []
+    return [
+      { value: 'all', label: 'All authors' },
+      ...[...authors]
+        .sort((a, b) => a.name_sort.localeCompare(b.name_sort))
+        .map((a) => ({ value: String(a.id), label: a.name_sort })),
+    ]
+  }, [authors])
+
   return (
     <div className="flex flex-wrap items-center gap-2">
       {authors && authors.length > 0 && (
         <Combobox
-          options={[
-            { value: 'all', label: 'All authors' },
-            ...[...authors]
-              .sort((a, b) => a.name_sort.localeCompare(b.name_sort))
-              .map((a) => ({ value: String(a.id), label: a.name_sort })),
-          ]}
+          options={authorOptions}
           value={String(filter.author_id)}
           onValueChange={(v) => set('author_id', v === 'all' ? 'all' : Number(v))}
           placeholder="All authors"

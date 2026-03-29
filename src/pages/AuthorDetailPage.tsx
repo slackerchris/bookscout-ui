@@ -1,4 +1,4 @@
-import { useState, useMemo } from 'react'
+import { useState, useMemo, useEffect } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import { useQueryClient } from '@tanstack/react-query'
 import { useAuthorDetail, useAuthorMutations, authorKeys } from '@/features/authors/useAuthors'
@@ -6,8 +6,8 @@ import { useFavoriteAuthors } from '@/features/authors/useFavoriteAuthors'
 import CoauthorsDrawer from '@/features/authors/CoauthorsDrawer'
 import ConfirmDialog from '@/components/ConfirmDialog'
 import BooksFilterBar, { type BooksFilter, DEFAULT_BOOKS_FILTER, isNonLatinTitle } from '@/features/books/BooksFilterBar'
-import BooksTable, { type BookRow } from '@/features/books/BooksTable'
-import { useBooks, bookKeys } from '@/features/books/useBooks'
+import BooksTable, { type BookRow, PAGE_SIZE } from '@/features/books/BooksTable'
+import { useBooks, useBooksCount, bookKeys } from '@/features/books/useBooks'
 import { useBookScoutSSE } from '@/lib/sse/useBookScoutSSE'
 import type { BookScoutEvent } from '@/types'
 import { Button } from '@/components/ui/button'
@@ -82,16 +82,34 @@ export default function AuthorDetailPage() {
   const { favorites, toggle: toggleFavorite } = useFavoriteAuthors()
 
   const [filter, setFilter] = useState<BooksFilter>(PAGE_DEFAULT)
+  const [page, setPage] = useState(0)
   const [scanning, setScanning] = useState(false)
   const [coauthorsOpen, setCoauthorsOpen] = useState(false)
   const [confirmRemove, setConfirmRemove] = useState(false)
 
-  // Books for this author — push server-side params
-  const { data: booksRaw = [], isLoading: booksLoading, isError: booksError } = useBooks({
+  // Reset to first page when server-side filter params change
+  useEffect(() => {
+    setPage(0)
+  }, [filter.missing_only, filter.confidence_band])
+
+  // Server-side params — paginated
+  const serverParams = {
     author_id: authorId,
     missing_only: filter.missing_only || undefined,
     confidence_band: filter.confidence_band !== 'all' ? filter.confidence_band : undefined,
-  })
+    limit: PAGE_SIZE,
+    offset: page * PAGE_SIZE,
+  }
+
+  // Count params — no limit/offset, same filters
+  const countParams = {
+    author_id: authorId,
+    missing_only: filter.missing_only || undefined,
+    confidence_band: filter.confidence_band !== 'all' ? filter.confidence_band : undefined,
+  }
+
+  const { data: booksRaw = [], isLoading: booksLoading, isError: booksError } = useBooks(serverParams)
+  const { data: totalCount = 0 } = useBooksCount(countParams)
 
   // Attach author name (required by BookRow type) + client-side english filter + sort
   const displayBooks = useMemo<BookRow[]>(() => {
@@ -130,7 +148,8 @@ export default function AuthorDetailPage() {
     if (event.event_type === 'scan.complete') {
       const payload = event.payload
       if (!payload.author_id || payload.author_id === authorId) {
-        qc.invalidateQueries({ queryKey: bookKeys.all })
+        qc.invalidateQueries({ queryKey: bookKeys.counts() })
+        qc.invalidateQueries({ queryKey: bookKeys.list(serverParams) })
         qc.invalidateQueries({ queryKey: authorKeys.detail(authorId) })
       }
     }
@@ -261,7 +280,7 @@ export default function AuthorDetailPage() {
           {/* Book count */}
           {!booksLoading && (
             <p className="text-sm text-muted-foreground -mt-1">
-              {displayBooks.length} book{displayBooks.length !== 1 ? 's' : ''}
+              {totalCount} book{totalCount !== 1 ? 's' : ''}
             </p>
           )}
 
@@ -282,7 +301,12 @@ export default function AuthorDetailPage() {
 
           {/* Books table */}
           {!booksLoading && !booksError && (
-            <BooksTable books={displayBooks} />
+            <BooksTable
+              books={displayBooks}
+              totalCount={totalCount}
+              page={page}
+              onPageChange={setPage}
+            />
           )}
         </>
       )}

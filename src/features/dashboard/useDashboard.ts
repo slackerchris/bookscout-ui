@@ -6,7 +6,6 @@ export const dashboardKeys = {
   missingCount: ['dashboard', 'count', 'missing'] as const,
   highConfidenceCount: ['dashboard', 'count', 'high-confidence'] as const,
   authorsCount: ['dashboard', 'count', 'authors'] as const,
-  highConfidence: ['dashboard', 'high-confidence'] as const,
 }
 
 export function useMissingCounts() {
@@ -26,17 +25,10 @@ export function useMissingCounts() {
   })
   const authors = useQuery({
     queryKey: dashboardKeys.authorsCount,
-    queryFn: () => authorsApi.list(),
+    queryFn: () => authorsApi.count(),
     refetchInterval: 5 * 60_000,
     staleTime: 4 * 60_000,
-    select: (d) => d.length,
+    select: (d) => d.count,
   })
   return { missing, highConf, authors }
-}
-
-export function useHighConfidenceMissing() {
-  return useQuery({
-    queryKey: dashboardKeys.highConfidence,
-    queryFn: () => booksApi.list({ missing_only: true, confidence_band: 'high' }),
-  })
 }

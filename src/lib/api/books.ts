@@ -7,6 +7,8 @@ export interface BooksParams {
   confidence_band?: 'high' | 'medium' | 'low'
   missing_only?: boolean
   include_deleted?: boolean
+  limit?: number
+  offset?: number
 }
 
 export interface BookUpdate {
