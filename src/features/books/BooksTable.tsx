@@ -139,7 +139,7 @@ export default function BooksTable({ books, grouped, totalCount, page = 0, onPag
         <div className="text-xs text-muted-foreground/60 mt-0.5 font-mono">ID: {book.id}</div>
       </TableCell>
       <TableCell className="text-center align-top">
-        <ConfidenceBadge band={book.confidence_band} score={book.score} />
+        <ConfidenceBadge band={book.confidence_band} score={book.score} reasons={book.score_reasons} />
       </TableCell>
       <TableCell className="align-top">
         <BookStateBadge state={bookState(book)} />

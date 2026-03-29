@@ -7,6 +7,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [0.63.3] — 2026-03-29
+
+### Added
+- **Confidence score reasons in tooltip** — hovering the confidence badge now shows the score value plus the list of reasons that contributed to it (e.g. "exact author match", "asin present", "audiobook format match").
+
+---
+
 ## [0.63.2] — 2026-03-29
 
 ### Fixed

@@ -18,6 +18,7 @@ export interface Book {
   description: string | null
   score: number
   confidence_band: 'high' | 'medium' | 'low'
+  score_reasons: string | null
   language: string | null
   narrator: string | null
   have_it: boolean

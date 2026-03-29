@@ -25,7 +25,7 @@ export function ActionStatusBadge({ status }: { status: ActionStatus }) {
 
 // ---- Confidence badge -----------------------------------------------------
 
-export function ConfidenceBadge({ band, score }: { band: 'high' | 'medium' | 'low'; score: number }) {
+export function ConfidenceBadge({ band, score, reasons }: { band: 'high' | 'medium' | 'low'; score: number; reasons?: string | null }) {
   const className =
     band === 'high'
       ? 'bg-green-500/15 text-green-600 dark:text-green-400 border-green-500/30'
@@ -40,7 +40,20 @@ export function ConfidenceBadge({ band, score }: { band: 'high' | 'medium' | 'lo
           {label}
         </Badge>
       </TooltipTrigger>
-      <TooltipContent>Score: {score}</TooltipContent>
+      <TooltipContent className="max-w-64">
+        <p className="font-medium mb-1">Score: {score}</p>
+        {reasons && (() => {
+          let items: string[] = []
+          try { items = JSON.parse(reasons) } catch { items = [reasons] }
+          return (
+            <ul className="text-xs opacity-80 space-y-0.5">
+              {items.map((r) => (
+                <li key={r}>· {r.replace(/_/g, ' ')}</li>
+              ))}
+            </ul>
+          )
+        })()}
+      </TooltipContent>
     </Tooltip>
   )
 }
