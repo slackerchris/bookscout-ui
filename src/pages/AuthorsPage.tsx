@@ -240,8 +240,13 @@ export default function AuthorsPage() {
     const combined = [...authors, ...unwatched]
     return combined
       .filter((a) => a.name.toLowerCase().includes(search.toLowerCase()))
-      .sort((a, b) => a.name.localeCompare(b.name))
-  }, [authors, unwatched, search])
+      .sort((a, b) => {
+        const aFav = favorites.has(a.id) ? 0 : 1
+        const bFav = favorites.has(b.id) ? 0 : 1
+        if (aFav !== bFav) return aFav - bFav
+        return a.name.localeCompare(b.name)
+      })
+  }, [authors, unwatched, search, favorites])
 
   function handleAddOpenChange(open: boolean) {
     if (!open) add.reset()
