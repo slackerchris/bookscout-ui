@@ -7,6 +7,20 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [0.63.0] — 2026-03-28
+
+### Added
+- **"Not watching" tab on Authors page** — authors imported from ABS but not yet on the watchlist now appear in a dedicated tab with an amber badge showing the count.  Each row has a Watch button; a "Watch all" shortcut adds every visible author at once.  A Dismiss button (hover-reveal) is planned but the tab makes manual triage easy.
+
+### Changed
+- **ABS import result stored in backend DB** — `useAbsImport` no longer caches the last import result in localStorage.  Results are persisted to the `app_settings` table in PostgreSQL, so a browser clear or fresh install no longer shows stale data.
+- **ABS import no longer auto-adds authors to watchlist** — importing from Audiobookshelf now creates Author records only; users review the "Not watching" tab and add authors to the watchlist manually.
+
+### Fixed
+- **Integrations page blank after DB wipe** — backend now returns `{}` when no import result exists; the UI guards on `imported_at` presence so it treats an empty object the same as null.
+
+---
+
 ## [0.62.1] — 2026-03-28
 
 ### Changed
