@@ -7,6 +7,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [0.63.2] — 2026-03-29
+
+### Fixed
+- **Unwatched author cards now use the same card design as watched authors** — removed the separate `UnwatchedCard` component that looked different/dimmed. All authors in the "All" tab now render with `AuthorCard`; unwatched ones show "Not watching" status and a Watch button in place of Scan/Coauthors/Remove.
+
+---
+
 ## [0.63.1] — 2026-03-29
 
 ### Added

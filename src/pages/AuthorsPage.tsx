@@ -41,21 +41,26 @@ interface AuthorCardProps {
   onScan: () => void
   onCoauthors: () => void
   onRemove: () => void
+  /** If provided, the card is in "unwatched" mode — shows Watch instead of Scan/Coauthors/Remove */
+  onWatch?: () => void
+  isWatching?: boolean
 }
 
-function AuthorCard({ author, isFavorite, isScanning, onFavorite, onScan, onCoauthors, onRemove }: AuthorCardProps) {
+function AuthorCard({ author, isFavorite, isScanning, onFavorite, onScan, onCoauthors, onRemove, onWatch, isWatching }: AuthorCardProps) {
   return (
     <Card className={cn(
       'relative flex flex-col overflow-hidden transition-shadow hover:shadow-md',
       isFavorite && 'ring-1 ring-amber-400/70',
     )}>
-      <button
-        className="absolute top-2.5 right-2.5 z-10 text-muted-foreground/30 hover:text-amber-400 transition-colors"
-        onClick={onFavorite}
-        title={isFavorite ? 'Remove from favorites' : 'Add to favorites'}
-      >
-        <Star size={13} className={cn(isFavorite && 'fill-amber-400 text-amber-400')} />
-      </button>
+      {!onWatch && (
+        <button
+          className="absolute top-2.5 right-2.5 z-10 text-muted-foreground/30 hover:text-amber-400 transition-colors"
+          onClick={onFavorite}
+          title={isFavorite ? 'Remove from favorites' : 'Add to favorites'}
+        >
+          <Star size={13} className={cn(isFavorite && 'fill-amber-400 text-amber-400')} />
+        </button>
+      )}
 
       <CardContent className="flex flex-col gap-3 p-4">
         <Link to={`/authors/${author.id}`} className="flex items-center gap-3 pr-5 group">
@@ -67,49 +72,79 @@ function AuthorCard({ author, isFavorite, isScanning, onFavorite, onScan, onCoau
           </div>
           <div className="min-w-0">
             <p className="truncate text-sm font-medium text-foreground leading-snug group-hover:underline">{author.name}</p>
-            <p className="text-xs text-muted-foreground/60 mt-0.5">Watching</p>
+            <p className="text-xs text-muted-foreground/60 mt-0.5">{onWatch ? 'Not watching' : 'Watching'}</p>
           </div>
         </Link>
 
         <div className="flex items-center gap-1 border-t border-border pt-2.5">
-          <Tooltip>
-            <TooltipTrigger asChild>
+          {onWatch ? (
+            <>
               <Button
                 variant="ghost"
                 size="sm"
                 className="h-7 flex-1 text-xs gap-1.5"
-                disabled={isScanning}
-                onClick={onScan}
+                disabled={isWatching}
+                onClick={onWatch}
               >
-                {isScanning ? <Loader2 size={12} className="animate-spin" /> : <ScanLine size={12} />}
-                Scan
+                {isWatching ? <Loader2 size={12} className="animate-spin" /> : <Eye size={12} />}
+                Watch
               </Button>
-            </TooltipTrigger>
-            <TooltipContent>Scan for new books</TooltipContent>
-          </Tooltip>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className="h-7 w-7 p-0 text-destructive/50 hover:text-destructive hover:bg-destructive/10"
+                    onClick={onRemove}
+                  >
+                    <Trash2 size={12} />
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent>Dismiss author</TooltipContent>
+              </Tooltip>
+            </>
+          ) : (
+            <>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className="h-7 flex-1 text-xs gap-1.5"
+                    disabled={isScanning}
+                    onClick={onScan}
+                  >
+                    {isScanning ? <Loader2 size={12} className="animate-spin" /> : <ScanLine size={12} />}
+                    Scan
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent>Scan for new books</TooltipContent>
+              </Tooltip>
 
-          <Tooltip>
-            <TooltipTrigger asChild>
-              <Button variant="ghost" size="sm" className="h-7 w-7 p-0" onClick={onCoauthors}>
-                <Users size={12} />
-              </Button>
-            </TooltipTrigger>
-            <TooltipContent>View coauthors</TooltipContent>
-          </Tooltip>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button variant="ghost" size="sm" className="h-7 w-7 p-0" onClick={onCoauthors}>
+                    <Users size={12} />
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent>View coauthors</TooltipContent>
+              </Tooltip>
 
-          <Tooltip>
-            <TooltipTrigger asChild>
-              <Button
-                variant="ghost"
-                size="sm"
-                className="h-7 w-7 p-0 text-destructive/50 hover:text-destructive hover:bg-destructive/10"
-                onClick={onRemove}
-              >
-                <Trash2 size={12} />
-              </Button>
-            </TooltipTrigger>
-            <TooltipContent>Remove author</TooltipContent>
-          </Tooltip>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className="h-7 w-7 p-0 text-destructive/50 hover:text-destructive hover:bg-destructive/10"
+                    onClick={onRemove}
+                  >
+                    <Trash2 size={12} />
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent>Remove author</TooltipContent>
+              </Tooltip>
+            </>
+          )}
         </div>
       </CardContent>
     </Card>
@@ -161,62 +196,6 @@ function UnwatchedRow({ author, isWatching, onWatch, onDismiss }: UnwatchedRowPr
         Watch
       </Button>
     </div>
-  )
-}
-
-// ── Unwatched author card (All tab) ───────────────────────────────────────
-
-interface UnwatchedCardProps {
-  author: Author
-  isWatching: boolean
-  onWatch: () => void
-  onDismiss: () => void
-}
-
-function UnwatchedCard({ author, isWatching, onWatch, onDismiss }: UnwatchedCardProps) {
-  return (
-    <Card className="relative flex flex-col overflow-hidden transition-shadow hover:shadow-md opacity-60 hover:opacity-100">
-      <CardContent className="flex flex-col gap-3 p-4">
-        <div className="flex items-center gap-3">
-          <div className={cn(
-            'flex size-10 shrink-0 items-center justify-center rounded-full text-white text-sm font-semibold select-none',
-            avatarColor(author.name),
-          )}>
-            {initials(author.name)}
-          </div>
-          <div className="min-w-0">
-            <p className="truncate text-sm font-medium text-foreground leading-snug">{author.name}</p>
-            <p className="text-xs text-muted-foreground/60 mt-0.5">Not watching</p>
-          </div>
-        </div>
-
-        <div className="flex items-center gap-1 border-t border-border pt-2.5">
-          <Button
-            size="sm"
-            variant="outline"
-            className="h-7 flex-1 text-xs gap-1.5"
-            disabled={isWatching}
-            onClick={onWatch}
-          >
-            {isWatching ? <Loader2 size={12} className="animate-spin" /> : <Eye size={12} />}
-            Watch
-          </Button>
-          <Tooltip>
-            <TooltipTrigger asChild>
-              <Button
-                variant="ghost"
-                size="sm"
-                className="h-7 w-7 p-0 text-destructive/50 hover:text-destructive hover:bg-destructive/10"
-                onClick={onDismiss}
-              >
-                <Trash2 size={12} />
-              </Button>
-            </TooltipTrigger>
-            <TooltipContent>Dismiss</TooltipContent>
-          </Tooltip>
-        </div>
-      </CardContent>
-    </Card>
   )
 }
 
@@ -457,12 +436,17 @@ export default function AuthorsPage() {
                     onRemove={() => setRemoveTarget(author)}
                   />
                 ) : (
-                  <UnwatchedCard
+                  <AuthorCard
                     key={author.id}
                     author={author}
-                    isWatching={watchingId === author.id}
+                    isFavorite={false}
+                    isScanning={false}
+                    onFavorite={() => {}}
+                    onScan={() => {}}
+                    onCoauthors={() => {}}
+                    onRemove={() => setRemoveTarget(author)}
                     onWatch={() => handleWatch(author)}
-                    onDismiss={() => setRemoveTarget(author)}
+                    isWatching={watchingId === author.id}
                   />
                 )
               })}
