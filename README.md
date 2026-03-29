@@ -10,7 +10,7 @@ A React control panel for [BookScout](https://github.com/slackerchris/bookscout)
 
 - **Dashboard** — stat cards (missing books, high-confidence missing, authors tracked) + high-confidence missing book table with live SSE refresh
 - **Missing Books** — filterable table (search, confidence band, missing-only toggle) backed by `GET /api/v1/books/`
-- **Authors** — add / remove authors, trigger scans (`POST /api/v1/scans/author/{id}`), view co-authors with watchlist status
+- **Authors** — All / Watching / Not watching tabs; add authors, trigger scans, view co-authors. **Favorites** (star icon) are only available on *watched* authors — the flag is stored in the watchlist row, so an author must be watched before they can be favorited. Watch an author first, then mark them as a favorite.
 - **Activity** — real-time SSE event log (up to 200 events) with a "Scan all authors" button
 
 ## Tech Stack
