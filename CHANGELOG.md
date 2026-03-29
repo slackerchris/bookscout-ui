@@ -7,6 +7,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [0.63.5] — 2026-03-29
+
+### Added
+- **Downloads page** — new sidebar entry and `/downloads` route.
+  - **Active Queue** section polls `GET /api/v1/search/download/queue` every 5 seconds, showing each item with a progress bar, percentage, size, and ETA.  Handles SABnzbd, qBittorrent, and Transmission field differences.  Completed/seeding items appear in a separate sub-section below active ones.
+  - **Owned Books** section lists all books marked as owned (sorted by most recently updated) so you can see what has been confirmed in your library.  Items imported via BookScout's post-processing are tagged "Imported".
+
+---
+
 ## [0.63.4] — 2026-03-29
 
 ### Changed

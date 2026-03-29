@@ -41,13 +41,25 @@ export interface DownloadRequest {
 }
 
 export interface DownloadQueueItem {
-  name: string
+  title: string
   status: string
-  progress: number     // 0–100
-  eta?: number         // seconds remaining
-  size?: number
-  size_left?: number
+  // qBittorrent / Transmission: numeric 0–100
+  progress?: number
+  // SABnzbd: percentage as a string e.g. "75 %"
+  percentage?: string
+  // Size: bytes (qbt/tr) or MB string (sab)
+  size?: number | string
+  downloaded?: number   // bytes downloaded so far
+  remaining?: string    // SABnzbd: MB left as string
+  // ETA: seconds int (qbt/tr) or human string (sab)
+  eta?: number | string
+  // IDs
+  hash?: string         // qBittorrent / Transmission
+  nzo_id?: string       // SABnzbd
+  // Extra
+  category?: string
   save_path?: string
+  error?: string | null
 }
 
 export const searchApi = {

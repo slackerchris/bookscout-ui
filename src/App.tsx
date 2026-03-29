@@ -9,6 +9,7 @@ import AuthorsPage from '@/pages/AuthorsPage'
 import AuthorDetailPage from '@/pages/AuthorDetailPage'
 import ActivityPage from '@/pages/ActivityPage'
 import IntegrationsPage from '@/pages/IntegrationsPage'
+import DownloadsPage from '@/pages/DownloadsPage'
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -31,6 +32,7 @@ export default function App() {
                   <Route index element={<DashboardPage />} />
                   <Route path="authors" element={<AuthorsPage />} />
                   <Route path="authors/:id" element={<AuthorDetailPage />} />
+                  <Route path="downloads" element={<DownloadsPage />} />
                   <Route path="activity" element={<ActivityPage />} />
                   <Route path="integrations" element={<IntegrationsPage />} />
                 </Route>
