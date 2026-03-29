@@ -29,6 +29,8 @@ export const authorsApi = {
   scan: (id: number) => api.post<void>(`/scans/author/${id}`),
   watchlist: (id: number, settings: WatchlistSettings) =>
     api.patch<{ author_id: number; scan_enabled: boolean }>(`/authors/${id}/watchlist`, settings),
+  unwatched: () => api.get<Author[]>('/authors/unwatched'),
+  watch: (id: number) => api.post<Author>(`/authors/${id}/watch`),
   coauthors: (id: number) => api.get<Coauthor[]>(`/authors/${id}/coauthors`),
   favorites: () => api.get<{ author_ids: number[] }>('/authors/favorites'),
   addFavorite: (id: number) => api.post<void>(`/authors/${id}/favorite`),

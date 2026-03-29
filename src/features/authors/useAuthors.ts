@@ -4,6 +4,7 @@ import { authorsApi } from '@/lib/api/authors'
 export const authorKeys = {
   all: ['authors'] as const,
   list: () => ['authors', 'list'] as const,
+  unwatched: () => ['authors', 'unwatched'] as const,
   detail: (id: number) => ['authors', 'detail', id] as const,
   coauthors: (id: number) => ['authors', 'coauthors', id] as const,
 }
@@ -12,6 +13,13 @@ export function useAuthors() {
   return useQuery({
     queryKey: authorKeys.list(),
     queryFn: () => authorsApi.list(),
+  })
+}
+
+export function useUnwatchedAuthors() {
+  return useQuery({
+    queryKey: authorKeys.unwatched(),
+    queryFn: () => authorsApi.unwatched(),
   })
 }
 
@@ -39,6 +47,7 @@ export function useAuthorMutations() {
   const add    = useMutation({ mutationFn: authorsApi.add,    onSuccess: invalidate })
   const remove = useMutation({ mutationFn: authorsApi.remove, onSuccess: invalidate })
   const scan   = useMutation({ mutationFn: authorsApi.scan,   onSuccess: invalidate })
+  const watch  = useMutation({ mutationFn: authorsApi.watch,  onSuccess: invalidate })
 
-  return { add, remove, scan }
+  return { add, remove, scan, watch }
 }
