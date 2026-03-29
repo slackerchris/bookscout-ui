@@ -116,7 +116,7 @@ function AuthorCard({ author, isFavorite, isScanning, onFavorite, onScan, onCoau
   )
 }
 
-// ── Unwatched author row ───────────────────────────────────────────────────
+// ── Unwatched author row (Not watching tab) ───────────────────────────────
 
 interface UnwatchedRowProps {
   author: Author
@@ -164,6 +164,62 @@ function UnwatchedRow({ author, isWatching, onWatch, onDismiss }: UnwatchedRowPr
   )
 }
 
+// ── Unwatched author card (All tab) ───────────────────────────────────────
+
+interface UnwatchedCardProps {
+  author: Author
+  isWatching: boolean
+  onWatch: () => void
+  onDismiss: () => void
+}
+
+function UnwatchedCard({ author, isWatching, onWatch, onDismiss }: UnwatchedCardProps) {
+  return (
+    <Card className="relative flex flex-col overflow-hidden transition-shadow hover:shadow-md opacity-60 hover:opacity-100">
+      <CardContent className="flex flex-col gap-3 p-4">
+        <div className="flex items-center gap-3">
+          <div className={cn(
+            'flex size-10 shrink-0 items-center justify-center rounded-full text-white text-sm font-semibold select-none',
+            avatarColor(author.name),
+          )}>
+            {initials(author.name)}
+          </div>
+          <div className="min-w-0">
+            <p className="truncate text-sm font-medium text-foreground leading-snug">{author.name}</p>
+            <p className="text-xs text-muted-foreground/60 mt-0.5">Not watching</p>
+          </div>
+        </div>
+
+        <div className="flex items-center gap-1 border-t border-border pt-2.5">
+          <Button
+            size="sm"
+            variant="outline"
+            className="h-7 flex-1 text-xs gap-1.5"
+            disabled={isWatching}
+            onClick={onWatch}
+          >
+            {isWatching ? <Loader2 size={12} className="animate-spin" /> : <Eye size={12} />}
+            Watch
+          </Button>
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <Button
+                variant="ghost"
+                size="sm"
+                className="h-7 w-7 p-0 text-destructive/50 hover:text-destructive hover:bg-destructive/10"
+                onClick={onDismiss}
+              >
+                <Trash2 size={12} />
+              </Button>
+            </TooltipTrigger>
+            <TooltipContent>Dismiss</TooltipContent>
+          </Tooltip>
+        </div>
+      </CardContent>
+    </Card>
+  )
+}
+
 // ── Page ────────────────────────────────────────────────────────────────────
 
 export default function AuthorsPage() {
@@ -172,7 +228,7 @@ export default function AuthorsPage() {
   const { add, remove, scan, watch } = useAuthorMutations()
   const { favorites, toggle: toggleFavorite } = useFavoriteAuthors()
 
-  const [tab, setTab] = useState<'watching' | 'unwatched'>('watching')
+  const [tab, setTab] = useState<'all' | 'watching' | 'unwatched'>('all')
   const [search, setSearch] = useState('')
   const [sortDir, setSortDir] = useState<'asc' | 'desc'>('asc')
   const [favoritesOnly, setFavoritesOnly] = useState(false)
@@ -198,6 +254,13 @@ export default function AuthorsPage() {
   const filteredUnwatched = useMemo(() =>
     unwatched.filter((a) => a.name.toLowerCase().includes(search.toLowerCase())),
   [unwatched, search])
+
+  const allAuthors = useMemo(() => {
+    const combined = [...authors, ...unwatched]
+    return combined
+      .filter((a) => a.name.toLowerCase().includes(search.toLowerCase()))
+      .sort((a, b) => a.name.localeCompare(b.name))
+  }, [authors, unwatched, search])
 
   function handleAddOpenChange(open: boolean) {
     if (!open) add.reset()
@@ -239,7 +302,12 @@ export default function AuthorsPage() {
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-xl font-semibold text-foreground">Authors</h1>
-          {!isLoading && tab === 'watching' && (
+          {tab === 'all' && !isLoading && !unwatchedLoading && (
+            <p className="text-sm text-muted-foreground mt-0.5">
+              {authors.length + unwatched.length} total · {authors.length} watching · {unwatched.length} not watching
+            </p>
+          )}
+          {tab === 'watching' && !isLoading && (
             <p className="text-sm text-muted-foreground mt-0.5">
               {authors.length} watched{favorites.size > 0 && ` · ${favorites.size} favorited`}
             </p>
@@ -259,6 +327,14 @@ export default function AuthorsPage() {
       {/* Tab toggle + filter bar */}
       <div className="flex items-center gap-2 flex-wrap">
         {/* Tab toggle */}
+        <Button
+          variant={tab === 'all' ? 'default' : 'outline'}
+          size="sm"
+          className="h-8 text-xs"
+          onClick={() => setTab('all')}
+        >
+          All
+        </Button>
         <Button
           variant={tab === 'watching' ? 'default' : 'outline'}
           size="sm"
@@ -292,7 +368,7 @@ export default function AuthorsPage() {
           className="h-8 w-48 text-sm"
         />
 
-        {tab === 'watching' && (
+        {(tab === 'watching') && (
           <>
             <Button
               variant={favoritesOnly ? 'default' : 'outline'}
@@ -346,6 +422,53 @@ export default function AuthorsPage() {
           <AlertCircle size={14} className="shrink-0" />
           Scan failed: {scan.error instanceof Error ? scan.error.message : 'Unknown error'}
         </div>
+      )}
+
+      {/* ── All tab ── */}
+      {tab === 'all' && (
+        <>
+          {(isLoading || unwatchedLoading) && (
+            <div className="flex items-center justify-center py-20 text-muted-foreground gap-2">
+              <Loader2 size={16} className="animate-spin" />
+              <span className="text-sm">Loading…</span>
+            </div>
+          )}
+
+          {!isLoading && !unwatchedLoading && allAuthors.length === 0 && (
+            <div className="flex flex-col items-center justify-center py-20 text-muted-foreground gap-3">
+              <Users size={32} className="opacity-30" />
+              <p className="text-sm">No authors found.</p>
+            </div>
+          )}
+
+          {!isLoading && !unwatchedLoading && allAuthors.length > 0 && (
+            <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6">
+              {allAuthors.map((author) => {
+                const isWatched = authors.some((a) => a.id === author.id)
+                return isWatched ? (
+                  <AuthorCard
+                    key={author.id}
+                    author={author}
+                    isFavorite={favorites.has(author.id)}
+                    isScanning={scanningId === author.id}
+                    onFavorite={() => toggleFavorite(author.id)}
+                    onScan={() => handleScan(author)}
+                    onCoauthors={() => setCoauthorTarget({ id: author.id, name: author.name })}
+                    onRemove={() => setRemoveTarget(author)}
+                  />
+                ) : (
+                  <UnwatchedCard
+                    key={author.id}
+                    author={author}
+                    isWatching={watchingId === author.id}
+                    onWatch={() => handleWatch(author)}
+                    onDismiss={() => setRemoveTarget(author)}
+                  />
+                )
+              })}
+            </div>
+          )}
+        </>
       )}
 
       {/* ── Watching tab ── */}

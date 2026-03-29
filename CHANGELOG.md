@@ -7,6 +7,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [0.63.1] — 2026-03-29
+
+### Added
+- **"All" tab on Authors page (default)** — shows every author (watched + not watching) as cards in a single grid.  Watched authors show their full action set; unwatched authors show a Watch button and a Dismiss option.  Allows at-a-glance overview without switching tabs.
+
+### Fixed
+- **`GET /authors/` now returns watchlisted authors only** — the endpoint was doing an outer join without a `WHERE watchlist IS NOT NULL` filter, so it returned all authors regardless of watch status.  Authors page "Watching" tab now correctly shows only authors on the watchlist.
+- **ABS import no longer adds authors to watchlist** — `session.add(Watchlist(...))` was still present in the import handler despite the intended change.  Import now creates Author records only; users watch authors manually via the Authors page.
+
+---
+
 ## [0.63.0] — 2026-03-28
 
 ### Added
