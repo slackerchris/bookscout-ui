@@ -7,6 +7,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [0.63.6] — 2026-03-29
+
+### Fixed
+- **Favorited authors float to the top of the All tab** — the "All" tab now sorts favorited authors first (alphabetically within favorites, then alphabetically for the rest), matching the behaviour of the "Watching" tab.
+
+---
+
 ## [0.63.5] — 2026-03-29
 
 ### Added
