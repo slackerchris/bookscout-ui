@@ -122,7 +122,7 @@ export default function IntegrationsPage() {
                   <span className="text-xs text-muted-foreground">
                     {stored.imported} added, {stored.skipped} skipped
                     {stored.total_from_abs > 0 && ` of ${stored.total_from_abs} total`}
-                    {' — '}{formatDate(stored.imported_at)}
+                    {' — '}{formatDate(stored.imported_at!)}
                   </span>
                 </div>
               </div>
