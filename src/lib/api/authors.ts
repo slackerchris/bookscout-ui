@@ -30,4 +30,7 @@ export const authorsApi = {
   watchlist: (id: number, settings: WatchlistSettings) =>
     api.patch<{ author_id: number; scan_enabled: boolean }>(`/authors/${id}/watchlist`, settings),
   coauthors: (id: number) => api.get<Coauthor[]>(`/authors/${id}/coauthors`),
+  favorites: () => api.get<{ author_ids: number[] }>('/authors/favorites'),
+  addFavorite: (id: number) => api.post<void>(`/authors/${id}/favorite`),
+  removeFavorite: (id: number) => api.delete<void>(`/authors/${id}/favorite`),
 }

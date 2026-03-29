@@ -7,6 +7,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [0.62.1] — 2026-03-28
+
+### Changed
+- **Server-side favourites** — `useFavoriteAuthors` now stores favourites in the backend (`GET/POST/DELETE /authors/{id}/favorite`) instead of localStorage.  Favourites survive browser clears and are shared across devices.  Optimistic updates keep the UI responsive while the request is in flight.
+
+---
+
 ## [0.62.0] — 2026-03-28
 
 ### Changed
