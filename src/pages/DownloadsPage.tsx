@@ -1,11 +1,11 @@
 import { useQuery } from '@tanstack/react-query'
-import { searchApi, n8nApi, N8N_WORKFLOW_ID } from '@/lib/api'
-import type { DownloadQueueItem, N8nExecution } from '@/lib/api'
+import { searchApi, booksApi } from '@/lib/api'
+import type { DownloadQueueItem } from '@/lib/api'
+import type { Book } from '@/types'
 import { cn } from '@/lib/utils'
 import {
   Download, CheckCircle2, Clock, AlertCircle, Loader2,
   HardDrive, RefreshCw, BookAudio, Library, FolderOpen,
-  Workflow, XCircle,
 } from 'lucide-react'
 
 // ── Helpers ────────────────────────────────────────────────────────────────
@@ -189,51 +189,26 @@ function QueueRow({ item }: { item: DownloadQueueItem }) {
   )
 }
 
-// ── n8n execution row ─────────────────────────────────────────────────────
+// ── Recently imported row ──────────────────────────────────────────────────
 
-function ExecutionRow({ execution }: { execution: N8nExecution }) {
-  const when = execution.stopped_at ?? execution.started_at
-  const timeLabel = when
-    ? new Date(when).toLocaleString(undefined, { dateStyle: 'medium', timeStyle: 'short' })
-    : null
-
-  const hasItems = execution.items.length > 0
-  const isError = execution.status === 'error'
-
+function ImportedRow({ book }: { book: Book }) {
+  const when = new Date(book.updated_at).toLocaleString(undefined, {
+    dateStyle: 'medium', timeStyle: 'short',
+  })
   return (
-    <div className="border-b border-border px-4 py-3 last:border-0">
-      <div className="flex items-center gap-2">
-        {isError ? (
-          <XCircle size={13} className="shrink-0 text-destructive" />
-        ) : (
-          <CheckCircle2 size={13} className="shrink-0 text-emerald-500" />
-        )}
-        <span className="text-xs text-muted-foreground tabular-nums">{timeLabel}</span>
-        {!hasItems && (
-          <span className="ml-auto text-xs text-muted-foreground italic">no imports</span>
-        )}
+    <div className="flex items-center gap-3 border-b border-border px-4 py-3 last:border-0">
+      <CheckCircle2 size={14} className="shrink-0 text-emerald-500" />
+      <div className="min-w-0 flex-1">
+        <p className="truncate text-sm text-foreground">
+          {book.title}
+          {book.series_name && (
+            <span className="text-muted-foreground">
+              {' '}· {book.series_name}{book.series_position ? ` #${book.series_position}` : ''}
+            </span>
+          )}
+        </p>
       </div>
-      {hasItems && (
-        <ul className="mt-1.5 space-y-1 pl-5">
-          {execution.items.map((item, i) => (
-            <li key={i} className="flex items-center gap-2 text-sm">
-              <span className={cn(
-                'size-1.5 shrink-0 rounded-full',
-                item.result === 'imported' ? 'bg-emerald-500' : 'bg-red-500',
-              )} />
-              <span className="truncate text-foreground">{item.name}</span>
-              <span className={cn(
-                'ml-auto shrink-0 rounded-full px-2 py-0.5 text-[11px] font-medium',
-                item.result === 'imported'
-                  ? 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400'
-                  : 'bg-destructive/10 text-destructive',
-              )}>
-                {item.result}
-              </span>
-            </li>
-          ))}
-        </ul>
-      )}
+      <span className="shrink-0 text-xs text-muted-foreground tabular-nums">{when}</span>
     </div>
   )
 }
@@ -255,14 +230,12 @@ export default function DownloadsPage() {
   })
 
   const {
-    data: executions = [],
-    isLoading: executionsLoading,
-    isError: executionsError,
+    data: recentImports = [],
+    isLoading: importsLoading,
   } = useQuery({
-    queryKey: ['n8n', 'executions', N8N_WORKFLOW_ID],
-    queryFn: () => n8nApi.executions(N8N_WORKFLOW_ID, 20),
+    queryKey: ['downloads', 'recently-imported'],
+    queryFn: () => booksApi.recentlyImported(20),
     staleTime: 60_000,
-    refetchInterval: 60_000,
   })
 
   const lastUpdated = dataUpdatedAt
@@ -385,38 +358,33 @@ export default function DownloadsPage() {
         )}
       </section>
 
-      {/* ── n8n Import History ── */}
+      {/* ── Recently Imported ── */}
       <section>
         <h2 className="text-sm font-medium text-foreground mb-3 flex items-center gap-2">
-          <Workflow size={14} />
-          n8n Import History
-          <span className="ml-1 text-xs text-muted-foreground">last 20 runs</span>
+          <CheckCircle2 size={14} className="text-emerald-500" />
+          Recently Imported
+          {recentImports.length > 0 && (
+            <span className="ml-1 text-xs text-muted-foreground">{recentImports.length}</span>
+          )}
         </h2>
 
-        {executionsLoading && (
+        {importsLoading && (
           <div className="flex items-center gap-2 text-sm text-muted-foreground py-6">
             <Loader2 size={14} className="animate-spin" />
-            Loading executions…
+            Loading…
           </div>
         )}
 
-        {executionsError && !executionsLoading && (
-          <div className="rounded-md border border-destructive/30 bg-destructive/10 px-4 py-3 text-sm text-destructive flex items-center gap-2">
-            <AlertCircle size={14} className="shrink-0" />
-            Could not reach n8n. Check the Integrations page or verify your API key.
-          </div>
-        )}
-
-        {!executionsLoading && !executionsError && executions.length === 0 && (
+        {!importsLoading && recentImports.length === 0 && (
           <div className="rounded-xl border border-dashed border-border bg-muted/20 px-4 py-6 text-sm text-muted-foreground">
-            No executions found for this workflow.
+            No books imported yet.
           </div>
         )}
 
-        {executions.length > 0 && (
+        {recentImports.length > 0 && (
           <div className="overflow-hidden rounded-xl border border-border bg-card">
-            {executions.map((ex) => (
-              <ExecutionRow key={ex.id} execution={ex} />
+            {recentImports.map((book) => (
+              <ImportedRow key={book.id} book={book} />
             ))}
           </div>
         )}

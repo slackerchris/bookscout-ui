@@ -94,7 +94,7 @@
     },
     {
       "parameters": {
-        "jsCode": "const allInputItems = $input.all();\nconst out = [];\n\nfor (let i = 0; i < allInputItems.length; i++) {\n  const t = allInputItems[i].json;\n  if (!t || typeof t !== 'object') continue;\n\n  const rawTags = String(t.tags || '')\n    .split(',')\n    .map(s => s.trim())\n    .filter(Boolean);\n\n  const tagMatch = rawTags\n    .map(tag => tag.match(/^bookscout-(\\d+)$/))\n    .find(Boolean);\n\n  const alreadyImported = rawTags.includes('bs-imported');\n  const alreadyFailed = rawTags.includes('bs-failed');\n\n  if (!tagMatch || alreadyImported || alreadyFailed) continue;\n\n  const bookId = tagMatch[1];\n\n  const savePath = String(t.save_path || '');\n  const normalizedSavePath = savePath && !savePath.endsWith('/') ? `${savePath}/` : savePath;\n  const contentPath = String(\n    t.content_path || (normalizedSavePath ? `${normalizedSavePath}${t.name}` : '')\n  ).trim();\n\n  if (!contentPath) continue;\n\n  out.push({\n    json: {\n      hash: t.hash || '',\n      name: t.name || '',\n      category: t.category || '',\n      tags: t.tags || '',\n      tagsArray: rawTags,\n      bookId,\n      contentPath,\n      state: t.state || '',\n      progress: t.progress ?? null,\n      size: t.size ?? null\n    },\n    pairedItem: { item: i }\n  });\n}\n\nreturn out;"
+        "jsCode": "const allInputItems = $input.all();\nconst cookie = $('Extract SID').first().json.cookie;\nconst out = [];\n\nfor (let i = 0; i < allInputItems.length; i++) {\n  const t = allInputItems[i].json;\n  if (!t || typeof t !== 'object') continue;\n\n  const rawTags = String(t.tags || '')\n    .split(',')\n    .map(s => s.trim())\n    .filter(Boolean);\n\n  const tagMatch = rawTags\n    .map(tag => tag.match(/^bookscout-(\\d+)$/))\n    .find(Boolean);\n\n  if (!tagMatch || rawTags.includes('bs-imported') || rawTags.includes('bs-failed')) continue;\n\n  const bookId = tagMatch[1];\n  const savePath = String(t.save_path || '');\n  const normalizedSavePath = savePath && !savePath.endsWith('/') ? `${savePath}/` : savePath;\n  const contentPath = String(\n    t.content_path || (normalizedSavePath ? `${normalizedSavePath}${t.name}` : '')\n  ).trim();\n\n  if (!contentPath) continue;\n\n  out.push({\n    json: {\n      cookie,\n      hash: t.hash || '',\n      name: t.name || '',\n      category: t.category || '',\n      tags: t.tags || '',\n      tagsArray: rawTags,\n      bookId,\n      contentPath,\n      state: t.state || '',\n      progress: t.progress ?? null,\n      size: t.size ?? null,\n    },\n    pairedItem: { item: i },\n  });\n}\n\nreturn out;"
       },
       "id": "f2d0b386-6d10-47aa-929b-d6c9dc49767c",
       "name": "Prepare Candidate Imports",
@@ -102,39 +102,6 @@
       "typeVersion": 2,
       "position": [
         -1024,
-        64
-      ]
-    },
-    {
-      "parameters": {
-        "conditions": {
-          "options": {
-            "caseSensitive": true,
-            "leftValue": "",
-            "typeValidation": "strict",
-            "version": 2
-          },
-          "conditions": [
-            {
-              "leftValue": "={{$json.contentPath}}",
-              "rightValue": "",
-              "operator": {
-                "type": "string",
-                "operation": "notEmpty",
-                "singleValue": true
-              }
-            }
-          ],
-          "combinator": "and"
-        },
-        "options": {}
-      },
-      "id": "f0ac6439-e0ba-4437-bc63-3c69ef90c0fa",
-      "name": "Has Content Path",
-      "type": "n8n-nodes-base.if",
-      "typeVersion": 2.2,
-      "position": [
-        -784,
         64
       ]
     },
@@ -164,7 +131,7 @@
     },
     {
       "parameters": {
-        "jsCode": "const responses = $input.all();\nconst candidates = $('Has Content Path').all();\n\nreturn responses.map((responseItem, i) => {\n  const response = responseItem.json;\n  const prev = candidates[i]?.json ?? {};\n\n  return {\n    json: {\n      ...prev,\n      importStatusCode: response.statusCode ?? 200,\n      importResponse: response.body ?? response\n    }\n  };\n});"
+        "jsCode": "const responses = $input.all();\nconst candidates = $('Prepare Candidate Imports').all();\n\nreturn responses.map((responseItem, i) => {\n  const response = responseItem.json;\n  const prev = candidates[i]?.json ?? {};\n  return {\n    json: {\n      ...prev,\n      importStatusCode: response.statusCode ?? 200,\n      importResponse: response.body ?? response,\n    },\n  };\n});"
       },
       "id": "5bed67da-50f4-4037-8bf5-b460c5fa8a39",
       "name": "Merge Import Response",
@@ -216,7 +183,7 @@
           "parameters": [
             {
               "name": "Cookie",
-              "value": "={{ $('Extract SID').item.json.cookie }}"
+              "value": "={{$json.cookie}}"
             }
           ]
         },
@@ -254,7 +221,7 @@
           "parameters": [
             {
               "name": "Cookie",
-              "value": "={{ $('Extract SID').item.json.cookie }}"
+              "value": "={{$json.cookie}}"
             }
           ]
         },
@@ -292,7 +259,7 @@
           "parameters": [
             {
               "name": "Cookie",
-              "value": "={{ $('Extract SID').item.json.cookie }}"
+              "value": "={{$json.cookie}}"
             }
           ]
         },
@@ -395,17 +362,6 @@
       ]
     },
     "Prepare Candidate Imports": {
-      "main": [
-        [
-          {
-            "node": "Has Content Path",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    },
-    "Has Content Path": {
       "main": [
         [
           {

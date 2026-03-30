@@ -7,6 +7,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [0.63.10] — 2026-03-30
+
+### Added
+- **Import toast notifications** — `import.complete` SSE events now trigger a Sonner toast showing the book title and author name, appearing bottom-right on any page.
+- **Downloads — Recently Imported section** — replaces the unreliable n8n execution history panel with a live query against BookScout's own database (`/books/recently-imported`). Automatically refreshes when an `import.complete` event arrives.
+
+### Fixed
+- **n8n workflow: all torrents now processed** — `Prepare Candidate Imports` now iterates all input items and passes the qBittorrent cookie through item data, removing the fragile `$('Extract SID').item` paired-item chain that caused errors on multi-torrent runs. `Has Content Path` IF node removed (redundant — filtering already happens in `Prepare Candidate Imports`). `Merge Import Response` updated to reference `Prepare Candidate Imports` directly.
+
+---
+
 ## [0.63.9] — 2026-03-29
 
 ### Added
