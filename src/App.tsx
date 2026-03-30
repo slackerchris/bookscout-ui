@@ -28,7 +28,7 @@ function ImportNotifier() {
   const qc = useQueryClient()
   useBookScoutSSE((event) => {
     if (event.event_type !== 'import.complete') return
-    const p = event.payload as ImportCompletePayload
+    const p = event.payload as unknown as ImportCompletePayload
     toast.success(`Imported: ${p.book_title}`, {
       description: p.author_name,
       duration: 6000,
