@@ -48,10 +48,6 @@ function ServiceStatusBadge({ svc, loading }: { svc?: ServiceStatus; loading: bo
   )
 }
 
-const staticServices = [
-  { id: 'n8n', label: 'n8n', description: 'Workflow automation — webhooks and notifications', Icon: Webhook },
-]
-
 export default function IntegrationsPage() {
   const { data: storedRaw } = useAbsImportResult()
   // Backend returns {} when no import has run yet — treat as absent.
@@ -83,6 +79,7 @@ export default function IntegrationsPage() {
 
   const prowlarr = searchStatus?.indexers.prowlarr
   const jackett = searchStatus?.indexers.jackett
+  const n8n = searchStatus?.automation.n8n
   // download_client is a Record with a single key (sabnzbd | qbittorrent | transmission)
   const dlEntry = searchStatus?.download_client
     ? Object.entries(searchStatus.download_client)[0]
@@ -191,7 +188,7 @@ export default function IntegrationsPage() {
         </CardContent>
       </Card>
 
-      {/* Indexers + download client — live status */}
+      {/* Service integrations — live status */}
       <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-4">
         {/* Prowlarr */}
         <Card>
@@ -252,6 +249,24 @@ export default function IntegrationsPage() {
           <CardHeader className="pb-2">
             <div className="flex items-center gap-2.5">
               <div className="flex size-8 items-center justify-center rounded-md bg-muted">
+                <Webhook size={15} className="text-muted-foreground" />
+              </div>
+              <div>
+                <CardTitle className="text-sm font-medium">n8n</CardTitle>
+                <p className="text-xs text-muted-foreground">Workflow automation — webhooks and notifications</p>
+              </div>
+            </div>
+          </CardHeader>
+          <CardContent className="pt-0">
+            <ServiceStatusBadge svc={n8n} loading={statusLoading} />
+          </CardContent>
+        </Card>
+
+        {/* BookScout API — live status via /health */}
+        <Card>
+          <CardHeader className="pb-2">
+            <div className="flex items-center gap-2.5">
+              <div className="flex size-8 items-center justify-center rounded-md bg-muted">
                 <Server size={15} className="text-muted-foreground" />
               </div>
               <div>
@@ -264,26 +279,6 @@ export default function IntegrationsPage() {
             <ServiceStatusBadge svc={bookscoutStatus} loading={healthLoading} />
           </CardContent>
         </Card>
-
-        {/* Static cards — no status endpoint yet */}
-        {staticServices.map(({ id, label, description, Icon }) => (
-          <Card key={id}>
-            <CardHeader className="pb-2">
-              <div className="flex items-center gap-2.5">
-                <div className="flex size-8 items-center justify-center rounded-md bg-muted">
-                  <Icon size={15} className="text-muted-foreground" />
-                </div>
-                <div>
-                  <CardTitle className="text-sm font-medium">{label}</CardTitle>
-                  <p className="text-xs text-muted-foreground">{description}</p>
-                </div>
-              </div>
-            </CardHeader>
-            <CardContent className="pt-0">
-              <span className="text-xs text-muted-foreground/60">Status unavailable</span>
-            </CardContent>
-          </Card>
-        ))}
       </div>
     </div>
   )

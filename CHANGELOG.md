@@ -7,6 +7,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [0.63.7] — 2026-03-30
+
+### Added
+- **Integrations — live n8n status** — the Integrations page now reads the backend `automation.n8n` health status from `GET /api/v1/search/status` and shows it as a normal live integration card instead of a static placeholder.
+
+### Changed
+- **Downloads — audiobook-focused queue view** — the Downloads page now filters the queue to audiobook-looking items using category/save-path/title hints so unrelated downloader items do not dominate the view.
+- **Downloads — compact status-sorted layout** — queue items now render in a cleaner table-like list with status dots, normalized labels, concise metadata, and ordering by status then title for faster scanning.
+- **Downloads — queue summary counts** — the header summary now shows audiobook queue totals for total, downloading, paused, and completed items.
+
+---
+
 ## [0.63.6] — 2026-03-29
 
 ### Fixed

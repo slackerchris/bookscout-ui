@@ -12,6 +12,9 @@ export interface SearchStatusResult {
     prowlarr: ServiceStatus
     jackett: ServiceStatus
   }
+  automation: {
+    n8n: ServiceStatus
+  }
   download_client: Record<string, ServiceStatus>
 }
 

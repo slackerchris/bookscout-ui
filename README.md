@@ -8,9 +8,11 @@ A React control panel for [BookScout](https://github.com/slackerchris/bookscout)
 
 ## Features
 
-- **Dashboard** — stat cards (missing books, high-confidence missing, authors tracked) + high-confidence missing book table with live SSE refresh
-- **Missing Books** — filterable table (search, confidence band, missing-only toggle) backed by `GET /api/v1/books/`
+- **Dashboard** — compact library stats plus live service health indicators
 - **Authors** — All / Watching / Not watching tabs; add authors, trigger scans, view co-authors. **Favorites** (star icon) are only available on *watched* authors — the flag is stored in the watchlist row, so an author must be watched before they can be favorited. Watch an author first, then mark them as a favorite.
+- **Author Detail** — per-author bookshelf with filters, server-backed counts, scan actions, and missing/confirmed breakdown
+- **Downloads** — audiobook-focused queue view with status counts, compact progress list, and owned-book history
+- **Integrations** — live status for BookScout API, downloader, Prowlarr, Jackett, and n8n
 - **Activity** — real-time SSE event log (up to 200 events) with a "Scan all authors" button
 
 ## Tech Stack
@@ -95,13 +97,15 @@ Targets the BookScout `/api/v1` API. Key endpoints used:
 
 | Endpoint | Used by |
 |---|---|
-| `GET /api/v1/books/` | Missing Books page, Dashboard |
+| `GET /api/v1/books/` | Author Detail, Downloads history |
 | `GET /api/v1/authors/` | Authors page, Dashboard stat card |
 | `POST /api/v1/authors/` | Add author |
 | `DELETE /api/v1/authors/{id}` | Remove author |
 | `GET /api/v1/authors/{id}/coauthors` | Coauthors drawer |
 | `POST /api/v1/scans/author/{id}` | Scan author button |
 | `POST /api/v1/scans/all` | Scan all (Activity page) |
+| `GET /api/v1/search/status` | Integrations page, Dashboard service health |
+| `GET /api/v1/search/download/queue` | Downloads queue |
 | `GET /api/v1/events` | SSE live updates (singleton connection) |
 
 ---
