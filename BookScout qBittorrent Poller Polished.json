@@ -1,0 +1,504 @@
+{
+  "name": "BookScout qBittorrent Poller Polished",
+  "nodes": [
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "minutes",
+              "minutesInterval": 2
+            }
+          ]
+        }
+      },
+      "id": "175fa7f7-b8b2-428f-9a2b-d38ff7c619f5",
+      "name": "Every 2 Minutes",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.2,
+      "position": [
+        -1984,
+        64
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "http://10.0.50.13:8080/api/v2/auth/login",
+        "sendBody": true,
+        "contentType": "form-urlencoded",
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "username",
+              "value": "admin"
+            },
+            {
+              "name": "password",
+              "value": "g0g0tr@!N!"
+            }
+          ]
+        },
+        "options": {
+          "response": {
+            "response": {
+              "fullResponse": true
+            }
+          }
+        }
+      },
+      "id": "7dcc73fc-488d-4fe8-b515-ebb3098ee47f",
+      "name": "Login qBittorrent",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        -1744,
+        64
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "const headers = $json.headers || {};\nconst setCookie = headers['set-cookie'] || headers['Set-Cookie'] || [];\nlet cookie = '';\nif (Array.isArray(setCookie)) {\n  const sid = setCookie.find(c => c.startsWith('SID='));\n  if (sid) cookie = sid.split(';')[0];\n} else if (typeof setCookie === 'string' && setCookie.startsWith('SID=')) {\n  cookie = setCookie.split(';')[0];\n}\nif (!cookie) {\n  throw new Error('Could not extract SID cookie from qBittorrent login response');\n}\nreturn [{ json: { cookie } }];"
+      },
+      "id": "481f2075-1d58-40f6-a7e9-40d9702eef6f",
+      "name": "Extract SID",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -1504,
+        64
+      ]
+    },
+    {
+      "parameters": {
+        "url": "http://10.0.50.13:8080/api/v2/torrents/info?filter=completed&category=audiobooks",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Cookie",
+              "value": "={{$json.cookie}}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "6912d108-bd61-43aa-afdd-b066f19c0648",
+      "name": "Get Completed Audiobooks",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        -1264,
+        64
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "const first = $input.first();\nconst source = first?.json ?? {};\n\nlet torrents = [];\n\nif (Array.isArray(source)) {\n  torrents = source;\n} else if (Array.isArray(source.body)) {\n  torrents = source.body;\n} else if (Array.isArray(source.data)) {\n  torrents = source.data;\n} else if (source && typeof source === 'object' && source.hash) {\n  torrents = [source];\n} else if (source && typeof source === 'object') {\n  for (const value of Object.values(source)) {\n    if (Array.isArray(value)) {\n      torrents = value;\n      break;\n    }\n  }\n}\n\nif (!Array.isArray(torrents) || torrents.length === 0) {\n  return [];\n}\n\nconst out = [];\n\nfor (const t of torrents) {\n  if (!t || typeof t !== 'object') continue;\n\n  const rawTags = String(t.tags || '')\n    .split(',')\n    .map(s => s.trim())\n    .filter(Boolean);\n\n  const tagMatch = rawTags\n    .map(tag => tag.match(/^bookscout-(\\d+)$/))\n    .find(Boolean);\n\n  const alreadyImported = rawTags.includes('bs-imported');\n  const alreadyFailed = rawTags.includes('bs-failed');\n\n  if (!tagMatch || alreadyImported || alreadyFailed) {\n    continue;\n  }\n\n  const bookId = tagMatch[1];\n\n  const savePath = String(t.save_path || '');\n  const normalizedSavePath =\n    savePath && !savePath.endsWith('/') ? `${savePath}/` : savePath;\n\n  const contentPath = String(\n    t.content_path || (normalizedSavePath ? `${normalizedSavePath}${t.name}` : '')\n  ).trim();\n\n  if (!contentPath) {\n    continue;\n  }\n\n  out.push({\n    json: {\n      hash: t.hash || '',\n      name: t.name || '',\n      category: t.category || '',\n      tags: t.tags || '',\n      tagsArray: rawTags,\n      bookId,\n      contentPath,\n      state: t.state || '',\n      progress: t.progress ?? null,\n      size: t.size ?? null\n    }\n  });\n}\n\nreturn out;"
+      },
+      "id": "f2d0b386-6d10-47aa-929b-d6c9dc49767c",
+      "name": "Prepare Candidate Imports",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -1024,
+        64
+      ]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "leftValue": "={{$json.contentPath}}",
+              "rightValue": "",
+              "operator": {
+                "type": "string",
+                "operation": "notEmpty",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "f0ac6439-e0ba-4437-bc63-3c69ef90c0fa",
+      "name": "Has Content Path",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        -784,
+        64
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "=http://10.0.50.45:8765/api/v1/books/{{$json.bookId}}/import",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\"source_path\":\"{{$json.contentPath}}\"}",
+        "options": {
+          "response": {
+            "response": {
+              "fullResponse": true
+            }
+          }
+        }
+      },
+      "id": "64182b0c-b5c3-4718-ba31-8243c8aef9b4",
+      "name": "Call BookScout Import",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        -544,
+        -48
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "const responses = $input.all();\nconst candidates = $('Has Content Path').all();\n\nreturn responses.map((responseItem, i) => {\n  const response = responseItem.json;\n  const prev = candidates[i]?.json ?? {};\n\n  return {\n    json: {\n      ...prev,\n      importStatusCode: response.statusCode ?? 200,\n      importResponse: response.body ?? response\n    }\n  };\n});"
+      },
+      "id": "5bed67da-50f4-4037-8bf5-b460c5fa8a39",
+      "name": "Merge Import Response",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -304,
+        -48
+      ]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "leftValue": "={{$json.importStatusCode}}",
+              "rightValue": 200,
+              "operator": {
+                "type": "number",
+                "operation": "equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "e851b1d6-3ed7-4f24-a8da-c7ccd2129f90",
+      "name": "Import Succeeded",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        -64,
+        -48
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "http://10.0.50.13:8080/api/v2/torrents/addTags",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Cookie",
+              "value": "={{ $('Extract SID').item.json.cookie }}"
+            }
+          ]
+        },
+        "sendBody": true,
+        "contentType": "form-urlencoded",
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "hashes",
+              "value": "={{$json.hash}}"
+            },
+            {
+              "name": "tags",
+              "value": "bs-imported"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "e6bdf414-8ca4-4d08-b890-19ba60ab8be6",
+      "name": "Tag bs-imported",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        176,
+        -128
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "http://10.0.50.13:8080/api/v2/torrents/addTags",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Cookie",
+              "value": "={{ $('Extract SID').item.json.cookie }}"
+            }
+          ]
+        },
+        "sendBody": true,
+        "contentType": "form-urlencoded",
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "hashes",
+              "value": "={{$json.hash}}"
+            },
+            {
+              "name": "tags",
+              "value": "bs-failed"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "c75ace0f-3914-41ae-8bfc-2124da632307",
+      "name": "Tag bs-failed",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        176,
+        64
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "http://10.0.50.13:8080/api/v2/torrents/removeTags",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Cookie",
+              "value": "={{ $('Extract SID').item.json.cookie }}"
+            }
+          ]
+        },
+        "sendBody": true,
+        "contentType": "form-urlencoded",
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "hashes",
+              "value": "={{$json.hash}}"
+            },
+            {
+              "name": "tags",
+              "value": "bs-failed"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "dcf867a0-912c-4def-9172-c34f62176d39",
+      "name": "Clear bs-failed on Success",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        416,
+        -128
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "return [{\n  json: {\n    result: 'imported',\n    hash: $json.hash,\n    name: $json.name,\n    bookId: $json.bookId,\n    contentPath: $json.contentPath,\n    importStatusCode: $json.importStatusCode,\n    importResponse: $json.importResponse\n  }\n}];"
+      },
+      "id": "e36035cc-0162-44b7-8d71-66d1fbc4cc80",
+      "name": "Success Summary",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        656,
+        -128
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "return [{\n  json: {\n    result: 'failed',\n    hash: $json.hash,\n    name: $json.name,\n    bookId: $json.bookId,\n    contentPath: $json.contentPath,\n    importStatusCode: $json.importStatusCode,\n    importResponse: $json.importResponse\n  }\n}];"
+      },
+      "id": "3d3c4dc0-2487-439c-ab58-f317657e4d85",
+      "name": "Failure Summary",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        416,
+        64
+      ]
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Every 2 Minutes": {
+      "main": [
+        [
+          {
+            "node": "Login qBittorrent",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Login qBittorrent": {
+      "main": [
+        [
+          {
+            "node": "Extract SID",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Extract SID": {
+      "main": [
+        [
+          {
+            "node": "Get Completed Audiobooks",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get Completed Audiobooks": {
+      "main": [
+        [
+          {
+            "node": "Prepare Candidate Imports",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Prepare Candidate Imports": {
+      "main": [
+        [
+          {
+            "node": "Has Content Path",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Has Content Path": {
+      "main": [
+        [
+          {
+            "node": "Call BookScout Import",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Call BookScout Import": {
+      "main": [
+        [
+          {
+            "node": "Merge Import Response",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Merge Import Response": {
+      "main": [
+        [
+          {
+            "node": "Import Succeeded",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Import Succeeded": {
+      "main": [
+        [
+          {
+            "node": "Tag bs-imported",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Tag bs-failed",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Tag bs-imported": {
+      "main": [
+        [
+          {
+            "node": "Clear bs-failed on Success",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Clear bs-failed on Success": {
+      "main": [
+        [
+          {
+            "node": "Success Summary",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Tag bs-failed": {
+      "main": [
+        [
+          {
+            "node": "Failure Summary",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate"
+  },
+  "versionId": "10f186e7-7c9c-4929-8ee6-8d4bd3b9416e",
+  "meta": {
+    "instanceId": "9976bf3672ce34626f25df6ba0bbaf52b2d7ffe2cc9354e653b0c18bf6a027ac"
+  },
+  "id": "SwTAfQEy3XagttAp",
+  "tags": []
+}
