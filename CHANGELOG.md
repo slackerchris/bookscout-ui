@@ -7,7 +7,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
-## [0.63.7] — 2026-03-30
+## [0.63.8] — 2026-03-30
 
 ### Added
 - **Integrations — live n8n status** — the Integrations page now reads the backend `automation.n8n` health status from `GET /api/v1/search/status` and shows it as a normal live integration card instead of a static placeholder.
