@@ -13,3 +13,5 @@ export type {
   DownloadRequest,
   DownloadQueueItem,
 } from './search'
+export { n8nApi, N8N_WORKFLOW_ID } from './n8n'
+export type { N8nExecution, N8nExecutionItem } from './n8n'

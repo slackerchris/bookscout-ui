@@ -7,6 +7,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [0.63.9] — 2026-03-29
+
+### Added
+- **Downloads — n8n Import History** — new section showing the last 20 executions of the qBittorrent poller workflow with book titles and imported/failed badges. Polls every 60 seconds. Requires `n8n.api_key` in backend config or `N8N_API_KEY` env var.
+
+### Removed
+- **Downloads — Owned Books section** — removed the full owned-books list (2 000+ rows); coverage remains on each Author Detail page.
+
+---
+
 ## [0.63.8] — 2026-03-30
 
 ### Added
