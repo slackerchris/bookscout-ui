@@ -7,6 +7,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [0.65.0] — 2026-03-31
+
+### Fixed
+- **nginx DNS re-resolution** — added `resolver 127.0.0.11 valid=10s ipv6=off` and switched both proxy locations to use a `$upstream` variable, forcing nginx to re-resolve the `bookscout` hostname via Docker's internal DNS after a backend container restart. Previously nginx cached the resolved IP at startup and continued hitting the old address after a restart, causing 502s until the UI container was also restarted.
+
+---
+
 ## [0.64.9] — 2026-03-31
 
 ### Changed
