@@ -6,6 +6,12 @@ A React control panel for [BookScout](https://github.com/slackerchris/bookscout)
 
 ---
 
+## Architecture
+
+![BookScout UI architecture](docs/architecture.svg)
+
+---
+
 ## Features
 
 - **Dashboard** — compact library stats plus live service health indicators
