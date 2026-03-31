@@ -18,8 +18,11 @@ export const authorsApi = {
     const qs = parts.length ? `?${parts.join('&')}` : ''
     return api.get<Author[]>(`/authors/${qs}`)
   },
-  count: (params: { active_only?: boolean } = {}) => {
-    const qs = params.active_only === false ? '?active_only=false' : ''
+  count: (params: { active_only?: boolean; watched_only?: boolean } = {}) => {
+    const parts: string[] = []
+    if (params.active_only === false) parts.push('active_only=false')
+    if (params.watched_only === false) parts.push('watched_only=false')
+    const qs = parts.length ? `?${parts.join('&')}` : ''
     return api.get<{ count: number }>(`/authors/count${qs}`)
   },
   get: (id: number) => api.get<AuthorDetail>(`/authors/${id}`),

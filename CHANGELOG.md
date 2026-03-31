@@ -7,6 +7,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [0.64.2] — 2026-03-31
+
+### Fixed
+- **Dashboard — Total authors** was returning the same count as Authors watched because the backend `/authors/count` always joined against the Watchlist table. Added `watched_only=false` query param support to the backend and updated the UI query accordingly.
+
+---
+
 ## [0.64.1] — 2026-03-31
 
 ### Changed

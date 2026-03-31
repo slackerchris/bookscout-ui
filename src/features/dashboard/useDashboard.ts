@@ -33,7 +33,7 @@ export function useMissingCounts() {
   })
   const totalAuthors = useQuery({
     queryKey: dashboardKeys.totalAuthorsCount,
-    queryFn: () => authorsApi.count({ active_only: false }),
+    queryFn: () => authorsApi.count({ watched_only: false }),
     refetchInterval: 5 * 60_000,
     staleTime: 4 * 60_000,
     select: (d) => d.count,
