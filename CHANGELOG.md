@@ -7,6 +7,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [0.65.1] — 2026-03-31
+
+### Added
+- **Scanned badge on author cards** — watched authors now show a small green timestamp (e.g. "2d ago") below the "Watching" label when they have been scanned at least once, using `last_scanned` from the watchlist.
+
+---
+
 ## [0.65.0] — 2026-03-31
 
 ### Fixed

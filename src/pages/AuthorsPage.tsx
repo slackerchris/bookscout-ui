@@ -13,7 +13,7 @@ import { Card, CardContent } from '@/components/ui/card'
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip'
 import { cn } from '@/lib/utils'
 import type { Author } from '@/types'
-import { Plus, ScanLine, Trash2, Users, Loader2, AlertCircle, Star, ArrowUpDown, Eye, EyeOff } from 'lucide-react'
+import { Plus, ScanLine, Trash2, Users, Loader2, AlertCircle, Star, ArrowUpDown, Eye, EyeOff, Clock } from 'lucide-react'
 
 // ── Avatar helpers ─────────────────────────────────────────────────────────
 
@@ -31,6 +31,21 @@ function avatarColor(name: string): string {
 
 function initials(name: string): string {
   return name.split(' ').map((w) => w[0] ?? '').slice(0, 2).join('').toUpperCase()
+}
+
+// ── Relative time helper ───────────────────────────────────────────────────
+
+function relativeTime(iso: string): string {
+  const diff = Date.now() - new Date(iso).getTime()
+  const minutes = Math.floor(diff / 60_000)
+  if (minutes < 1) return 'just now'
+  if (minutes < 60) return `${minutes}m ago`
+  const hours = Math.floor(minutes / 60)
+  if (hours < 24) return `${hours}h ago`
+  const days = Math.floor(hours / 24)
+  if (days < 30) return `${days}d ago`
+  const months = Math.floor(days / 30)
+  return `${months}mo ago`
 }
 
 // ── Watched author card ────────────────────────────────────────────────────
@@ -75,6 +90,12 @@ function AuthorCard({ author, isFavorite, isScanning, onFavorite, onScan, onCoau
           <div className="min-w-0">
             <p className="truncate text-sm font-medium text-foreground leading-snug group-hover:underline">{author.name}</p>
             <p className="text-xs text-muted-foreground/60 mt-0.5">{onWatch ? 'Not watching' : 'Watching'}</p>
+            {author.last_scanned && (
+              <span className="inline-flex items-center gap-1 mt-1 text-[10px] text-emerald-600 font-medium">
+                <Clock size={9} />
+                {relativeTime(author.last_scanned)}
+              </span>
+            )}
           </div>
         </Link>
 

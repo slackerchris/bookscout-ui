@@ -37,7 +37,7 @@ export interface Author {
   asin: string | null
   openlibrary_key: string | null
   active: boolean
-  /** ISO datetime string — only populated by GET /authors/{id}, always null from list endpoint */
+  /** ISO datetime string — populated from Watchlist.last_scanned; null if never scanned */
   last_scanned: string | null
 }
 
