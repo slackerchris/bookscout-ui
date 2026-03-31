@@ -7,6 +7,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [0.64.0] — 2026-03-30
+
+### Added
+- **Import toast notifications** — `import.complete` SSE events show a Sonner toast (bottom-right) with the book title and author name on any page.
+- **Downloads — Recently Imported** — replaces n8n execution history with a live BookScout DB query (`/books/recently-imported`). Refreshes automatically when an `import.complete` event arrives.
+- **Books — mark as owned toggle** — each book row now has a toggle button (`BookCheck` / `BookX`) to flip `have_it` without leaving the page. Green when owned, neutral when missing.
+- **Books — Audible link** — books with an ASIN show an external link button that opens `audible.com/pd/{asin}` in a new tab.
+
+### Fixed
+- **Sonner integration** — previous attempt (0.63.10) used a shadcn-generated `sonner.tsx` with a circular self-import and a `next-themes` dependency that isn't installed, causing a silent runtime crash. Replaced with a direct, minimal wrapper around the Sonner `Toaster`.
+
+---
+
 ## [0.63.11] — 2026-03-30
 
 ### Reverted

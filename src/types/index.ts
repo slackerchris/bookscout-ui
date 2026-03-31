@@ -60,7 +60,15 @@ export interface Coauthor {
  * Known real event types published by the BookScout SSE stream.
  * Open string union keeps the UI forward-compatible with new event types.
  */
-export type EventType = 'scan.complete' | 'coauthor.discovered' | (string & {})
+export type EventType = 'scan.complete' | 'coauthor.discovered' | 'import.complete' | (string & {})
+
+export interface ImportCompletePayload {
+  book_id: number
+  book_title: string
+  author_name: string
+  destination: string
+  files_copied: string[]
+}
 
 export interface BookScoutEvent {
   /** Assigned client-side when accumulating events in component state. */

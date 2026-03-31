@@ -53,4 +53,5 @@ export const booksApi = {
   get: (id: number) => api.get<Book>(`/books/${id}`),
   update: (id: number, patch: BookUpdate) => api.patch<Book>(`/books/${id}`, patch),
   remove: (id: number) => api.delete<void>(`/books/${id}`),
+  recentlyImported: (limit = 20) => api.get<Book[]>(`/books/recently-imported?limit=${limit}`),
 }

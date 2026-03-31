@@ -9,7 +9,8 @@ import {
 } from '@/components/ui/table'
 import { Button } from '@/components/ui/button'
 import { ConfidenceBadge, BookStateBadge } from '@/components/StatusBadge'
-import { Search, Trash2, ChevronLeft, ChevronRight } from 'lucide-react'
+import { Search, Trash2, ChevronLeft, ChevronRight, BookCheck, BookX, ExternalLink } from 'lucide-react'
+import { cn } from '@/lib/utils'
 import { useMutation, useQueryClient } from '@tanstack/react-query'
 import { booksApi } from '@/lib/api/books'
 import { bookKeys } from './useBooks'
@@ -90,6 +91,15 @@ export default function BooksTable({ books, grouped, totalCount, page = 0, onPag
     },
   })
 
+  const ownMutation = useMutation({
+    mutationFn: ({ id, have_it }: { id: number; have_it: boolean }) =>
+      booksApi.update(id, { have_it }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: bookKeys.lists() })
+      queryClient.invalidateQueries({ queryKey: bookKeys.counts() })
+    },
+  })
+
   if (books.length === 0) {
     return (
       <div className="flex flex-col items-center justify-center py-20 text-muted-foreground gap-2">
@@ -146,6 +156,32 @@ export default function BooksTable({ books, grouped, totalCount, page = 0, onPag
       </TableCell>
       <TableCell className="align-top">
         <div className="flex gap-1">
+          <Button
+            variant="ghost"
+            size="sm"
+            className={cn(
+              'h-7 w-7 p-0',
+              book.have_it
+                ? 'text-emerald-500 hover:text-emerald-600'
+                : 'text-muted-foreground hover:text-foreground',
+            )}
+            title={book.have_it ? 'Mark as missing' : 'Mark as owned'}
+            onClick={() => ownMutation.mutate({ id: book.id, have_it: !book.have_it })}
+            disabled={ownMutation.isPending}
+          >
+            {book.have_it ? <BookCheck size={13} /> : <BookX size={13} />}
+          </Button>
+          {book.asin && (
+            <Button
+              variant="ghost"
+              size="sm"
+              className="h-7 w-7 p-0 text-muted-foreground hover:text-foreground"
+              title="Open on Audible"
+              onClick={() => window.open(`https://www.audible.com/pd/${book.asin}`, '_blank', 'noopener')}
+            >
+              <ExternalLink size={13} />
+            </Button>
+          )}
           <Button
             variant="ghost"
             size="sm"
