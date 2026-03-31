@@ -7,6 +7,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [0.63.11] — 2026-03-30
+
+### Reverted
+- **0.63.10 changes rolled back** — removed `ImportNotifier`, Sonner toast integration, and the recently-imported Downloads section due to 502 errors on the `/api/v1/events` SSE endpoint introduced in that release. Downloads page restored to 0.63.9 state (queue + n8n import history).
+
+---
+
 ## [0.63.10] — 2026-03-30
 
 ### Added
