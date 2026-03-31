@@ -15,8 +15,12 @@ import { toast } from 'sonner'
 import { useBookScoutSSE } from '@/lib/sse/useBookScoutSSE'
 import type { ImportCompletePayload } from '@/types'
 
-function isImportCompletePayload(p: Record<string, unknown>): p is ImportCompletePayload {
-  return typeof p.book_title === 'string' && typeof p.author_name === 'string'
+function isImportCompletePayload(p: unknown): p is ImportCompletePayload {
+  return (
+    typeof p === 'object' && p !== null &&
+    typeof (p as Record<string, unknown>).book_title === 'string' &&
+    typeof (p as Record<string, unknown>).author_name === 'string'
+  )
 }
 
 const queryClient = new QueryClient({

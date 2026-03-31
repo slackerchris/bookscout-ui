@@ -204,12 +204,12 @@ function UnwatchedRow({ author, isWatching, onWatch, onDismiss }: UnwatchedRowPr
 // ── Page ────────────────────────────────────────────────────────────────────
 
 export default function AuthorsPage() {
+  const [tab, setTab] = useState<'all' | 'watching' | 'unwatched'>('all')
+
   const { data: authors = [], isLoading, isError } = useAuthors()
   const { data: unwatched = [], isLoading: unwatchedLoading } = useUnwatchedAuthors(tab === 'all' || tab === 'unwatched')
   const { add, remove, scan, watch } = useAuthorMutations()
   const { favorites, toggle: toggleFavorite } = useFavoriteAuthors()
-
-  const [tab, setTab] = useState<'all' | 'watching' | 'unwatched'>('all')
   const [search, setSearch] = useState('')
   const [sortDir, setSortDir] = useState<'asc' | 'desc'>('asc')
   const [favoritesOnly, setFavoritesOnly] = useState(false)
