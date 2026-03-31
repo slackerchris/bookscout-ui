@@ -1,4 +1,4 @@
-import { useState, Fragment } from 'react'
+import { useState, Fragment, memo } from 'react'
 import {
   Table,
   TableBody,
@@ -15,6 +15,7 @@ import { useMutation, useQueryClient } from '@tanstack/react-query'
 import { booksApi } from '@/lib/api/books'
 import { bookKeys } from './useBooks'
 import type { Book } from '@/types'
+import type { BooksParams } from '@/lib/api/books'
 import SearchDownloadDrawer from './SearchDownloadDrawer'
 import {
   Tooltip,
@@ -73,19 +74,27 @@ interface Props {
   onPageChange?: (page: number) => void
 }
 
-function bookState(b: Book): 'have_it' | 'missing' {
+function bookState(b: BookRow): 'have_it' | 'missing' {
   return b.have_it ? 'have_it' : 'missing'
 }
 
-export default function BooksTable({ books, grouped, totalCount, page = 0, onPageChange }: Props) {
+function BooksTable({ books, grouped, totalCount, page = 0, onPageChange }: Props) {
   const [selectedBook, setSelectedBook] = useState<BookRow | null>(null)
   const [confirmDeleteId, setConfirmDeleteId] = useState<number | null>(null)
   const queryClient = useQueryClient()
 
   const deleteMutation = useMutation({
     mutationFn: (id: number) => booksApi.remove(id),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: bookKeys.lists() })
+    onSuccess: (_, id) => {
+      const authorId = books.find((b) => b.id === id)?.author_id
+      // Only invalidate lists for the affected author, not all authors' cached pages.
+      queryClient.invalidateQueries({
+        queryKey: bookKeys.lists(),
+        predicate: (query) => {
+          const params = query.queryKey[2] as BooksParams | undefined
+          return authorId === undefined || params?.author_id === authorId
+        },
+      })
       queryClient.invalidateQueries({ queryKey: bookKeys.counts() })
       setConfirmDeleteId(null)
     },
@@ -94,8 +103,12 @@ export default function BooksTable({ books, grouped, totalCount, page = 0, onPag
   const ownMutation = useMutation({
     mutationFn: ({ id, have_it }: { id: number; have_it: boolean }) =>
       booksApi.update(id, { have_it }),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: bookKeys.lists() })
+    onSuccess: (_, { id, have_it }) => {
+      // Update the toggled field in every cached book list rather than refetching all pages.
+      queryClient.setQueriesData<Book[]>(
+        { queryKey: bookKeys.lists() },
+        (old) => old?.map((b) => b.id === id ? { ...b, have_it } : b),
+      )
       queryClient.invalidateQueries({ queryKey: bookKeys.counts() })
     },
   })
@@ -130,7 +143,7 @@ export default function BooksTable({ books, grouped, totalCount, page = 0, onPag
   }
 
   const renderBookRow = (book: BookRow) => (
-    <TableRow key={book.id}>
+    <TableRow key={book.id} className={cn(confirmDeleteId === book.id && 'bg-destructive/5 ring-1 ring-inset ring-destructive/20')}>
       {showAuthor && (
         <TableCell className="text-sm text-foreground align-top">
           {book.author_name}
@@ -296,3 +309,5 @@ export default function BooksTable({ books, grouped, totalCount, page = 0, onPag
     </>
   )
 }
+
+export default memo(BooksTable)

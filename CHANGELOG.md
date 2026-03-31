@@ -7,6 +7,78 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [0.64.9] — 2026-03-31
+
+### Changed
+- **DownloadsPage refactor** — extracted helpers (`normalizeProgress`, `formatEta`, `formatBytes`, `statusDot`, `normalizeStatus`, `isAudiobookDownload`, `bucketStatus`, `statusRank`) into `features/downloads/helpers.ts`, and split `QueueRow` and `ImportedRow` into their own files under `features/downloads/`. `DownloadsPage` is now ~160 lines of pure layout and data-fetching.
+- **Dead comment removed** (`DashboardPage`) — removed orphaned `// ── ETA formatter ──` section marker left over from a previous refactor.
+- **`BooksFilterBar` clarity** — added a comment explaining the two-step filtering priority for `english_only` (explicit `language` field takes precedence over the title-heuristic fallback).
+- **`useAuthorMutations` invalidation** — each mutation now targets only the caches it actually affects (`add` → list only; `remove` → list + unwatched + favorites; `scan` → list only; `watch` → list + unwatched). Removes the previous shared invalidation helper that always flushed all three.
+
+---
+
+## [0.64.8] — 2026-03-31
+
+### Fixed
+- **Book count flicker** (`AuthorDetailPage`) — count is now suppressed until both the list and count queries resolve, preventing a brief "0 books" flash while data loads.
+- **Delete row highlight** (`BooksTable`) — the row pending confirmation is now visually highlighted with a destructive tint and ring so it's obvious which row the Confirm/Cancel applies to.
+- **Search drawer stale-result flash** (`SearchDownloadDrawer`) — `searchMutation.reset()` is called before the auto-search on drawer open, clearing the previous `isSuccess` state and preventing a "no results" frame from the prior book flashing before new results arrive.
+
+### Accessibility
+- **Authors tab bar** — tab toggle buttons now carry `role="tablist"` / `role="tab"` / `aria-selected` so screen readers correctly announce them as a tab group.
+
+---
+
+## [0.64.7] — 2026-03-31
+
+### Fixed
+- **`ImportCompletePayload` cast** — replaced `as unknown as ImportCompletePayload` with a runtime type guard (`isImportCompletePayload`). Malformed SSE payloads are now silently dropped instead of causing a runtime crash.
+- **`bookState` signature** — function now accepts `BookRow` explicitly instead of the base `Book` type.
+- **`useAbsImportResult` type narrowing** — added `select` to return `StoredAbsResult | null` directly from the hook. `IntegrationsPage` no longer needs its own `imported_at` presence check.
+- **BooksTable mutation scope** — `ownMutation` now uses `setQueriesData` to patch `have_it` in all cached lists without triggering any refetch. `deleteMutation` uses a `predicate` to limit list invalidation to the affected author's queries, not all cached book pages.
+
+---
+
+## [0.64.6] — 2026-03-31
+
+### Fixed
+- **`allAuthors` race condition** — after a watch mutation invalidates both author queries, a brief window existed where the same author appeared in both watched and unwatched lists. `allAuthors` now deduplicates by id, keeping the watched version as authoritative.
+- **Recently Imported timestamp** — was using `book.updated_at` (changes on any metadata update) as the import time. Now uses `book.created_at`, which is immutable and accurately reflects when the book row was first created (i.e. imported). Requires API v0.66.9+.
+
+### Removed
+- **`src/lib/api/n8n.ts`** — dead code from the v0.63.11 rollback. Not re-exported from the API index and not referenced by any page.
+
+---
+
+## [0.64.5] — 2026-03-31
+
+### Fixed
+- **Scan error banner never clears** — `scan.reset()` is now called at the start of `handleScan` so any previous error is dismissed before the next attempt fires.
+- **Unwatched authors lazy-load** — `useUnwatchedAuthors` now accepts an `enabled` flag. `AuthorsPage` passes `tab === 'all' || tab === 'unwatched'`, so the `/authors/unwatched` request is suppressed while the Watching tab is active.
+
+### Changed
+- **AuthorDetailPage `useEffect` comment** — documented why `english_only` is excluded from the pagination-reset effect (client-side filter, no server round-trip).
+
+---
+
+## [0.64.4] — 2026-03-31
+
+### Performance
+- **`BooksTable`** wrapped with `React.memo` — prevents re-renders triggered by parent reference churn (e.g. `author?.name` refetch busting the `useMemo` in `AuthorDetailPage`).
+- **`QueueRow` / `ImportedRow`** wrapped with `React.memo` — the 5-second queue poll no longer re-renders rows whose data hasn't changed.
+- **Recently Imported** — added `refetchInterval: 5 * 60_000` so the list polls as a fallback when no `import.complete` SSE event fires (was stale for up to 60s with no SSE activity).
+
+---
+
+## [0.64.3] — 2026-03-31
+
+### Fixed
+- **Toaster mount order** — `<Toaster>` is now rendered before `<BrowserRouter>` so it is mounted before `<ImportNotifier>` can fire toasts. Previously, toasts fired from fast initial SSE replay could be silently dropped.
+- **`missing_only` filter translation** — `false || undefined` was silently coercing the filter to `undefined` (working by accident). Now uses an explicit `filter.missing_only ? true : undefined` so the intent is clear and future changes to defaults won't silently break the param.
+- **`useAuthorDetail` called with `NaN`** — added `enabled: !isNaN(id)` guard so navigating to `/authors/:id` with a missing or invalid route param no longer fires a request to `/authors/NaN`.
+
+---
+
 ## [0.64.2] — 2026-03-31
 
 ### Fixed

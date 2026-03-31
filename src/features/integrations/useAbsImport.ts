@@ -10,12 +10,16 @@ export const absImportKeys = {
   result: ['abs', 'import', 'result'] as const,
 }
 
-/** Fetches the last import result from the backend (survives page reloads and DB wipes). */
+/** Fetches the last import result from the backend (survives page reloads and DB wipes).
+ *  Returns `StoredAbsResult | null` — null when the backend has no record or the
+ *  record predates the imported_at field. */
 export function useAbsImportResult() {
   return useQuery({
     queryKey: absImportKeys.result,
     queryFn: () => audiobookshelfApi.getImportResult(),
     staleTime: Infinity,
+    select: (data): StoredAbsResult | null =>
+      data?.imported_at ? (data as StoredAbsResult) : null,
   })
 }
 

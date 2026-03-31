@@ -15,6 +15,10 @@ import { toast } from 'sonner'
 import { useBookScoutSSE } from '@/lib/sse/useBookScoutSSE'
 import type { ImportCompletePayload } from '@/types'
 
+function isImportCompletePayload(p: Record<string, unknown>): p is ImportCompletePayload {
+  return typeof p.book_title === 'string' && typeof p.author_name === 'string'
+}
+
 const queryClient = new QueryClient({
   defaultOptions: {
     queries: {
@@ -28,7 +32,8 @@ function ImportNotifier() {
   const qc = useQueryClient()
   useBookScoutSSE((event) => {
     if (event.event_type !== 'import.complete') return
-    const p = event.payload as unknown as ImportCompletePayload
+    if (!isImportCompletePayload(event.payload)) return
+    const p = event.payload
     toast.success(`Imported: ${p.book_title}`, {
       description: p.author_name,
       duration: 6000,
@@ -43,6 +48,7 @@ export default function App() {
     <QueryClientProvider client={queryClient}>
       <TooltipProvider>
         <SSEProvider>
+          <Toaster position="bottom-right" richColors />
           <BrowserRouter>
             <ErrorBoundary>
               <ImportNotifier />
@@ -58,7 +64,6 @@ export default function App() {
               </Routes>
             </ErrorBoundary>
           </BrowserRouter>
-          <Toaster position="bottom-right" richColors />
         </SSEProvider>
       </TooltipProvider>
     </QueryClientProvider>

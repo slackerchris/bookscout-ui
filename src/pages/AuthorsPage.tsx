@@ -205,7 +205,7 @@ function UnwatchedRow({ author, isWatching, onWatch, onDismiss }: UnwatchedRowPr
 
 export default function AuthorsPage() {
   const { data: authors = [], isLoading, isError } = useAuthors()
-  const { data: unwatched = [], isLoading: unwatchedLoading } = useUnwatchedAuthors()
+  const { data: unwatched = [], isLoading: unwatchedLoading } = useUnwatchedAuthors(tab === 'all' || tab === 'unwatched')
   const { add, remove, scan, watch } = useAuthorMutations()
   const { favorites, toggle: toggleFavorite } = useFavoriteAuthors()
 
@@ -237,7 +237,11 @@ export default function AuthorsPage() {
   [unwatched, search])
 
   const allAuthors = useMemo(() => {
-    const combined = [...authors, ...unwatched]
+    // Deduplicate by id — during a refetch race the same author can briefly
+    // appear in both lists. Prefer the watched version (authors) since it's
+    // the more authoritative source.
+    const watchedIds = new Set(authors.map((a) => a.id))
+    const combined = [...authors, ...unwatched.filter((a) => !watchedIds.has(a.id))]
     return combined
       .filter((a) => a.name.toLowerCase().includes(search.toLowerCase()))
       .sort((a, b) => {
@@ -324,37 +328,45 @@ export default function AuthorsPage() {
       {/* Tab toggle + filter bar */}
       <div className="flex items-center gap-2 flex-wrap">
         {/* Tab toggle */}
-        <Button
-          variant={tab === 'all' ? 'default' : 'outline'}
-          size="sm"
-          className="h-8 text-xs"
-          onClick={() => setTab('all')}
-        >
-          All
-        </Button>
-        <Button
-          variant={tab === 'watching' ? 'default' : 'outline'}
-          size="sm"
-          className="h-8 gap-1.5 text-xs"
-          onClick={() => setTab('watching')}
-        >
-          <Eye size={12} />
-          Watching
-        </Button>
-        <Button
-          variant={tab === 'unwatched' ? 'default' : 'outline'}
-          size="sm"
-          className={cn('h-8 gap-1.5 text-xs', showUnwatchedBadge && tab !== 'unwatched' && 'border-amber-400/70 text-amber-600')}
-          onClick={() => setTab('unwatched')}
-        >
-          <EyeOff size={12} />
-          Not watching
-          {showUnwatchedBadge && (
-            <span className="ml-1 rounded-full bg-amber-400/20 px-1.5 py-0.5 text-[10px] font-semibold text-amber-600 leading-none">
-              {unwatched.length}
-            </span>
-          )}
-        </Button>
+        <div role="tablist" aria-label="Author list view" className="flex items-center gap-2">
+          <Button
+            role="tab"
+            aria-selected={tab === 'all'}
+            variant={tab === 'all' ? 'default' : 'outline'}
+            size="sm"
+            className="h-8 text-xs"
+            onClick={() => setTab('all')}
+          >
+            All
+          </Button>
+          <Button
+            role="tab"
+            aria-selected={tab === 'watching'}
+            variant={tab === 'watching' ? 'default' : 'outline'}
+            size="sm"
+            className="h-8 gap-1.5 text-xs"
+            onClick={() => setTab('watching')}
+          >
+            <Eye size={12} />
+            Watching
+          </Button>
+          <Button
+            role="tab"
+            aria-selected={tab === 'unwatched'}
+            variant={tab === 'unwatched' ? 'default' : 'outline'}
+            size="sm"
+            className={cn('h-8 gap-1.5 text-xs', showUnwatchedBadge && tab !== 'unwatched' && 'border-amber-400/70 text-amber-600')}
+            onClick={() => setTab('unwatched')}
+          >
+            <EyeOff size={12} />
+            Not watching
+            {showUnwatchedBadge && (
+              <span className="ml-1 rounded-full bg-amber-400/20 px-1.5 py-0.5 text-[10px] font-semibold text-amber-600 leading-none">
+                {unwatched.length}
+              </span>
+            )}
+          </Button>
+        </div>
 
         <div className="w-px h-5 bg-border mx-1" />
 

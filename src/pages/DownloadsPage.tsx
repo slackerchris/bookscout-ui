@@ -1,212 +1,13 @@
 import { useQuery } from '@tanstack/react-query'
 import { searchApi, booksApi } from '@/lib/api'
 import type { DownloadQueueItem } from '@/lib/api'
-import type { Book } from '@/types'
-import { cn } from '@/lib/utils'
+import { isAudiobookDownload, bucketStatus, statusRank } from '@/features/downloads/helpers'
+import QueueRow from '@/features/downloads/QueueRow'
+import ImportedRow from '@/features/downloads/ImportedRow'
 import {
   Download, CheckCircle2, Clock, AlertCircle, Loader2,
-  HardDrive, RefreshCw, BookAudio, Library, FolderOpen,
+  BookAudio, RefreshCw,
 } from 'lucide-react'
-
-// ── Helpers ────────────────────────────────────────────────────────────────
-
-function normalizeProgress(item: DownloadQueueItem): number {
-  if (item.progress !== undefined) return Math.min(100, Math.max(0, item.progress))
-  if (item.percentage !== undefined) return Math.min(100, Math.max(0, parseFloat(item.percentage) || 0))
-  return 0
-}
-
-function formatEta(eta: number | string | undefined): string | null {
-  if (eta === undefined || eta === null) return null
-  if (typeof eta === 'string') {
-    if (eta === 'unknown' || eta === '') return null
-    return eta
-  }
-  if (eta < 0 || eta > 86400 * 7) return null
-  const h = Math.floor(eta / 3600)
-  const m = Math.floor((eta % 3600) / 60)
-  const s = Math.floor(eta % 60)
-  if (h > 0) return `${h}h ${m}m`
-  if (m > 0) return `${m}m ${s}s`
-  return `${s}s`
-}
-
-function formatBytes(bytes: number | string | undefined): string | null {
-  if (bytes === undefined || bytes === null) return null
-  if (typeof bytes === 'string') {
-    const n = parseFloat(bytes)
-    if (isNaN(n)) return null
-    return `${n.toFixed(0)} MB`
-  }
-  if (bytes < 1024) return `${bytes} B`
-  if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`
-  if (bytes < 1024 * 1024 * 1024) return `${(bytes / (1024 * 1024)).toFixed(1)} MB`
-  return `${(bytes / (1024 * 1024 * 1024)).toFixed(2)} GB`
-}
-
-const STATUS_DOT: Record<string, string> = {
-  downloading:   'bg-blue-500',
-  uploading:     'bg-emerald-500',
-  seeding:       'bg-emerald-500',
-  stalledDL:     'bg-yellow-500',
-  stalledUP:     'bg-yellow-500',
-  pausedDL:      'bg-zinc-400',
-  pausedUP:      'bg-zinc-400',
-  checkingDL:    'bg-violet-500',
-  checkingUP:    'bg-violet-500',
-  error:         'bg-red-500',
-  stopped:       'bg-zinc-400',
-  download_wait: 'bg-yellow-500',
-  check_wait:    'bg-violet-500',
-  checking:      'bg-violet-500',
-  seed_wait:     'bg-yellow-500',
-  Downloading:   'bg-blue-500',
-  Paused:        'bg-zinc-400',
-  Queued:        'bg-yellow-500',
-  Fetching:      'bg-violet-500',
-  Completed:     'bg-emerald-500',
-  Failed:        'bg-red-500',
-}
-
-function statusDot(status: string) {
-  return STATUS_DOT[status] ?? 'bg-zinc-400'
-}
-
-function normalizeStatus(status: string): string {
-  const s = status.toLowerCase()
-  if (s === 'stalleddl') return 'Stalled'
-  if (s === 'stalledup' || s === 'uploading' || s === 'seeding' || s === 'seed_wait') return 'Seeding'
-  if (s === 'downloading' || s === 'downloading metadata') return 'Downloading'
-  if (s === 'pauseddl' || s === 'pausedup' || s === 'paused') return 'Paused'
-  if (s === 'checkingdl' || s === 'checkingup' || s === 'checking' || s === 'check_wait') return 'Checking'
-  if (s === 'download_wait' || s === 'queued') return 'Queued'
-  if (s === 'completed') return 'Completed'
-  if (s === 'stopped') return 'Stopped'
-  if (s === 'failed' || s === 'error') return 'Error'
-  return status
-}
-
-const AUDIOBOOK_HINTS = ['audiobook', 'audiobooks', '/audiobooks', '\\audiobooks']
-
-function isAudiobookDownload(item: DownloadQueueItem): boolean {
-  const haystacks = [item.category, item.save_path, item.title]
-    .filter(Boolean)
-    .map((value) => value!.toLowerCase())
-  return haystacks.some((value) => AUDIOBOOK_HINTS.some((hint) => value.includes(hint)))
-}
-
-function bucketStatus(item: DownloadQueueItem): 'downloading' | 'paused' | 'completed' | 'other' {
-  const progress = normalizeProgress(item)
-  const s = item.status.toLowerCase()
-  if (progress >= 100 || s === 'completed' || s === 'seeding') return 'completed'
-  if (s === 'paused' || s === 'pauseddl' || s === 'pausedup' || s === 'stopped') return 'paused'
-  if (s === 'downloading' || s === 'download_wait' || s === 'queued' || s === 'fetching') return 'downloading'
-  return 'other'
-}
-
-function statusRank(item: DownloadQueueItem): number {
-  const bucket = bucketStatus(item)
-  if (bucket === 'downloading') return 0
-  if (bucket === 'paused') return 1
-  if (bucket === 'other') return 2
-  return 3
-}
-
-// ── Queue item row ─────────────────────────────────────────────────────────
-
-function QueueRow({ item }: { item: DownloadQueueItem }) {
-  const progress = normalizeProgress(item)
-  const eta = formatEta(item.eta)
-  const total = formatBytes(item.size)
-  const dl = formatBytes(item.downloaded)
-  const remaining = item.remaining ? `${item.remaining} MB left` : null
-  const label = normalizeStatus(item.status)
-
-  return (
-    <div className="grid grid-cols-[minmax(0,1fr)_auto] gap-3 border-b border-border px-4 py-3 last:border-0">
-      <div className="min-w-0">
-        <div className="flex items-center gap-2">
-          <span className={cn('size-2 shrink-0 rounded-full', statusDot(item.status))} />
-          <span className="truncate text-sm font-medium text-foreground">{item.title}</span>
-          <span className="shrink-0 rounded-full bg-muted px-2 py-0.5 text-[11px] text-muted-foreground">
-            {label}
-          </span>
-        </div>
-        <div className="mt-1 flex flex-wrap items-center gap-x-3 gap-y-1 text-[11px] text-muted-foreground">
-          <span className="font-medium tabular-nums">{progress.toFixed(1)}%</span>
-          {(dl || total) && (
-            <span className="flex items-center gap-1">
-              <HardDrive size={10} />
-              {dl && total ? `${dl} / ${total}` : (total ?? dl)}
-            </span>
-          )}
-          {remaining && <span>{remaining}</span>}
-          {eta && (
-            <span className="flex items-center gap-1">
-              <Clock size={10} />
-              {eta}
-            </span>
-          )}
-          {item.category && (
-            <span className="inline-flex items-center gap-1">
-              <Library size={10} />
-              {item.category}
-            </span>
-          )}
-          {item.save_path && (
-            <span className="inline-flex items-center gap-1 truncate">
-              <FolderOpen size={10} />
-              <span className="truncate">{item.save_path}</span>
-            </span>
-          )}
-        </div>
-        {item.error && (
-          <p className="mt-1 flex items-center gap-1 text-[11px] text-destructive">
-            <AlertCircle size={10} />
-            {item.error}
-          </p>
-        )}
-      </div>
-      <div className="w-24 justify-self-end self-center">
-        <div className="mb-1 text-right text-[11px] font-medium tabular-nums text-muted-foreground">
-          {progress.toFixed(0)}%
-        </div>
-        <div className="h-1.5 w-full overflow-hidden rounded-full bg-muted">
-          <div
-            className={cn('h-full rounded-full transition-all', progress >= 100 ? 'bg-emerald-500' : 'bg-blue-500')}
-            style={{ width: `${progress}%` }}
-          />
-        </div>
-      </div>
-    </div>
-  )
-}
-
-// ── Recently imported row ──────────────────────────────────────────────────
-
-function ImportedRow({ book }: { book: Book }) {
-  const when = new Date(book.updated_at).toLocaleString(undefined, {
-    dateStyle: 'medium', timeStyle: 'short',
-  })
-  return (
-    <div className="flex items-center gap-3 border-b border-border px-4 py-3 last:border-0">
-      <CheckCircle2 size={14} className="shrink-0 text-emerald-500" />
-      <div className="min-w-0 flex-1">
-        <p className="truncate text-sm text-foreground">
-          {book.title}
-          {book.series_name && (
-            <span className="text-muted-foreground">
-              {' '}· {book.series_name}{book.series_position ? ` #${book.series_position}` : ''}
-            </span>
-          )}
-        </p>
-      </div>
-      <span className="shrink-0 text-xs text-muted-foreground tabular-nums">{when}</span>
-    </div>
-  )
-}
-
-// ── Page ───────────────────────────────────────────────────────────────────
 
 export default function DownloadsPage() {
   const {
@@ -229,6 +30,7 @@ export default function DownloadsPage() {
     queryKey: ['downloads', 'recently-imported'],
     queryFn: () => booksApi.recentlyImported(20),
     staleTime: 60_000,
+    refetchInterval: 5 * 60_000,
   })
 
   const lastUpdated = dataUpdatedAt
@@ -245,7 +47,7 @@ export default function DownloadsPage() {
     { total: 0, downloading: 0, paused: 0, completed: 0, other: 0 },
   )
 
-  const sortedQueue = [...audiobookQueue].sort((a, b) => {
+  const sortedQueue = [...audiobookQueue].sort((a: DownloadQueueItem, b: DownloadQueueItem) => {
     const rankDiff = statusRank(a) - statusRank(b)
     if (rankDiff !== 0) return rankDiff
     return a.title.localeCompare(b.title)

@@ -87,7 +87,9 @@ export default function AuthorDetailPage() {
   const [coauthorsOpen, setCoauthorsOpen] = useState(false)
   const [confirmRemove, setConfirmRemove] = useState(false)
 
-  // Reset to first page when server-side filter params change
+  // Reset to first page when server-side filter params change.
+  // english_only is intentionally excluded — it's client-side only and doesn't
+  // affect the paginated query, so changing it shouldn't reset pagination.
   useEffect(() => {
     setPage(0)
   }, [filter.missing_only, filter.confidence_band])
@@ -95,7 +97,7 @@ export default function AuthorDetailPage() {
   // Server-side params — paginated
   const serverParams = {
     author_id: authorId,
-    missing_only: filter.missing_only || undefined,
+    missing_only: filter.missing_only ? true : undefined,
     confidence_band: filter.confidence_band !== 'all' ? filter.confidence_band : undefined,
     limit: PAGE_SIZE,
     offset: page * PAGE_SIZE,
@@ -104,12 +106,12 @@ export default function AuthorDetailPage() {
   // Count params — no limit/offset, same filters
   const countParams = {
     author_id: authorId,
-    missing_only: filter.missing_only || undefined,
+    missing_only: filter.missing_only ? true : undefined,
     confidence_band: filter.confidence_band !== 'all' ? filter.confidence_band : undefined,
   }
 
   const { data: booksRaw = [], isLoading: booksLoading, isError: booksError } = useBooks(serverParams)
-  const { data: totalCount = 0 } = useBooksCount(countParams)
+  const { data: totalCount = 0, isLoading: countLoading } = useBooksCount(countParams)
 
   // Attach author name (required by BookRow type) + client-side english filter + sort
   const displayBooks = useMemo<BookRow[]>(() => {
@@ -157,6 +159,7 @@ export default function AuthorDetailPage() {
   })
 
   function handleScan() {
+    scan.reset() // clear any previous error banner before the new attempt
     setScanning(true)
     // Don't reset on settle — scanning stays true until scan.complete SSE fires.
     // Fallback: clear after 10 min in case SSE is unavailable.
@@ -283,8 +286,8 @@ export default function AuthorDetailPage() {
             defaultFilter={PAGE_DEFAULT}
           />
 
-          {/* Book count */}
-          {!booksLoading && (
+          {/* Book count — suppressed until both the list and count queries resolve to avoid "0 books" flicker */}
+          {!booksLoading && !countLoading && (
             <p className="text-sm text-muted-foreground -mt-1">
               {totalCount} book{totalCount !== 1 ? 's' : ''}
             </p>

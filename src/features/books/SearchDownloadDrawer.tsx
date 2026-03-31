@@ -33,9 +33,11 @@ export default function SearchDownloadDrawer({ book, onClose }: Props) {
     onSuccess: (data) => setResults(data),
   })
 
-  // Stable ref so useEffect can call mutate without it being a dependency
+  // Stable refs so useEffect can call mutate/reset without them being dependencies
   const mutateRef = useRef(searchMutation.mutate)
+  const resetRef = useRef(searchMutation.reset)
   mutateRef.current = searchMutation.mutate
+  resetRef.current = searchMutation.reset
 
   // Reset state and auto-search when the drawer opens for a new book
   useEffect(() => {
@@ -44,6 +46,9 @@ export default function SearchDownloadDrawer({ book, onClose }: Props) {
       setQuery(q)
       setResults([])
       setDlStates({})
+      // Reset mutation state so isSuccess from the previous book doesn't flash
+      // "no results" before the new search completes.
+      resetRef.current()
       mutateRef.current(q)
     }
   }, [book?.id]) // eslint-disable-line react-hooks/exhaustive-deps

@@ -49,9 +49,7 @@ function ServiceStatusBadge({ svc, loading }: { svc?: ServiceStatus; loading: bo
 }
 
 export default function IntegrationsPage() {
-  const { data: storedRaw } = useAbsImportResult()
-  // Backend returns {} when no import has run yet — treat as absent.
-  const stored = storedRaw?.imported_at ? storedRaw : null
+  const { data: stored } = useAbsImportResult()
   const importMutation = useAbsImport()
   const { data: searchStatus, isLoading: statusLoading } = useSearchStatus()
   const { data: health, isLoading: healthLoading } = useHealth()

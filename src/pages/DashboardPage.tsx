@@ -46,8 +46,6 @@ function ServiceDot({ label, svc, loading }: { label: string; svc?: ServiceStatu
   )
 }
 
-// ── ETA formatter ──────────────────────────────────────────────────────────
-
 // ── Page ───────────────────────────────────────────────────────────────────
 
 export default function DashboardPage() {
