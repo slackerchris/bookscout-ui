@@ -96,7 +96,7 @@ export default function DashboardPage() {
       </div>
 
       {/* Stats row */}
-      <div className="grid grid-cols-3 gap-3">
+      <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
         <StatCard
           label="Missing books"
           value={counts.missing.data}
@@ -111,11 +111,18 @@ export default function DashboardPage() {
           iconClassName="bg-orange-500/10"
         />
         <StatCard
-          label="Authors tracked"
+          label="Authors watched"
           value={counts.authors.data}
           icon={Users}
           loading={counts.authors.isLoading}
           iconClassName="bg-blue-500/10"
+        />
+        <StatCard
+          label="Total authors"
+          value={counts.totalAuthors.data}
+          icon={Users}
+          loading={counts.totalAuthors.isLoading}
+          iconClassName="bg-violet-500/10"
         />
       </div>
     </div>

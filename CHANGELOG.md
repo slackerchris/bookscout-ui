@@ -7,6 +7,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [0.64.1] — 2026-03-31
+
+### Changed
+- **Dashboard — "Authors tracked" → "Authors watched"**
+- **Dashboard — added "Total authors" stat card** showing all authors in the DB (watched + unwatched). Grid expanded to 4 columns.
+
+---
+
 ## [0.64.0] — 2026-03-30
 
 ### Added
