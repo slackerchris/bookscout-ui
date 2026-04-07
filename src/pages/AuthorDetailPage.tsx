@@ -39,6 +39,12 @@ function formatDate(iso: string) {
   return new Date(iso).toLocaleString(undefined, { dateStyle: 'medium', timeStyle: 'short' })
 }
 
+function isEnglishLanguageTag(language: string | null): boolean {
+  if (!language) return false
+  const normalized = language.trim().toLowerCase().replace(/_/g, '-')
+  return normalized === 'en' || normalized.startsWith('en-') || normalized === 'eng' || normalized === 'english'
+}
+
 // ── Stat chip ──────────────────────────────────────────────────────────────
 
 function StatChip({ icon: Icon, label, value, className }: {
@@ -123,7 +129,7 @@ export default function AuthorDetailPage() {
 
     if (filter.english_only) {
       rows = rows.filter((b) =>
-        b.language ? b.language === 'en' : !isNonLatinTitle(b.title),
+        b.language ? isEnglishLanguageTag(b.language) : !isNonLatinTitle(b.title),
       )
     }
 

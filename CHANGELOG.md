@@ -7,6 +7,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [0.65.3] — 2026-04-06
+
+### Fixed
+- **Author Detail — English filter accepts common language tag variants**: `english_only` now treats `en`, `eng`, `english`, and region tags like `en-US` / `en_GB` as English instead of requiring an exact `en` match.
+- **Author Detail — fewer false "non-English" matches**: fallback title heuristic now flags only clearly non-Latin scripts, preventing accented Latin titles from being incorrectly filtered out.
+
+---
+
 ## [0.65.2] — 2026-04-06
 
 ### Performance

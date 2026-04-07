@@ -18,15 +18,16 @@ export interface BooksFilter {
   english_only: boolean
 }
 
-// Matches titles that contain characters from non-Latin scripts OR Latin Extended-A/B
-// (Polish, Czech, Hungarian, Romanian, etc.) — fallback for rows with no language set.
-// English titles virtually never contain characters outside ASCII + Latin-1 Supplement.
+// Matches titles that contain characters from clearly non-Latin scripts.
+// Fallback for rows with no language set: if a title is Latin-script (including
+// accented Latin text), keep it. This avoids false negatives for English titles
+// containing names/loanwords with diacritics.
 //
 // Filtering priority when english_only is on:
 //   1. If book.language is set → use it as ground truth (language='fr' hides even ASCII titles)
 //   2. If book.language is null → fall back to title heuristic (isNonLatinTitle)
 // This is intentional: a known non-English language is hidden regardless of title script.
-const NON_LATIN_RE = /[\u0100-\u024F\u0400-\u04FF\u0600-\u06FF\u0590-\u05FF\u4E00-\u9FFF\u3400-\u4DBF\u3040-\u30FF\uAC00-\uD7AF\u0E00-\u0E7F\u0900-\u097F]/
+const NON_LATIN_RE = /[\p{Script=Cyrillic}\p{Script=Arabic}\p{Script=Hebrew}\p{Script=Han}\p{Script=Hiragana}\p{Script=Katakana}\p{Script=Hangul}\p{Script=Thai}\p{Script=Devanagari}]/u
 
 export function isNonLatinTitle(title: string): boolean {
   return NON_LATIN_RE.test(title)
