@@ -13,6 +13,7 @@ export interface BooksParams {
 
 export interface BookUpdate {
   have_it?: boolean
+  language?: string | null
   series_name?: string | null
   series_position?: string | null
   subtitle?: string | null

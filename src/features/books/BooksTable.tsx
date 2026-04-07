@@ -9,7 +9,7 @@ import {
 } from '@/components/ui/table'
 import { Button } from '@/components/ui/button'
 import { ConfidenceBadge, BookStateBadge } from '@/components/StatusBadge'
-import { Search, Trash2, ChevronLeft, ChevronRight, BookCheck, BookX, ExternalLink } from 'lucide-react'
+import { Search, Trash2, ChevronLeft, ChevronRight, BookCheck, BookX, ExternalLink, Languages } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { useMutation, useQueryClient } from '@tanstack/react-query'
 import { booksApi } from '@/lib/api/books'
@@ -78,6 +78,12 @@ function bookState(b: BookRow): 'have_it' | 'missing' {
   return b.have_it ? 'have_it' : 'missing'
 }
 
+function isEnglishLanguageTag(language: string | null | undefined): boolean {
+  if (!language) return false
+  const normalized = language.trim().toLowerCase().replace(/_/g, '-')
+  return normalized === 'en' || normalized.startsWith('en-') || normalized === 'eng' || normalized === 'english'
+}
+
 function BooksTable({ books, grouped, totalCount, page = 0, onPageChange }: Props) {
   const [selectedBook, setSelectedBook] = useState<BookRow | null>(null)
   const [confirmDeleteId, setConfirmDeleteId] = useState<number | null>(null)
@@ -110,6 +116,17 @@ function BooksTable({ books, grouped, totalCount, page = 0, onPageChange }: Prop
         (old) => old?.map((b) => b.id === id ? { ...b, have_it } : b),
       )
       queryClient.invalidateQueries({ queryKey: bookKeys.counts() })
+    },
+  })
+
+  const languageMutation = useMutation({
+    mutationFn: ({ id, language }: { id: number; language: string }) =>
+      booksApi.update(id, { language }),
+    onSuccess: (_, { id, language }) => {
+      queryClient.setQueriesData<Book[]>(
+        { queryKey: bookKeys.lists() },
+        (old) => old?.map((b) => b.id === id ? { ...b, language } : b),
+      )
     },
   })
 
@@ -183,6 +200,21 @@ function BooksTable({ books, grouped, totalCount, page = 0, onPageChange }: Prop
             disabled={ownMutation.isPending}
           >
             {book.have_it ? <BookCheck size={13} /> : <BookX size={13} />}
+          </Button>
+          <Button
+            variant="ghost"
+            size="sm"
+            className={cn(
+              'h-7 w-7 p-0',
+              isEnglishLanguageTag(book.language)
+                ? 'text-emerald-500 hover:text-emerald-600'
+                : 'text-muted-foreground hover:text-foreground',
+            )}
+            title={isEnglishLanguageTag(book.language) ? 'Language is English' : 'Set language to English'}
+            onClick={() => languageMutation.mutate({ id: book.id, language: 'en' })}
+            disabled={languageMutation.isPending || isEnglishLanguageTag(book.language)}
+          >
+            <Languages size={13} />
           </Button>
           {book.asin && (
             <Button

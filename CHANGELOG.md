@@ -7,6 +7,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [0.65.4] — 2026-04-06
+
+### Added
+- **Author Detail — manual "Set English" action**: each book row now includes a language action button to force that book's language to `en` when metadata is wrong.
+- **Author Detail — hidden-by-filter hint**: when "English only" hides rows, the page shows a warning with a one-click "Show all languages" action.
+
+---
+
 ## [0.65.3] — 2026-04-06
 
 ### Fixed
