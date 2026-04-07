@@ -77,5 +77,20 @@ export function useAuthorMutations() {
     },
   })
 
-  return { add, remove, scan, watch }
+  // watchMany: bulk watch with a single invalidate pass to avoid refetch storms.
+  const watchMany = useMutation({
+    mutationFn: async (ids: number[]) => {
+      const results = await Promise.allSettled(ids.map((id) => authorsApi.watch(id)))
+      const rejected = results.filter((r): r is PromiseRejectedResult => r.status === 'rejected')
+      if (rejected.length > 0) {
+        throw new Error(`Failed to watch ${rejected.length} author${rejected.length === 1 ? '' : 's'}`)
+      }
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: authorKeys.list() })
+      qc.invalidateQueries({ queryKey: authorKeys.unwatched() })
+    },
+  })
+
+  return { add, remove, scan, watch, watchMany }
 }

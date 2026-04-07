@@ -7,6 +7,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [0.65.2] — 2026-04-06
+
+### Performance
+- **Authors page scaling (300+ authors)** — replaced repeated watched-membership scans with precomputed `Set` lookups and deferred search input processing to reduce expensive synchronous work during typing and tab changes.
+- **Incremental list rendering** — author lists now render in smaller initial batches (`60`) with "Show more" pagination controls on All, Watching, and Not watching views to cut first-paint DOM cost.
+- **Lower per-item UI overhead** — swapped per-card tooltip wrappers on high-frequency author actions for lightweight native `title` + `aria-label` attributes.
+- **Bulk watch optimization** — added `watchMany` mutation path used by "Watch all" so large operations avoid per-author query invalidation storms and refresh watched/unwatched lists once per batch.
+
+---
+
 ## [0.65.1] — 2026-03-31
 
 ### Added

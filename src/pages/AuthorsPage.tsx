@@ -1,4 +1,4 @@
-import { useState, useMemo } from 'react'
+import { memo, useDeferredValue, useMemo, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { useAuthors, useUnwatchedAuthors, useAuthorMutations } from '@/features/authors/useAuthors'
 import { useFavoriteAuthors } from '@/features/authors/useFavoriteAuthors'
@@ -10,10 +10,12 @@ import ConfirmDialog from '@/components/ConfirmDialog'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Card, CardContent } from '@/components/ui/card'
-import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip'
 import { cn } from '@/lib/utils'
 import type { Author } from '@/types'
 import { Plus, ScanLine, Trash2, Users, Loader2, AlertCircle, Star, ArrowUpDown, Eye, EyeOff, Clock } from 'lucide-react'
+
+const INITIAL_RENDER_COUNT = 60
+const RENDER_STEP = 60
 
 // ── Avatar helpers ─────────────────────────────────────────────────────────
 
@@ -63,7 +65,7 @@ interface AuthorCardProps {
   isWatching?: boolean
 }
 
-function AuthorCard({ author, isFavorite, isScanning, onFavorite, onScan, onCoauthors, onRemove, onWatch, isWatching }: AuthorCardProps) {
+const AuthorCard = memo(function AuthorCard({ author, isFavorite, isScanning, onFavorite, onScan, onCoauthors, onRemove, onWatch, isWatching }: AuthorCardProps) {
   return (
     <Card className={cn(
       'relative flex flex-col overflow-hidden transition-shadow hover:shadow-md',
@@ -112,67 +114,69 @@ function AuthorCard({ author, isFavorite, isScanning, onFavorite, onScan, onCoau
                 {isWatching ? <Loader2 size={12} className="animate-spin" /> : <Eye size={12} />}
                 Watch
               </Button>
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    className="h-7 w-7 p-0 text-destructive/50 hover:text-destructive hover:bg-destructive/10"
-                    onClick={onRemove}
-                  >
-                    <Trash2 size={12} />
-                  </Button>
-                </TooltipTrigger>
-                <TooltipContent>Dismiss author</TooltipContent>
-              </Tooltip>
+              <Button
+                variant="ghost"
+                size="sm"
+                className="h-7 w-7 p-0 text-destructive/50 hover:text-destructive hover:bg-destructive/10"
+                onClick={onRemove}
+                title="Dismiss author"
+                aria-label="Dismiss author"
+              >
+                <Trash2 size={12} />
+              </Button>
             </>
           ) : (
             <>
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    className="h-7 flex-1 text-xs gap-1.5"
-                    disabled={isScanning}
-                    onClick={onScan}
-                  >
-                    {isScanning ? <Loader2 size={12} className="animate-spin" /> : <ScanLine size={12} />}
-                    Scan
-                  </Button>
-                </TooltipTrigger>
-                <TooltipContent>Scan for new books</TooltipContent>
-              </Tooltip>
+              <Button
+                variant="ghost"
+                size="sm"
+                className="h-7 flex-1 text-xs gap-1.5"
+                disabled={isScanning}
+                onClick={onScan}
+                title="Scan for new books"
+              >
+                {isScanning ? <Loader2 size={12} className="animate-spin" /> : <ScanLine size={12} />}
+                Scan
+              </Button>
 
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <Button variant="ghost" size="sm" className="h-7 w-7 p-0" onClick={onCoauthors}>
-                    <Users size={12} />
-                  </Button>
-                </TooltipTrigger>
-                <TooltipContent>View coauthors</TooltipContent>
-              </Tooltip>
+              <Button
+                variant="ghost"
+                size="sm"
+                className="h-7 w-7 p-0"
+                onClick={onCoauthors}
+                title="View coauthors"
+                aria-label="View coauthors"
+              >
+                <Users size={12} />
+              </Button>
 
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    className="h-7 w-7 p-0 text-destructive/50 hover:text-destructive hover:bg-destructive/10"
-                    onClick={onRemove}
-                  >
-                    <Trash2 size={12} />
-                  </Button>
-                </TooltipTrigger>
-                <TooltipContent>Remove author</TooltipContent>
-              </Tooltip>
+              <Button
+                variant="ghost"
+                size="sm"
+                className="h-7 w-7 p-0 text-destructive/50 hover:text-destructive hover:bg-destructive/10"
+                onClick={onRemove}
+                title="Remove author"
+                aria-label="Remove author"
+              >
+                <Trash2 size={12} />
+              </Button>
             </>
           )}
         </div>
       </CardContent>
     </Card>
   )
-}
+}, (prev, next) => {
+  return (
+    prev.author.id === next.author.id &&
+    prev.author.name === next.author.name &&
+    prev.author.last_scanned === next.author.last_scanned &&
+    prev.isFavorite === next.isFavorite &&
+    prev.isScanning === next.isScanning &&
+    prev.isWatching === next.isWatching &&
+    Boolean(prev.onWatch) === Boolean(next.onWatch)
+  )
+})
 
 // ── Unwatched author row (Not watching tab) ───────────────────────────────
 
@@ -183,7 +187,7 @@ interface UnwatchedRowProps {
   onDismiss: () => void
 }
 
-function UnwatchedRow({ author, isWatching, onWatch, onDismiss }: UnwatchedRowProps) {
+const UnwatchedRow = memo(function UnwatchedRow({ author, isWatching, onWatch, onDismiss }: UnwatchedRowProps) {
   return (
     <div className="flex items-center gap-3 py-2 px-3 rounded-md hover:bg-muted/40 group">
       <div className={cn(
@@ -194,19 +198,16 @@ function UnwatchedRow({ author, isWatching, onWatch, onDismiss }: UnwatchedRowPr
       </div>
       <span className="flex-1 text-sm text-foreground truncate">{author.name}</span>
       <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-        <Tooltip>
-          <TooltipTrigger asChild>
-            <Button
-              variant="ghost"
-              size="sm"
-              className="h-7 w-7 p-0 text-destructive/50 hover:text-destructive hover:bg-destructive/10"
-              onClick={onDismiss}
-            >
-              <Trash2 size={12} />
-            </Button>
-          </TooltipTrigger>
-          <TooltipContent>Dismiss (remove from list)</TooltipContent>
-        </Tooltip>
+        <Button
+          variant="ghost"
+          size="sm"
+          className="h-7 w-7 p-0 text-destructive/50 hover:text-destructive hover:bg-destructive/10"
+          onClick={onDismiss}
+          title="Dismiss (remove from list)"
+          aria-label="Dismiss author"
+        >
+          <Trash2 size={12} />
+        </Button>
       </div>
       <Button
         size="sm"
@@ -220,7 +221,13 @@ function UnwatchedRow({ author, isWatching, onWatch, onDismiss }: UnwatchedRowPr
       </Button>
     </div>
   )
-}
+}, (prev, next) => {
+  return (
+    prev.author.id === next.author.id &&
+    prev.author.name === next.author.name &&
+    prev.isWatching === next.isWatching
+  )
+})
 
 // ── Page ────────────────────────────────────────────────────────────────────
 
@@ -229,7 +236,7 @@ export default function AuthorsPage() {
 
   const { data: authors = [], isLoading, isError } = useAuthors()
   const { data: unwatched = [], isLoading: unwatchedLoading } = useUnwatchedAuthors(tab === 'all' || tab === 'unwatched')
-  const { add, remove, scan, watch } = useAuthorMutations()
+  const { add, remove, scan, watch, watchMany } = useAuthorMutations()
   const { favorites, toggle: toggleFavorite } = useFavoriteAuthors()
   const [search, setSearch] = useState('')
   const [sortDir, setSortDir] = useState<'asc' | 'desc'>('asc')
@@ -239,10 +246,17 @@ export default function AuthorsPage() {
   const [removeTarget, setRemoveTarget] = useState<Author | null>(null)
   const [scanningId, setScanningId] = useState<number | null>(null)
   const [watchingId, setWatchingId] = useState<number | null>(null)
+  const [allVisible, setAllVisible] = useState(INITIAL_RENDER_COUNT)
+  const [watchingVisible, setWatchingVisible] = useState(INITIAL_RENDER_COUNT)
+  const [unwatchedVisible, setUnwatchedVisible] = useState(INITIAL_RENDER_COUNT)
+
+  const deferredSearch = useDeferredValue(search)
+  const normalizedSearch = useMemo(() => deferredSearch.trim().toLowerCase(), [deferredSearch])
+  const watchedIds = useMemo(() => new Set(authors.map((a) => a.id)), [authors])
 
   const filtered = useMemo(() =>
     authors
-      .filter((a) => a.name.toLowerCase().includes(search.toLowerCase()))
+      .filter((a) => a.name.toLowerCase().includes(normalizedSearch))
       .filter((a) => !favoritesOnly || favorites.has(a.id))
       .sort((a, b) => {
         const aFav = favorites.has(a.id) ? 0 : 1
@@ -251,27 +265,36 @@ export default function AuthorsPage() {
         const cmp = a.name.localeCompare(b.name)
         return sortDir === 'asc' ? cmp : -cmp
       }),
-  [authors, search, favoritesOnly, favorites, sortDir])
+  [authors, normalizedSearch, favoritesOnly, favorites, sortDir])
 
   const filteredUnwatched = useMemo(() =>
-    unwatched.filter((a) => a.name.toLowerCase().includes(search.toLowerCase())),
-  [unwatched, search])
+    unwatched.filter((a) => a.name.toLowerCase().includes(normalizedSearch)),
+  [unwatched, normalizedSearch])
 
   const allAuthors = useMemo(() => {
     // Deduplicate by id — during a refetch race the same author can briefly
     // appear in both lists. Prefer the watched version (authors) since it's
     // the more authoritative source.
-    const watchedIds = new Set(authors.map((a) => a.id))
     const combined = [...authors, ...unwatched.filter((a) => !watchedIds.has(a.id))]
     return combined
-      .filter((a) => a.name.toLowerCase().includes(search.toLowerCase()))
+      .filter((a) => a.name.toLowerCase().includes(normalizedSearch))
       .sort((a, b) => {
         const aFav = favorites.has(a.id) ? 0 : 1
         const bFav = favorites.has(b.id) ? 0 : 1
         if (aFav !== bFav) return aFav - bFav
         return a.name.localeCompare(b.name)
       })
-  }, [authors, unwatched, search, favorites])
+  }, [authors, unwatched, watchedIds, normalizedSearch, favorites])
+
+  const visibleAllAuthors = useMemo(() => allAuthors.slice(0, allVisible), [allAuthors, allVisible])
+  const visibleWatchingAuthors = useMemo(() => filtered.slice(0, watchingVisible), [filtered, watchingVisible])
+  const visibleUnwatchedAuthors = useMemo(() => filteredUnwatched.slice(0, unwatchedVisible), [filteredUnwatched, unwatchedVisible])
+
+  function resetVisible() {
+    setAllVisible(INITIAL_RENDER_COUNT)
+    setWatchingVisible(INITIAL_RENDER_COUNT)
+    setUnwatchedVisible(INITIAL_RENDER_COUNT)
+  }
 
   function handleAddOpenChange(open: boolean) {
     if (!open) add.reset()
@@ -304,9 +327,8 @@ export default function AuthorsPage() {
   }
 
   function handleWatchAll() {
-    for (const author of filteredUnwatched) {
-      watch.mutate(author.id)
-    }
+    if (filteredUnwatched.length === 0) return
+    watchMany.mutate(filteredUnwatched.map((author) => author.id))
   }
 
   function handleRemoveConfirm() {
@@ -356,7 +378,10 @@ export default function AuthorsPage() {
             variant={tab === 'all' ? 'default' : 'outline'}
             size="sm"
             className="h-8 text-xs"
-            onClick={() => setTab('all')}
+            onClick={() => {
+              setTab('all')
+              resetVisible()
+            }}
           >
             All
           </Button>
@@ -366,7 +391,10 @@ export default function AuthorsPage() {
             variant={tab === 'watching' ? 'default' : 'outline'}
             size="sm"
             className="h-8 gap-1.5 text-xs"
-            onClick={() => setTab('watching')}
+            onClick={() => {
+              setTab('watching')
+              resetVisible()
+            }}
           >
             <Eye size={12} />
             Watching
@@ -377,7 +405,10 @@ export default function AuthorsPage() {
             variant={tab === 'unwatched' ? 'default' : 'outline'}
             size="sm"
             className={cn('h-8 gap-1.5 text-xs', showUnwatchedBadge && tab !== 'unwatched' && 'border-amber-400/70 text-amber-600')}
-            onClick={() => setTab('unwatched')}
+            onClick={() => {
+              setTab('unwatched')
+              resetVisible()
+            }}
           >
             <EyeOff size={12} />
             Not watching
@@ -394,7 +425,10 @@ export default function AuthorsPage() {
         <Input
           placeholder={tab === 'watching' ? 'Filter authors…' : 'Search…'}
           value={search}
-          onChange={(e) => setSearch(e.target.value)}
+          onChange={(e) => {
+            setSearch(e.target.value)
+            resetVisible()
+          }}
           className="h-8 w-48 text-sm"
         />
 
@@ -404,7 +438,10 @@ export default function AuthorsPage() {
               variant={favoritesOnly ? 'default' : 'outline'}
               size="sm"
               className="h-8 gap-1.5 text-xs"
-              onClick={() => setFavoritesOnly((v) => !v)}
+              onClick={() => {
+                setFavoritesOnly((v) => !v)
+                resetVisible()
+              }}
             >
               <Star size={12} className={cn(favoritesOnly && 'fill-current')} />
               Favorites
@@ -413,7 +450,10 @@ export default function AuthorsPage() {
               variant="ghost"
               size="sm"
               className="h-8 gap-1.5 text-xs text-muted-foreground"
-              onClick={() => setSortDir((d) => d === 'asc' ? 'desc' : 'asc')}
+              onClick={() => {
+                setSortDir((d) => d === 'asc' ? 'desc' : 'asc')
+                resetVisible()
+              }}
             >
               <ArrowUpDown size={12} />
               {sortDir === 'asc' ? 'A → Z' : 'Z → A'}
@@ -427,10 +467,10 @@ export default function AuthorsPage() {
             size="sm"
             className="h-8 text-xs gap-1.5"
             onClick={handleWatchAll}
-            disabled={watch.isPending}
+            disabled={watch.isPending || watchMany.isPending}
           >
             <Eye size={12} />
-            Watch all ({filteredUnwatched.length})
+            {watchMany.isPending ? 'Watching…' : `Watch all (${filteredUnwatched.length})`}
           </Button>
         )}
       </div>
@@ -453,6 +493,12 @@ export default function AuthorsPage() {
           Scan failed: {scan.error instanceof Error ? scan.error.message : 'Unknown error'}
         </div>
       )}
+      {watchMany.isError && (
+        <div className="rounded-md border border-destructive/30 bg-destructive/10 px-4 py-3 text-sm text-destructive flex items-center gap-2">
+          <AlertCircle size={14} className="shrink-0" />
+          Bulk watch failed: {watchMany.error instanceof Error ? watchMany.error.message : 'Unknown error'}
+        </div>
+      )}
 
       {/* ── All tab ── */}
       {tab === 'all' && (
@@ -472,36 +518,49 @@ export default function AuthorsPage() {
           )}
 
           {!isLoading && !unwatchedLoading && allAuthors.length > 0 && (
-            <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6">
-              {allAuthors.map((author) => {
-                const isWatched = authors.some((a) => a.id === author.id)
-                return isWatched ? (
-                  <AuthorCard
-                    key={author.id}
-                    author={author}
-                    isFavorite={favorites.has(author.id)}
-                    isScanning={scanningId === author.id}
-                    onFavorite={() => toggleFavorite(author.id)}
-                    onScan={() => handleScan(author)}
-                    onCoauthors={() => setCoauthorTarget({ id: author.id, name: author.name })}
-                    onRemove={() => setRemoveTarget(author)}
-                  />
-                ) : (
-                  <AuthorCard
-                    key={author.id}
-                    author={author}
-                    isFavorite={false}
-                    isScanning={false}
-                    onFavorite={() => {}}
-                    onScan={() => {}}
-                    onCoauthors={() => {}}
-                    onRemove={() => setRemoveTarget(author)}
-                    onWatch={() => handleWatch(author)}
-                    isWatching={watchingId === author.id}
-                  />
-                )
-              })}
-            </div>
+            <>
+              <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6">
+                {visibleAllAuthors.map((author) => {
+                  const isWatched = watchedIds.has(author.id)
+                  return isWatched ? (
+                    <AuthorCard
+                      key={author.id}
+                      author={author}
+                      isFavorite={favorites.has(author.id)}
+                      isScanning={scanningId === author.id}
+                      onFavorite={() => toggleFavorite(author.id)}
+                      onScan={() => handleScan(author)}
+                      onCoauthors={() => setCoauthorTarget({ id: author.id, name: author.name })}
+                      onRemove={() => setRemoveTarget(author)}
+                    />
+                  ) : (
+                    <AuthorCard
+                      key={author.id}
+                      author={author}
+                      isFavorite={false}
+                      isScanning={false}
+                      onFavorite={() => {}}
+                      onScan={() => {}}
+                      onCoauthors={() => {}}
+                      onRemove={() => setRemoveTarget(author)}
+                      onWatch={() => handleWatch(author)}
+                      isWatching={watchingId === author.id}
+                    />
+                  )
+                })}
+              </div>
+              {allAuthors.length > visibleAllAuthors.length && (
+                <div className="flex justify-center pt-2">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => setAllVisible((v) => Math.min(v + RENDER_STEP, allAuthors.length))}
+                  >
+                    Show more ({allAuthors.length - visibleAllAuthors.length} remaining)
+                  </Button>
+                </div>
+              )}
+            </>
           )}
         </>
       )}
@@ -531,20 +590,33 @@ export default function AuthorsPage() {
           )}
 
           {!isLoading && filtered.length > 0 && (
-            <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6">
-              {filtered.map((author) => (
-                <AuthorCard
-                  key={author.id}
-                  author={author}
-                  isFavorite={favorites.has(author.id)}
-                  isScanning={scanningId === author.id}
-                  onFavorite={() => toggleFavorite(author.id)}
-                  onScan={() => handleScan(author)}
-                  onCoauthors={() => setCoauthorTarget({ id: author.id, name: author.name })}
-                  onRemove={() => setRemoveTarget(author)}
-                />
-              ))}
-            </div>
+            <>
+              <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6">
+                {visibleWatchingAuthors.map((author) => (
+                  <AuthorCard
+                    key={author.id}
+                    author={author}
+                    isFavorite={favorites.has(author.id)}
+                    isScanning={scanningId === author.id}
+                    onFavorite={() => toggleFavorite(author.id)}
+                    onScan={() => handleScan(author)}
+                    onCoauthors={() => setCoauthorTarget({ id: author.id, name: author.name })}
+                    onRemove={() => setRemoveTarget(author)}
+                  />
+                ))}
+              </div>
+              {filtered.length > visibleWatchingAuthors.length && (
+                <div className="flex justify-center pt-2">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => setWatchingVisible((v) => Math.min(v + RENDER_STEP, filtered.length))}
+                  >
+                    Show more ({filtered.length - visibleWatchingAuthors.length} remaining)
+                  </Button>
+                </div>
+              )}
+            </>
           )}
         </>
       )}
@@ -571,17 +643,30 @@ export default function AuthorsPage() {
           )}
 
           {!unwatchedLoading && filteredUnwatched.length > 0 && (
-            <div className="rounded-md border border-border divide-y divide-border">
-              {filteredUnwatched.map((author) => (
-                <UnwatchedRow
-                  key={author.id}
-                  author={author}
-                  isWatching={watchingId === author.id}
-                  onWatch={() => handleWatch(author)}
-                  onDismiss={() => setRemoveTarget(author)}
-                />
-              ))}
-            </div>
+            <>
+              <div className="rounded-md border border-border divide-y divide-border">
+                {visibleUnwatchedAuthors.map((author) => (
+                  <UnwatchedRow
+                    key={author.id}
+                    author={author}
+                    isWatching={watchingId === author.id}
+                    onWatch={() => handleWatch(author)}
+                    onDismiss={() => setRemoveTarget(author)}
+                  />
+                ))}
+              </div>
+              {filteredUnwatched.length > visibleUnwatchedAuthors.length && (
+                <div className="flex justify-center pt-2">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => setUnwatchedVisible((v) => Math.min(v + RENDER_STEP, filteredUnwatched.length))}
+                  >
+                    Show more ({filteredUnwatched.length - visibleUnwatchedAuthors.length} remaining)
+                  </Button>
+                </div>
+              )}
+            </>
           )}
         </>
       )}
