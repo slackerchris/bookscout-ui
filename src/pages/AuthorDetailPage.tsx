@@ -1,4 +1,5 @@
 import { useState, useMemo, useEffect } from 'react'
+import { useLocalStorage } from '@/hooks/useLocalStorage'
 import { useParams, useNavigate } from 'react-router-dom'
 import { useQueryClient } from '@tanstack/react-query'
 import { useAuthorDetail, useAuthorMutations, authorKeys } from '@/features/authors/useAuthors'
@@ -87,7 +88,7 @@ export default function AuthorDetailPage() {
   const { remove, scan } = useAuthorMutations()
   const { favorites, toggle: toggleFavorite } = useFavoriteAuthors()
 
-  const [filter, setFilter] = useState<BooksFilter>(PAGE_DEFAULT)
+  const [filter, setFilter] = useLocalStorage<BooksFilter>('author-detail-filter', PAGE_DEFAULT)
   const [page, setPage] = useState(0)
   const [scanning, setScanning] = useState(false)
   const [coauthorsOpen, setCoauthorsOpen] = useState(false)
