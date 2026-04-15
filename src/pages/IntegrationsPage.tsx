@@ -10,6 +10,8 @@ import {
   Loader2,
   AlertCircle,
   Circle,
+  RefreshCw,
+  UserPlus,
 } from 'lucide-react'
 import { useAbsImport, useAbsImportResult } from '@/features/integrations/useAbsImport'
 import { useSearchStatus } from '@/features/integrations/useSearchStatus'
@@ -131,11 +133,11 @@ export default function IntegrationsPage() {
                 <Button
                   variant="outline"
                   size="sm"
-                  className="h-7 text-xs"
+                  className="h-7 text-xs gap-1.5"
                   disabled={loading}
                   onClick={runImport}
                 >
-                  {loading && <Loader2 size={12} className="animate-spin" />}
+                  {loading ? <Loader2 size={12} className="animate-spin" /> : <RefreshCw size={12} />}
                   Re-import
                 </Button>
                 <Button
@@ -173,11 +175,11 @@ export default function IntegrationsPage() {
                 </div>
               )}
               <div>
-                <Button size="sm" disabled={loading} onClick={runImport}>
+                <Button size="sm" className="gap-1.5" disabled={loading} onClick={runImport}>
                   {loading ? (
                     <><Loader2 size={13} className="animate-spin" />Importing…</>
                   ) : (
-                    'Import authors from Audiobookshelf'
+                    <><UserPlus size={13} />Import authors from Audiobookshelf</>
                   )}
                 </Button>
               </div>

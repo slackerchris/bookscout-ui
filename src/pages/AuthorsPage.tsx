@@ -50,12 +50,22 @@ function relativeTime(iso: string): string {
   return `${months}mo ago`
 }
 
+// ── "New" badge helper ─────────────────────────────────────────────────────
+
+const NEW_WINDOW_MS = 48 * 60 * 60 * 1000 // 48 hours
+
+function isNewAuthor(created_at: string | null): boolean {
+  if (!created_at) return false
+  return Date.now() - new Date(created_at).getTime() < NEW_WINDOW_MS
+}
+
 // ── Watched author card ────────────────────────────────────────────────────
 
 interface AuthorCardProps {
   author: Author
   isFavorite: boolean
   isScanning: boolean
+  isNew: boolean
   onFavorite: () => void
   onScan: () => void
   onCoauthors: () => void
@@ -65,12 +75,17 @@ interface AuthorCardProps {
   isWatching?: boolean
 }
 
-const AuthorCard = memo(function AuthorCard({ author, isFavorite, isScanning, onFavorite, onScan, onCoauthors, onRemove, onWatch, isWatching }: AuthorCardProps) {
+const AuthorCard = memo(function AuthorCard({ author, isFavorite, isScanning, isNew, onFavorite, onScan, onCoauthors, onRemove, onWatch, isWatching }: AuthorCardProps) {
   return (
     <Card className={cn(
       'relative flex flex-col overflow-hidden transition-shadow hover:shadow-md',
       isFavorite && 'ring-1 ring-amber-400/70',
     )}>
+      {isNew && (
+        <span className="absolute top-2 left-2 z-10 inline-flex items-center gap-0.5 rounded-full bg-emerald-500/15 px-1.5 py-0.5 text-[9px] font-semibold uppercase tracking-wide text-emerald-600 ring-1 ring-emerald-500/25">
+          New
+        </span>
+      )}
       {!onWatch && (
         <button
           className="absolute top-2.5 right-2.5 z-10 text-muted-foreground/30 hover:text-amber-400 transition-colors"
@@ -82,7 +97,7 @@ const AuthorCard = memo(function AuthorCard({ author, isFavorite, isScanning, on
       )}
 
       <CardContent className="flex flex-col gap-3 p-4">
-        <Link to={`/authors/${author.id}`} className="flex items-center gap-3 pr-5 group">
+        <Link to={`/authors/${author.id}`} className={cn('flex items-center gap-3 pr-5 group', isNew && 'pt-3')}>
           <div className={cn(
             'flex size-10 shrink-0 items-center justify-center rounded-full text-white text-sm font-semibold select-none',
             avatarColor(author.name),
@@ -173,6 +188,7 @@ const AuthorCard = memo(function AuthorCard({ author, isFavorite, isScanning, on
     prev.author.last_scanned === next.author.last_scanned &&
     prev.isFavorite === next.isFavorite &&
     prev.isScanning === next.isScanning &&
+    prev.isNew === next.isNew &&
     prev.isWatching === next.isWatching &&
     Boolean(prev.onWatch) === Boolean(next.onWatch)
   )
@@ -528,6 +544,7 @@ export default function AuthorsPage() {
                       author={author}
                       isFavorite={favorites.has(author.id)}
                       isScanning={scanningId === author.id}
+                      isNew={isNewAuthor(author.created_at)}
                       onFavorite={() => toggleFavorite(author.id)}
                       onScan={() => handleScan(author)}
                       onCoauthors={() => setCoauthorTarget({ id: author.id, name: author.name })}
@@ -539,6 +556,7 @@ export default function AuthorsPage() {
                       author={author}
                       isFavorite={false}
                       isScanning={false}
+                      isNew={isNewAuthor(author.created_at)}
                       onFavorite={() => {}}
                       onScan={() => {}}
                       onCoauthors={() => {}}
@@ -598,6 +616,7 @@ export default function AuthorsPage() {
                     author={author}
                     isFavorite={favorites.has(author.id)}
                     isScanning={scanningId === author.id}
+                    isNew={isNewAuthor(author.created_at)}
                     onFavorite={() => toggleFavorite(author.id)}
                     onScan={() => handleScan(author)}
                     onCoauthors={() => setCoauthorTarget({ id: author.id, name: author.name })}

@@ -39,6 +39,8 @@ export interface Author {
   active: boolean
   /** ISO datetime string — populated from Watchlist.last_scanned; null if never scanned */
   last_scanned: string | null
+  /** ISO datetime string — when this author row was first created in the DB */
+  created_at: string | null
 }
 
 /** Returned by GET /authors/{id} only — extends Author with aggregate counts */
