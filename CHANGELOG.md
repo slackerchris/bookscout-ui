@@ -7,6 +7,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [0.66.0] — 2026-04-23
+
+### Added
+- **Mobile Responsive Layout** — the UI now elegantly adapts to mobile phone screens. The desktop sidebar is hidden on small viewports and replaced with a modern bottom navigation bar. Container paddings and grid columns have been polished for portrait screens.
+
+---
+
 ## [0.65.4] — 2026-04-06
 
 ### Added

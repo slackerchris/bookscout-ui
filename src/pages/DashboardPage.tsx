@@ -77,7 +77,7 @@ export default function DashboardPage() {
   })
 
   return (
-    <div className="flex flex-col gap-6 p-6">
+    <div className="flex flex-col gap-6 p-4 md:p-6">
       {/* Header */}
       <div>
         <h1 className="text-xl font-semibold text-foreground">Dashboard</h1>

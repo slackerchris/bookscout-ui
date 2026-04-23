@@ -14,7 +14,7 @@ import { useHealth } from '@/hooks/useHealth'
 
 const APP_VERSION = __APP_VERSION__
 
-const nav = [
+export const nav = [
   { to: '/', label: 'Dashboard', icon: LayoutDashboard },
   { to: '/authors', label: 'Authors', icon: Users },
   { to: '/downloads', label: 'Downloads', icon: Download },

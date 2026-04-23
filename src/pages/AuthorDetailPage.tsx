@@ -195,7 +195,7 @@ export default function AuthorDetailPage() {
   const missing = author ? author.book_count - author.owned_count : undefined
 
   return (
-    <div className="flex flex-col gap-4 p-6">
+    <div className="flex flex-col gap-4 p-4 md:p-6">
 
       {/* Back nav */}
       <Button variant="ghost" size="sm" className="w-fit -ml-2 gap-1.5 text-muted-foreground" onClick={() => navigate('/authors')}>
