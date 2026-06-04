@@ -1,4 +1,4 @@
-import { useState, useCallback, useRef } from 'react'
+import { useState, useCallback, useEffect, useRef } from 'react'
 import { useMutation } from '@tanstack/react-query'
 import { useBookScoutSSE } from '@/lib/sse/useBookScoutSSE'
 import { scansApi } from '@/lib/api'
@@ -56,7 +56,14 @@ function payloadSummary(event: BookScoutEvent): string | null {
 // ---- Relative time --------------------------------------------------------
 
 function RelativeTime({ iso }: { iso: string }) {
-  const diff = Date.now() - new Date(iso).getTime()
+  const [now, setNow] = useState(() => Date.now())
+
+  useEffect(() => {
+    const interval = setInterval(() => setNow(Date.now()), 60_000)
+    return () => clearInterval(interval)
+  }, [])
+
+  const diff = now - new Date(iso).getTime()
   const m = Math.floor(diff / 60_000)
   const h = Math.floor(diff / 3_600_000)
   const d = Math.floor(diff / 86_400_000)

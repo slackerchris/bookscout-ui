@@ -7,6 +7,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [0.67.0] — 2026-06-04
+
+### Added
+- **Author Detail release dates** — book rows now show the audiobook release date, falling back to published year when only year-level metadata is available.
+- **Generated API types** — core catalog types now derive from the BookScout backend OpenAPI schema to reduce frontend/backend drift.
+
+### Changed
+- **Route-level code splitting** — pages are lazy-loaded so the production build no longer emits an oversized initial JavaScript chunk warning.
+- **Frontend lint cleanup** — moved shared constants out of component modules and cleaned up React hook purity issues so `npm run lint` passes cleanly.
+
+---
+
 ## [0.66.0] — 2026-04-23
 
 ### Added

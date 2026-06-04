@@ -1,19 +1,21 @@
+import { lazy, Suspense } from 'react'
 import { BrowserRouter, Routes, Route } from 'react-router-dom'
 import { QueryClient, QueryClientProvider, useQueryClient } from '@tanstack/react-query'
 import { TooltipProvider } from '@/components/ui/tooltip'
 import { SSEProvider } from '@/lib/sse/SSEContext'
 import { ErrorBoundary } from '@/components/ErrorBoundary'
 import AppShell from '@/components/AppShell'
-import DashboardPage from '@/pages/DashboardPage'
-import AuthorsPage from '@/pages/AuthorsPage'
-import AuthorDetailPage from '@/pages/AuthorDetailPage'
-import ActivityPage from '@/pages/ActivityPage'
-import IntegrationsPage from '@/pages/IntegrationsPage'
-import DownloadsPage from '@/pages/DownloadsPage'
 import { Toaster } from '@/components/ui/sonner'
 import { toast } from 'sonner'
 import { useBookScoutSSE } from '@/lib/sse/useBookScoutSSE'
 import type { ImportCompletePayload } from '@/types'
+
+const DashboardPage = lazy(() => import('@/pages/DashboardPage'))
+const AuthorsPage = lazy(() => import('@/pages/AuthorsPage'))
+const AuthorDetailPage = lazy(() => import('@/pages/AuthorDetailPage'))
+const DownloadsPage = lazy(() => import('@/pages/DownloadsPage'))
+const ActivityPage = lazy(() => import('@/pages/ActivityPage'))
+const IntegrationsPage = lazy(() => import('@/pages/IntegrationsPage'))
 
 function isImportCompletePayload(p: unknown): p is ImportCompletePayload {
   return (
@@ -47,6 +49,14 @@ function ImportNotifier() {
   return null
 }
 
+function PageFallback() {
+  return (
+    <div className="flex min-h-[50vh] items-center justify-center text-sm text-muted-foreground">
+      Loading…
+    </div>
+  )
+}
+
 export default function App() {
   return (
     <QueryClientProvider client={queryClient}>
@@ -56,16 +66,18 @@ export default function App() {
           <BrowserRouter>
             <ErrorBoundary>
               <ImportNotifier />
-              <Routes>
-                <Route element={<AppShell />}>
-                  <Route index element={<DashboardPage />} />
-                  <Route path="authors" element={<AuthorsPage />} />
-                  <Route path="authors/:id" element={<AuthorDetailPage />} />
-                  <Route path="downloads" element={<DownloadsPage />} />
-                  <Route path="activity" element={<ActivityPage />} />
-                  <Route path="integrations" element={<IntegrationsPage />} />
-                </Route>
-              </Routes>
+              <Suspense fallback={<PageFallback />}>
+                <Routes>
+                  <Route element={<AppShell />}>
+                    <Route index element={<DashboardPage />} />
+                    <Route path="authors" element={<AuthorsPage />} />
+                    <Route path="authors/:id" element={<AuthorDetailPage />} />
+                    <Route path="downloads" element={<DownloadsPage />} />
+                    <Route path="activity" element={<ActivityPage />} />
+                    <Route path="integrations" element={<IntegrationsPage />} />
+                  </Route>
+                </Routes>
+              </Suspense>
             </ErrorBoundary>
           </BrowserRouter>
         </SSEProvider>

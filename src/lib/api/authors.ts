@@ -1,14 +1,10 @@
 import type { Author, AuthorDetail, Coauthor } from '@/types'
+import type { components } from './generated'
 import { api } from './client'
 
-export interface AuthorUpdate {
-  name?: string
-  active?: boolean
-}
+export type AuthorUpdate = components['schemas']['AuthorUpdate']
 
-export interface WatchlistSettings {
-  scan_enabled?: boolean
-}
+export type WatchlistSettings = components['schemas']['WatchlistSettings']
 
 export const authorsApi = {
   list: (params: { active_only?: boolean; search?: string } = {}) => {

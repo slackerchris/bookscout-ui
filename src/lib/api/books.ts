@@ -1,4 +1,5 @@
 import type { Book } from '@/types'
+import type { components } from './generated'
 import { api } from './client'
 
 export interface BooksParams {
@@ -11,17 +12,7 @@ export interface BooksParams {
   offset?: number
 }
 
-export interface BookUpdate {
-  have_it?: boolean
-  language?: string | null
-  series_name?: string | null
-  series_position?: string | null
-  subtitle?: string | null
-  deleted?: boolean
-  asin?: string | null
-  isbn?: string | null
-  isbn13?: string | null
-}
+export type BookUpdate = components['schemas']['BookUpdate']
 
 export interface BooksCountParams {
   author_id?: number

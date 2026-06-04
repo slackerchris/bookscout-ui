@@ -84,6 +84,27 @@ function isEnglishLanguageTag(language: string | null | undefined): boolean {
   return normalized === 'en' || normalized.startsWith('en-') || normalized === 'eng' || normalized === 'english'
 }
 
+function formatReleaseDate(releaseDate: string | null, publishedYear: number | null): string {
+  if (releaseDate) {
+    const trimmed = releaseDate.trim()
+    if (/^\d{4}$/.test(trimmed)) return trimmed
+
+    const parsed = new Date(trimmed)
+    if (!Number.isNaN(parsed.getTime())) {
+      return parsed.toLocaleDateString(undefined, {
+        year: 'numeric',
+        month: 'short',
+        day: trimmed.length > 7 ? 'numeric' : undefined,
+        timeZone: 'UTC',
+      })
+    }
+
+    return trimmed
+  }
+
+  return publishedYear ? String(publishedYear) : '—'
+}
+
 function BooksTable({ books, grouped, totalCount, page = 0, onPageChange }: Props) {
   const [selectedBook, setSelectedBook] = useState<BookRow | null>(null)
   const [confirmDeleteId, setConfirmDeleteId] = useState<number | null>(null)
@@ -180,6 +201,9 @@ function BooksTable({ books, grouped, totalCount, page = 0, onPageChange }: Prop
       </TableCell>
       <TableCell className="text-center align-top">
         <ConfidenceBadge band={book.confidence_band} score={book.score} reasons={book.score_reasons} />
+      </TableCell>
+      <TableCell className="text-sm text-muted-foreground align-top whitespace-nowrap">
+        {formatReleaseDate(book.release_date, book.published_year)}
       </TableCell>
       <TableCell className="align-top">
         <BookStateBadge state={bookState(book)} />
@@ -281,6 +305,7 @@ function BooksTable({ books, grouped, totalCount, page = 0, onPageChange }: Prop
               {showAuthor && <TableHead className="w-[180px]">Author</TableHead>}
               <TableHead>Title</TableHead>
               <TableHead className="w-[110px] text-center">Confidence</TableHead>
+              <TableHead className="w-[120px]">Release</TableHead>
               <TableHead className="w-[90px]">Status</TableHead>
               <TableHead className="w-[80px]"></TableHead>
             </TableRow>
@@ -290,7 +315,7 @@ function BooksTable({ books, grouped, totalCount, page = 0, onPageChange }: Prop
               ? groups.map((group) => (
                   <Fragment key={group.author_id}>
                     <TableRow className="bg-muted/50 hover:bg-muted/50">
-                      <TableCell colSpan={4} className="py-1.5 text-sm font-semibold text-foreground">
+                      <TableCell colSpan={5} className="py-1.5 text-sm font-semibold text-foreground">
                         {group.author_name}
                         <span className="ml-2 text-xs font-normal text-muted-foreground">
                           {group.books.length} book{group.books.length !== 1 ? 's' : ''}

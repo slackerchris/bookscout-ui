@@ -24,7 +24,16 @@ function dlKey(r: SearchResult): string {
 }
 
 export default function SearchDownloadDrawer({ book, onClose }: Props) {
-  const [query, setQuery] = useState('')
+  return (
+    <Sheet open={!!book} onOpenChange={(open) => { if (!open) onClose() }}>
+      {book && <SearchDownloadContent key={book.id} book={book} />}
+    </Sheet>
+  )
+}
+
+function SearchDownloadContent({ book }: { book: BookRow }) {
+  const initialQuery = book.author_name ? `${book.title} ${book.author_name}` : book.title
+  const [query, setQuery] = useState(initialQuery)
   const [results, setResults] = useState<SearchResult[]>([])
   const [dlStates, setDlStates] = useState<Record<string, DlState>>({})
 
@@ -36,22 +45,16 @@ export default function SearchDownloadDrawer({ book, onClose }: Props) {
   // Stable refs so useEffect can call mutate/reset without them being dependencies
   const mutateRef = useRef(searchMutation.mutate)
   const resetRef = useRef(searchMutation.reset)
-  mutateRef.current = searchMutation.mutate
-  resetRef.current = searchMutation.reset
 
-  // Reset state and auto-search when the drawer opens for a new book
   useEffect(() => {
-    if (book) {
-      const q = book.author_name ? `${book.title} ${book.author_name}` : book.title
-      setQuery(q)
-      setResults([])
-      setDlStates({})
-      // Reset mutation state so isSuccess from the previous book doesn't flash
-      // "no results" before the new search completes.
-      resetRef.current()
-      mutateRef.current(q)
-    }
-  }, [book?.id]) // eslint-disable-line react-hooks/exhaustive-deps
+    mutateRef.current = searchMutation.mutate
+    resetRef.current = searchMutation.reset
+  }, [searchMutation.mutate, searchMutation.reset])
+
+  useEffect(() => {
+    resetRef.current()
+    mutateRef.current(initialQuery)
+  }, [initialQuery])
 
   function handleSearch(e: React.FormEvent) {
     e.preventDefault()
@@ -73,7 +76,7 @@ export default function SearchDownloadDrawer({ book, onClose }: Props) {
         url,
         title: r.title,
         type: r.type.toLowerCase() === 'nzb' ? 'nzb' : 'torrent',
-        book_id: book?.id ?? 0,
+        book_id: book.id,
       })
       setDlStates((s) => ({ ...s, [key]: 'success' }))
     } catch {
@@ -82,19 +85,17 @@ export default function SearchDownloadDrawer({ book, onClose }: Props) {
   }
 
   return (
-    <Sheet open={!!book} onOpenChange={(open) => { if (!open) onClose() }}>
+    <>
       <SheetContent className="flex flex-col w-[680px] sm:max-w-[680px] gap-0 p-0">
         <SheetHeader className="px-6 py-4 border-b border-border shrink-0">
           <SheetTitle className="flex items-center gap-2 text-base">
             <Search size={15} />
             Find Download
           </SheetTitle>
-          {book && (
-            <p className="text-sm text-muted-foreground truncate">
-              {book.title}
-              {book.author_name ? ` · ${book.author_name}` : ''}
-            </p>
-          )}
+          <p className="text-sm text-muted-foreground truncate">
+            {book.title}
+            {book.author_name ? ` · ${book.author_name}` : ''}
+          </p>
         </SheetHeader>
 
         <form onSubmit={handleSearch} className="flex gap-2 px-6 py-3 border-b border-border shrink-0">
@@ -211,6 +212,6 @@ export default function SearchDownloadDrawer({ book, onClose }: Props) {
           )}
         </div>
       </SheetContent>
-    </Sheet>
+    </>
   )
 }

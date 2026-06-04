@@ -1,20 +1,10 @@
 import {
-  createContext,
   useCallback,
-  useContext,
   useEffect,
   useRef,
 } from 'react'
 import type { BookScoutEvent } from '@/types'
-
-type Handler = (event: BookScoutEvent) => void
-
-interface SSEContextValue {
-  /** Register a handler — returns an unsubscribe function. */
-  subscribe: (handler: Handler) => () => void
-}
-
-const SSEContext = createContext<SSEContextValue | null>(null)
+import { SSEContext, type Handler } from './sse-context'
 
 /**
  * Singleton SSE provider.
@@ -74,10 +64,4 @@ export function SSEProvider({ children }: { children: React.ReactNode }) {
   }, [])
 
   return <SSEContext.Provider value={{ subscribe }}>{children}</SSEContext.Provider>
-}
-
-export function useSSEContext(): SSEContextValue {
-  const ctx = useContext(SSEContext)
-  if (!ctx) throw new Error('useSSEContext must be used within <SSEProvider>')
-  return ctx
 }

@@ -1,11 +1,12 @@
 {
   "name": "bookscout-ui",
   "private": true,
-  "version": "0.66.0",
+  "version": "0.67.0",
   "type": "module",
   "scripts": {
     "dev": "vite",
     "build": "tsc -b && vite build",
+    "generate:api-types": "cd ../bookscout && .venv/bin/python scripts/export_openapi.py /tmp/bookscout-openapi.json && cd ../bookscout-ui && openapi-typescript /tmp/bookscout-openapi.json -o ./src/lib/api/generated.ts",
     "lint": "eslint .",
     "preview": "vite preview"
   },
@@ -37,6 +38,7 @@
     "eslint-plugin-react-hooks": "^7.0.1",
     "eslint-plugin-react-refresh": "^0.5.2",
     "globals": "^17.4.0",
+    "openapi-typescript": "^7.13.0",
     "tailwindcss": "^4.2.2",
     "typescript": "~5.9.3",
     "typescript-eslint": "^8.57.0",

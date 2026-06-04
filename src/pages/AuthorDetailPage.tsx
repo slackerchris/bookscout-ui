@@ -1,4 +1,4 @@
-import { useState, useMemo, useEffect } from 'react'
+import { useState, useMemo } from 'react'
 import { useLocalStorage } from '@/hooks/useLocalStorage'
 import { useParams, useNavigate } from 'react-router-dom'
 import { useQueryClient } from '@tanstack/react-query'
@@ -6,7 +6,8 @@ import { useAuthorDetail, useAuthorMutations, authorKeys } from '@/features/auth
 import { useFavoriteAuthors } from '@/features/authors/useFavoriteAuthors'
 import CoauthorsDrawer from '@/features/authors/CoauthorsDrawer'
 import ConfirmDialog from '@/components/ConfirmDialog'
-import BooksFilterBar, { type BooksFilter, DEFAULT_BOOKS_FILTER, isNonLatinTitle } from '@/features/books/BooksFilterBar'
+import BooksFilterBar from '@/features/books/BooksFilterBar'
+import { DEFAULT_BOOKS_FILTER, isNonLatinTitle, type BooksFilter } from '@/features/books/booksFilter'
 import BooksTable, { type BookRow, PAGE_SIZE } from '@/features/books/BooksTable'
 import { useBooks, useBooksCount, bookKeys } from '@/features/books/useBooks'
 import { useBookScoutSSE } from '@/lib/sse/useBookScoutSSE'
@@ -94,12 +95,17 @@ export default function AuthorDetailPage() {
   const [coauthorsOpen, setCoauthorsOpen] = useState(false)
   const [confirmRemove, setConfirmRemove] = useState(false)
 
-  // Reset to first page when server-side filter params change.
-  // english_only is intentionally excluded — it's client-side only and doesn't
-  // affect the paginated query, so changing it shouldn't reset pagination.
-  useEffect(() => {
-    setPage(0)
-  }, [filter.missing_only, filter.confidence_band])
+  function handleFilterChange(next: BooksFilter) {
+    setFilter((prev) => {
+      if (
+        prev.missing_only !== next.missing_only ||
+        prev.confidence_band !== next.confidence_band
+      ) {
+        setPage(0)
+      }
+      return next
+    })
+  }
 
   // Server-side params — paginated
   const serverParams = {
@@ -297,7 +303,7 @@ export default function AuthorDetailPage() {
           {/* Filter bar — no author picker since we're scoped to one */}
           <BooksFilterBar
             filter={filter}
-            onChange={setFilter}
+            onChange={handleFilterChange}
             defaultFilter={PAGE_DEFAULT}
           />
 

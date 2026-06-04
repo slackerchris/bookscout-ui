@@ -1,6 +1,6 @@
 import { NavLink } from 'react-router-dom'
 import { cn } from '@/lib/utils'
-import { nav } from './Sidebar'
+import { nav } from './nav'
 
 export default function MobileNav() {
   return (

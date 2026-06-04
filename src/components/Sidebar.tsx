@@ -1,26 +1,11 @@
 import { NavLink } from 'react-router-dom'
 import { cn } from '@/lib/utils'
-import {
-  LayoutDashboard,
-  Users,
-  Download,
-  Activity,
-  Plug,
-  Moon,
-  Sun,
-} from 'lucide-react'
+import { Moon, Sun } from 'lucide-react'
 import { useState, useEffect } from 'react'
 import { useHealth } from '@/hooks/useHealth'
+import { nav } from './nav'
 
 const APP_VERSION = __APP_VERSION__
-
-export const nav = [
-  { to: '/', label: 'Dashboard', icon: LayoutDashboard },
-  { to: '/authors', label: 'Authors', icon: Users },
-  { to: '/downloads', label: 'Downloads', icon: Download },
-  { to: '/activity', label: 'Activity', icon: Activity },
-  { to: '/integrations', label: 'Integrations', icon: Plug },
-]
 
 export default function Sidebar() {
   const [dark, setDark] = useState(() => {

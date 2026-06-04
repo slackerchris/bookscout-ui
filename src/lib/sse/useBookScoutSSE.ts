@@ -1,6 +1,6 @@
 import { useEffect, useRef } from 'react'
 import type { BookScoutEvent } from '@/types'
-import { useSSEContext } from './SSEContext'
+import { useSSEContext } from './sse-context'
 
 type Handler = (event: BookScoutEvent) => void
 
@@ -13,7 +13,10 @@ type Handler = (event: BookScoutEvent) => void
 export function useBookScoutSSE(onEvent: Handler) {
   const { subscribe } = useSSEContext()
   const handlerRef = useRef<Handler>(onEvent)
-  handlerRef.current = onEvent
+
+  useEffect(() => {
+    handlerRef.current = onEvent
+  }, [onEvent])
 
   useEffect(() => {
     return subscribe((event) => handlerRef.current(event))
