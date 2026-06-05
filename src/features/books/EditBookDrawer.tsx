@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState } from 'react'
 import { useMutation, useQueryClient } from '@tanstack/react-query'
 import {
   Sheet,
@@ -67,7 +67,7 @@ function EditBookContent({ book, onClose }: { book: BookRow; onClose: () => void
   const rescanMutation = useMutation({
     mutationFn: () => booksApi.rescan(book.id),
     onSuccess: (data) => {
-      toast.success(`Scan queued for ${data.author_name}`)
+      toast.success(`Scan queued for author ${data.author_id}`)
     },
     onError: () => toast.error('Could not queue scan'),
   })
