@@ -7,6 +7,29 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [0.68.0] — 2026-06-04
+
+### Added
+- **Edit book drawer** — pencil icon on every book row opens a drawer to manually edit title, subtitle, series name & position, release date, language, narrator, ASIN, ISBN, and ISBN-13. Includes a "Rescan author" button that queues a fresh metadata scan without leaving the page.
+- **Inline book badges** — each book row now shows contextual inline badges: **Upcoming** (blue) for future release dates, **Non-English** (amber) with the language code when the book isn't English, **Low conf** (rose) for low-confidence books, and **No date** (muted) when no release date is recorded.
+- **Column sorting on Author Detail** — a sort bar above the book table lets you sort by Series (default), Release date, Confidence, Status, or Title. Direction toggles between ascending and descending. Sort preference is persisted in localStorage.
+- **Filter presets** — the filter bar now has a "Presets" toggle that reveals four built-in presets (Upcoming, High confidence missing, Owned only, Needs cleanup) plus any custom presets you save. Custom presets are stored in localStorage and can be deleted individually.
+- **Health banner** — a dismissible warning banner appears at the top of every page when the BookScout API returns a degraded status or becomes unreachable. The banner identifies which components are unhealthy.
+- **Keyboard shortcuts** — on the Author Detail page: `s` triggers a scan (same as the Scan Now button), `f` toggles the missing-only filter. Both ignore keypresses when a text input has focus.
+- **Search result scoring** — the Find Download drawer now scores every result against the book's known metadata (title word match, author name, year, unabridged keyword, narrator, format, seeders, file size) and highlights the best match in green with a filled star. A star toggle button shows/hides the raw numeric score for each result. Results are ordered by score.
+- **Settings page** (`/settings`) — new page accessible from the sidebar with:
+  - **Export** — one-click download of the full catalog as `bookscout-export.json`.
+  - **Download preferences** — persisted quality settings (min seeders, preferred format, language, require unabridged, max file size) used by the search scorer.
+  - **Clear download history** — with confirmation.
+  - **Config hint** — shows the `config.yaml` keys and environment variable names for reference.
+- **Webhook management on Integrations** — the Integrations page now has a full webhook manager: list all registered webhooks with their URL, active status, and failure count; add new URLs; remove existing webhooks; re-enable auto-disabled webhooks; send a test ping to any webhook with live visual feedback.
+- **Downloads history tab** — the Downloads page now has three tabs: Queue (existing), History (new), and Imported (existing). The History tab lists every past download attempt recorded by the API with release title, type, size, status, and relative timestamp. A "Clear history" action with confirmation is available at the bottom of the list.
+- **Empty-state filter reasons** — when the book table has no results, the empty state now explains which active filters are excluding rows (e.g. "showing missing only, confidence = high, English only").
+
+### Changed
+- **Downloads page** — reorganised into Queue / History / Imported tabs so the history and imported sections don't compete for vertical space.
+- **BooksFilterBar** — preset panel sits below the filter row, slides open/closed with the Presets button, so it doesn't push content around when hidden.
+
 ## [0.67.0] — 2026-06-04
 
 ### Added

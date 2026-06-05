@@ -12,17 +12,30 @@ Planned and in-progress work for BookScout UI. Items at the top of each section 
 
 ## Planned
 
-### Integrations page — service status cards
-The Prowlarr, Downloader, BookScout API, and n8n cards are currently static placeholders. Once the backend exposes the relevant health or status endpoints, wire each card up to show live connection status (connected / unreachable / not configured).
+### Merge duplicates UI
+Display groups of books identified by `GET /books/duplicates` and allow merging two rows into one (keep primary, discard duplicate, transfer identifiers).
 
-### Integrations page — per-service configuration
-Allow setting service URLs and credentials from the UI rather than requiring direct backend config.
+### Source comparison panel
+For a selected book, show a side-by-side comparison of what each metadata source (Audnexus, OpenLibrary, Google Books, ISBNdb) returned, so the user can see why a field has its current value and override it if needed.
+
+### Retry failed downloads
+Surface the "failed" entries in the download history with a one-click retry that pre-fills the search drawer for that book.
+
+### Author `active` toggle
+UI control to deactivate / reactivate an author and optionally show inactive authors in a separate tab.
+
+### Author watchlist settings
+UI control to toggle `scan_enabled` per author (expose `PATCH /authors/{id}/watchlist`).
 
 ---
 
 ## Ideas / Backlog
 
-<!-- Lower priority — not yet committed -->
+### Per-service configuration on Integrations
+Allow setting service URLs and credentials from the UI rather than requiring direct backend config.
+
+### Scan schedule editor
+Visual cron editor for `scan.schedule_cron` stored in config.yaml.
 
 ---
 
@@ -33,12 +46,3 @@ The Activity page logic lives directly in `src/pages/ActivityPage.tsx`. If the p
 
 ### `features/integrations/` — partial
 Only `useAbsImport.ts` lives here. Future Integrations feature code (service status hooks, config hooks) should be co-located.
-
-### Book-level mutations not surfaced in UI
-`booksApi.update()` (`PATCH /books/{id}`) and `booksApi.remove()` (`DELETE /books/{id}`) are implemented in the API layer but not yet exposed in `BooksTable` or elsewhere.
-
-### Author `active` toggle not in UI
-`authorsApi.update()` supports toggling `active`, and `authorsApi.list()` accepts `active_only: false`, but there is no UI control to deactivate/reactivate an author or show inactive authors.
-
-### Author watchlist settings not in UI
-`authorsApi.watchlist()` (`PATCH /authors/{id}/watchlist`) exists in the API layer with no UI to call it.

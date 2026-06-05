@@ -8,8 +8,9 @@ import {
 } from '@/components/ui/sheet'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
-import { Search, Download, Loader2, CheckCircle2, AlertCircle } from 'lucide-react'
+import { Search, Download, Loader2, CheckCircle2, AlertCircle, Star } from 'lucide-react'
 import { searchApi, type SearchResult } from '@/lib/api/search'
+import { cn } from '@/lib/utils'
 import type { BookRow } from './BooksTable'
 
 interface Props {
@@ -21,6 +22,58 @@ type DlState = 'idle' | 'loading' | 'success' | 'error'
 
 function dlKey(r: SearchResult): string {
   return r.download_url || r.magnet_url || r.title
+}
+
+// ---------------------------------------------------------------------------
+// Scoring
+// ---------------------------------------------------------------------------
+
+function scoreResult(result: SearchResult, book: BookRow): number {
+  let score = 0
+  const t = result.title.toLowerCase()
+  const bookTitle = book.title.toLowerCase()
+  const authorName = (book.author_name ?? '').toLowerCase()
+
+  // Title contains book title words
+  const titleWords = bookTitle.split(/\s+/).filter((w) => w.length > 3)
+  const matchedWords = titleWords.filter((w) => t.includes(w))
+  score += (matchedWords.length / Math.max(titleWords.length, 1)) * 30
+
+  // Author name present
+  if (authorName && authorName.split(' ').some((w) => w.length > 2 && t.includes(w))) {
+    score += 15
+  }
+
+  // Year match
+  const year = book.release_date?.slice(0, 4) ?? book.published_year?.toString()
+  if (year && t.includes(year)) score += 10
+
+  // Unabridged bonus
+  if (t.includes('unabridged')) score += 10
+
+  // Narrator
+  if (book.narrator) {
+    const nParts = book.narrator.toLowerCase().split(/[\s,]+/).filter((w) => w.length > 2)
+    if (nParts.some((n) => t.includes(n))) score += 10
+  }
+
+  // Audio format bonus
+  if (/\bm4b\b/.test(t)) score += 8
+  if (/\bmp3\b/.test(t)) score += 3
+
+  // Seeder signal (log-scale, cap contribution)
+  const seeders = result.seeders ?? 0
+  if (seeders > 0) score += Math.min(Math.log10(seeders + 1) * 5, 10)
+
+  // Penalise very small (<5 MB) or very large (>8 GB) files
+  const bytes = result.size ?? 0
+  if (bytes > 0) {
+    const gb = bytes / 1_073_741_824
+    if (gb > 8) score -= 15
+    if (bytes < 5_000_000) score -= 20
+  }
+
+  return Math.round(score)
 }
 
 export default function SearchDownloadDrawer({ book, onClose }: Props) {
@@ -36,13 +89,13 @@ function SearchDownloadContent({ book }: { book: BookRow }) {
   const [query, setQuery] = useState(initialQuery)
   const [results, setResults] = useState<SearchResult[]>([])
   const [dlStates, setDlStates] = useState<Record<string, DlState>>({})
+  const [showScores, setShowScores] = useState(false)
 
   const searchMutation = useMutation({
     mutationFn: (q: string) => searchApi.search(q),
     onSuccess: (data) => setResults(data),
   })
 
-  // Stable refs so useEffect can call mutate/reset without them being dependencies
   const mutateRef = useRef(searchMutation.mutate)
   const resetRef = useRef(searchMutation.reset)
 
@@ -84,6 +137,12 @@ function SearchDownloadContent({ book }: { book: BookRow }) {
     }
   }
 
+  // Score all results and find the top one
+  const scored = results.map((r) => ({ result: r, score: scoreResult(r, book) }))
+  scored.sort((a, b) => b.score - a.score)
+  const topScore = scored[0]?.score ?? 0
+  const topKey = scored[0] ? dlKey(scored[0].result) : null
+
   return (
     <>
       <SheetContent className="flex flex-col w-[680px] sm:max-w-[680px] gap-0 p-0">
@@ -111,6 +170,18 @@ function SearchDownloadContent({ book }: { book: BookRow }) {
               : <Search size={13} />}
             Search
           </Button>
+          {results.length > 0 && (
+            <Button
+              type="button"
+              variant="ghost"
+              size="sm"
+              className="shrink-0"
+              onClick={() => setShowScores((s) => !s)}
+              title="Toggle score column"
+            >
+              <Star size={13} />
+            </Button>
+          )}
         </form>
 
         <div className="flex-1 overflow-y-auto min-h-0">
@@ -136,7 +207,7 @@ function SearchDownloadContent({ book }: { book: BookRow }) {
             </div>
           )}
 
-          {!searchMutation.isPending && results.length > 0 && (
+          {!searchMutation.isPending && scored.length > 0 && (
             <table className="w-full text-sm">
               <thead className="sticky top-0 z-10">
                 <tr className="border-b border-border bg-muted/60 text-muted-foreground text-xs">
@@ -144,19 +215,28 @@ function SearchDownloadContent({ book }: { book: BookRow }) {
                   <th className="px-3 py-2 text-center font-medium w-[58px]">Type</th>
                   <th className="px-3 py-2 text-center font-medium w-[52px]">Seeds</th>
                   <th className="px-3 py-2 text-right font-medium w-[76px]">Size</th>
+                  {showScores && <th className="px-3 py-2 text-center font-medium w-[52px]">Score</th>}
                   <th className="px-3 py-2 w-[82px]"></th>
                 </tr>
               </thead>
               <tbody>
-                {results.map((r, i) => {
+                {scored.map(({ result: r, score }, i) => {
                   const key = dlKey(r)
                   const state: DlState = dlStates[key] ?? 'idle'
                   const canDl = !!(r.download_url || r.magnet_url)
+                  const isBest = key === topKey && topScore > 0 && i === 0
 
                   return (
-                    <tr key={i} className="border-b border-border last:border-0 hover:bg-muted/30">
+                    <tr
+                      key={i}
+                      className={cn(
+                        'border-b border-border last:border-0 hover:bg-muted/30',
+                        isBest && 'bg-emerald-500/5',
+                      )}
+                    >
                       <td className="px-4 py-2.5 align-top">
-                        <div className="font-medium text-foreground leading-snug line-clamp-2">
+                        <div className="font-medium text-foreground leading-snug line-clamp-2 flex items-start gap-1">
+                          {isBest && <Star size={11} className="text-emerald-500 mt-0.5 shrink-0 fill-emerald-500" />}
                           {r.title}
                         </div>
                         <div className="text-xs text-muted-foreground mt-0.5">
@@ -164,11 +244,7 @@ function SearchDownloadContent({ book }: { book: BookRow }) {
                         </div>
                       </td>
                       <td className="px-3 py-2.5 text-center align-top">
-                        <span
-                          className={`text-xs font-semibold ${
-                            r.type === 'NZB' ? 'text-amber-500' : 'text-sky-500'
-                          }`}
-                        >
+                        <span className={`text-xs font-semibold ${r.type === 'NZB' ? 'text-amber-500' : 'text-sky-500'}`}>
                           {r.type}
                         </span>
                       </td>
@@ -178,21 +254,24 @@ function SearchDownloadContent({ book }: { book: BookRow }) {
                       <td className="px-3 py-2.5 text-right align-top text-muted-foreground tabular-nums">
                         {r.size_human}
                       </td>
+                      {showScores && (
+                        <td className="px-3 py-2.5 text-center align-top">
+                          <span className="text-xs tabular-nums text-muted-foreground">{score}</span>
+                        </td>
+                      )}
                       <td className="px-3 py-2.5 text-right align-top">
                         {state === 'success' ? (
                           <span className="flex items-center justify-end gap-1 text-xs text-emerald-500">
-                            <CheckCircle2 size={12} />
-                            Queued
+                            <CheckCircle2 size={12} />Queued
                           </span>
                         ) : state === 'error' ? (
                           <span className="flex items-center justify-end gap-1 text-xs text-destructive">
-                            <AlertCircle size={12} />
-                            Failed
+                            <AlertCircle size={12} />Failed
                           </span>
                         ) : (
                           <Button
                             size="sm"
-                            variant="outline"
+                            variant={isBest ? 'default' : 'outline'}
                             className="h-7 text-xs px-2 gap-1"
                             disabled={!canDl || state === 'loading'}
                             onClick={() => handleDownload(r)}

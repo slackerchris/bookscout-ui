@@ -1,23 +1,27 @@
-import { useState, useMemo } from 'react'
+import { useMemo, useState } from 'react'
 import { useLocalStorage } from '@/hooks/useLocalStorage'
 import { useParams, useNavigate } from 'react-router-dom'
 import { useQueryClient } from '@tanstack/react-query'
-import { useAuthorDetail, useAuthorMutations, authorKeys } from '@/features/authors/useAuthors'
+import { useAuthorDetail, useAuthorMutations, useAuthorPreferences, authorKeys } from '@/features/authors/useAuthors'
 import { useFavoriteAuthors } from '@/features/authors/useFavoriteAuthors'
 import CoauthorsDrawer from '@/features/authors/CoauthorsDrawer'
 import ConfirmDialog from '@/components/ConfirmDialog'
 import BooksFilterBar from '@/features/books/BooksFilterBar'
 import { DEFAULT_BOOKS_FILTER, isNonLatinTitle, type BooksFilter } from '@/features/books/booksFilter'
-import BooksTable, { type BookRow, PAGE_SIZE } from '@/features/books/BooksTable'
-import { useBooks, useBooksCount, bookKeys } from '@/features/books/useBooks'
+import BooksTable, { type BookRow } from '@/features/books/BooksTable'
+import { useBooks, bookKeys } from '@/features/books/useBooks'
 import { useBookScoutSSE } from '@/lib/sse/useBookScoutSSE'
+import { useKeyboardShortcuts } from '@/hooks/useKeyboardShortcuts'
 import type { BookScoutEvent } from '@/types'
 import { Button } from '@/components/ui/button'
 import { cn } from '@/lib/utils'
 import {
   ArrowLeft, ScanLine, Star, Users, Trash2, Loader2, AlertCircle,
-  BookX, CheckCircle2,
+  BookX, CheckCircle2, Save, ArrowUpDown, ArrowUp, ArrowDown,
 } from 'lucide-react'
+
+type SortField = 'series' | 'release_date' | 'confidence' | 'status' | 'title'
+type SortDir = 'asc' | 'desc'
 
 // ── Avatar (same logic as AuthorsPage) ────────────────────────────────────
 
@@ -68,6 +72,78 @@ function StatChip({ icon: Icon, label, value, className }: {
   )
 }
 
+function AuthorPreferencesPanel({ authorId }: { authorId: number }) {
+  const { data: preferences } = useAuthorPreferences(authorId)
+  const editorKey = `${authorId}:${preferences?.notes ?? ''}:${(preferences?.ignore_rules ?? []).join('\n')}`
+
+  return (
+    <AuthorPreferencesEditor
+      key={editorKey}
+      authorId={authorId}
+      initialNotes={preferences?.notes ?? ''}
+      initialRules={preferences?.ignore_rules ?? []}
+    />
+  )
+}
+
+function AuthorPreferencesEditor({ authorId, initialNotes, initialRules }: {
+  authorId: number
+  initialNotes: string
+  initialRules: string[]
+}) {
+  const { updatePreferences } = useAuthorMutations()
+  const [notes, setNotes] = useState(initialNotes)
+  const [rulesText, setRulesText] = useState(initialRules.join('\n'))
+
+  function handleSave() {
+    updatePreferences.mutate({
+      id: authorId,
+      patch: {
+        notes,
+        ignore_rules: rulesText
+          .split('\n')
+          .map((rule) => rule.trim())
+          .filter(Boolean),
+      },
+    })
+  }
+
+  return (
+    <section className="grid gap-3 md:grid-cols-2">
+      <div className="flex flex-col gap-2">
+        <label className="text-xs font-medium text-muted-foreground" htmlFor="author-notes">Notes</label>
+        <textarea
+          id="author-notes"
+          value={notes}
+          onChange={(event) => setNotes(event.target.value)}
+          className="min-h-24 resize-y rounded-md border border-input bg-transparent px-3 py-2 text-sm outline-none transition-colors placeholder:text-muted-foreground focus-visible:border-ring focus-visible:ring-[3px] focus-visible:ring-ring/50"
+        />
+      </div>
+      <div className="flex flex-col gap-2">
+        <label className="text-xs font-medium text-muted-foreground" htmlFor="author-ignore-rules">Ignore rules</label>
+        <textarea
+          id="author-ignore-rules"
+          value={rulesText}
+          onChange={(event) => setRulesText(event.target.value)}
+          className="min-h-24 resize-y rounded-md border border-input bg-transparent px-3 py-2 text-sm outline-none transition-colors placeholder:text-muted-foreground focus-visible:border-ring focus-visible:ring-[3px] focus-visible:ring-ring/50"
+        />
+      </div>
+      <div className="md:col-span-2 flex items-center justify-end">
+        <Button
+          variant="outline"
+          size="sm"
+          className="h-8 gap-1.5 text-xs"
+          onClick={handleSave}
+          disabled={updatePreferences.isPending}
+        >
+          {updatePreferences.isPending ? <Loader2 size={12} className="animate-spin" /> : <Save size={12} />}
+          Save notes
+        </Button>
+      </div>
+    </section>
+  )
+}
+
 // ── Page default filter ────────────────────────────────────────────────────
 
 const PAGE_DEFAULT: BooksFilter = {
@@ -90,8 +166,20 @@ export default function AuthorDetailPage() {
   const { favorites, toggle: toggleFavorite } = useFavoriteAuthors()
 
   const [filter, setFilter] = useLocalStorage<BooksFilter>('author-detail-filter', PAGE_DEFAULT)
+  const [sortField, setSortField] = useLocalStorage<SortField>('author-detail-sort-field', 'series')
+  const [sortDir, setSortDir] = useLocalStorage<SortDir>('author-detail-sort-dir', 'asc')
   const [page, setPage] = useState(0)
   const [scanning, setScanning] = useState(false)
+
+  function cycleSort(field: SortField) {
+    if (sortField === field) {
+      setSortDir(sortDir === 'asc' ? 'desc' : 'asc')
+    } else {
+      setSortField(field)
+      setSortDir('asc')
+    }
+    setPage(0)
+  }
   const [coauthorsOpen, setCoauthorsOpen] = useState(false)
   const [confirmRemove, setConfirmRemove] = useState(false)
 
@@ -99,7 +187,8 @@ export default function AuthorDetailPage() {
     setFilter((prev) => {
       if (
         prev.missing_only !== next.missing_only ||
-        prev.confidence_band !== next.confidence_band
+        prev.confidence_band !== next.confidence_band ||
+        prev.english_only !== next.english_only
       ) {
         setPage(0)
       }
@@ -107,27 +196,20 @@ export default function AuthorDetailPage() {
     })
   }
 
-  // Server-side params — paginated
+  // Server-side params for this author's current filter scope.
+  // English-only is applied client-side because rows without a language use the
+  // same title-script heuristic as the table.
   const serverParams = {
     author_id: authorId,
     missing_only: filter.missing_only ? true : undefined,
     confidence_band: filter.confidence_band !== 'all' ? filter.confidence_band : undefined,
-    limit: PAGE_SIZE,
-    offset: page * PAGE_SIZE,
-  }
-
-  // Count params — no limit/offset, same filters
-  const countParams = {
-    author_id: authorId,
-    missing_only: filter.missing_only ? true : undefined,
-    confidence_band: filter.confidence_band !== 'all' ? filter.confidence_band : undefined,
+    limit: 500,
   }
 
   const { data: booksRaw = [], isLoading: booksLoading, isError: booksError } = useBooks(serverParams)
-  const { data: totalCount = 0, isLoading: countLoading } = useBooksCount(countParams)
 
   // Attach author name (required by BookRow type) + client-side english filter + sort
-  const displayBooks = useMemo<BookRow[]>(() => {
+  const displayBooks = useMemo<BookRow[]>(() => {  // eslint-disable-line react-hooks/exhaustive-deps
     let rows: BookRow[] = booksRaw.map((b) => ({
       ...b,
       author_id: authorId,
@@ -140,23 +222,42 @@ export default function AuthorDetailPage() {
       )
     }
 
-    // Sort: series first (standalones last) → series name → position → title
+    const dir = sortDir === 'asc' ? 1 : -1
     rows = [...rows].sort((a, b) => {
-      const aHasSeries = !!a.series_name
-      const bHasSeries = !!b.series_name
-      if (aHasSeries !== bHasSeries) return aHasSeries ? -1 : 1
-      if (aHasSeries && bHasSeries) {
-        const seriesCmp = a.series_name!.localeCompare(b.series_name!)
-        if (seriesCmp !== 0) return seriesCmp
-        const aPos = parseFloat(a.series_position ?? '') || 0
-        const bPos = parseFloat(b.series_position ?? '') || 0
-        if (aPos !== bPos) return aPos - bPos
+      switch (sortField) {
+        case 'release_date': {
+          const aDate = a.release_date ?? (a.published_year ? String(a.published_year) : '')
+          const bDate = b.release_date ?? (b.published_year ? String(b.published_year) : '')
+          return dir * (aDate || 'zzzz').localeCompare(bDate || 'zzzz')
+        }
+        case 'confidence': {
+          const rank = { high: 0, medium: 1, low: 2 } as Record<string, number>
+          return dir * ((rank[a.confidence_band] ?? 3) - (rank[b.confidence_band] ?? 3))
+        }
+        case 'status': {
+          return dir * (Number(b.have_it) - Number(a.have_it))
+        }
+        case 'title':
+          return dir * a.title.localeCompare(b.title)
+        case 'series':
+        default: {
+          const aHasSeries = !!a.series_name
+          const bHasSeries = !!b.series_name
+          if (aHasSeries !== bHasSeries) return aHasSeries ? -1 : 1
+          if (aHasSeries && bHasSeries) {
+            const seriesCmp = a.series_name!.localeCompare(b.series_name!)
+            if (seriesCmp !== 0) return dir * seriesCmp
+            const aPos = parseFloat(a.series_position ?? '') || 0
+            const bPos = parseFloat(b.series_position ?? '') || 0
+            if (aPos !== bPos) return dir * (aPos - bPos)
+          }
+          return dir * a.title.localeCompare(b.title)
+        }
       }
-      return a.title.localeCompare(b.title)
     })
 
     return rows
-  }, [booksRaw, author?.name, authorId, filter.english_only])
+  }, [booksRaw, author?.name, authorId, filter.english_only, sortField, sortDir])
 
   const englishHiddenCount = useMemo(() => {
     if (!filter.english_only) return 0
@@ -165,6 +266,12 @@ export default function AuthorDetailPage() {
       return keep ? count : count + 1
     }, 0)
   }, [booksRaw, filter.english_only])
+
+  const filteredOwnedCount = useMemo(
+    () => displayBooks.reduce((count, book) => count + (book.have_it ? 1 : 0), 0),
+    [displayBooks],
+  )
+  const filteredMissingCount = displayBooks.length - filteredOwnedCount
 
   // Live: refresh books when a scan completes for this author
   useBookScoutSSE((event: BookScoutEvent) => {
@@ -190,6 +297,11 @@ export default function AuthorDetailPage() {
     setTimeout(() => setScanning(false), 10 * 60 * 1000)
   }
 
+  useKeyboardShortcuts([
+    { key: 's', handler: () => { if (!scanning) handleScan() } },
+    { key: 'f', handler: () => handleFilterChange({ ...filter, missing_only: !filter.missing_only }) },
+  ])
+
   function handleRemoveConfirm() {
     setConfirmRemove(false)
     remove.mutate(authorId, {
@@ -198,7 +310,6 @@ export default function AuthorDetailPage() {
   }
 
   const isFavorite = favorites.has(authorId)
-  const missing = author ? author.book_count - author.owned_count : undefined
 
   return (
     <div className="flex flex-col gap-4 p-4 md:p-6">
@@ -288,9 +399,11 @@ export default function AuthorDetailPage() {
 
           {/* Stat chips */}
           <div className="flex gap-3 flex-wrap">
-            <StatChip icon={CheckCircle2} label="Confirmed" value={author.owned_count} className="text-emerald-500" />
-            <StatChip icon={BookX} label="Missing" value={missing} className="text-orange-500" />
+            <StatChip icon={CheckCircle2} label="Confirmed" value={filteredOwnedCount} className="text-emerald-500" />
+            <StatChip icon={BookX} label="Missing" value={filteredMissingCount} className="text-orange-500" />
           </div>
+
+          <AuthorPreferencesPanel authorId={authorId} />
 
           {/* Scan error */}
           {scan.isError && (
@@ -314,17 +427,16 @@ export default function AuthorDetailPage() {
                 variant="outline"
                 size="sm"
                 className="h-7 text-xs"
-                onClick={() => setFilter((prev) => ({ ...prev, english_only: false }))}
+                onClick={() => handleFilterChange({ ...filter, english_only: false })}
               >
                 Show all languages
               </Button>
             </div>
           )}
 
-          {/* Book count — suppressed until both the list and count queries resolve to avoid "0 books" flicker */}
-          {!booksLoading && !countLoading && (
+          {!booksLoading && (
             <p className="text-sm text-muted-foreground -mt-1">
-              {totalCount} book{totalCount !== 1 ? 's' : ''}
+              {displayBooks.length} book{displayBooks.length !== 1 ? 's' : ''}
             </p>
           )}
 
@@ -343,13 +455,49 @@ export default function AuthorDetailPage() {
             </div>
           )}
 
+          {/* Sort bar */}
+          {!booksLoading && displayBooks.length > 0 && (
+            <div className="flex items-center gap-1 text-xs text-muted-foreground">
+              <span className="mr-1">Sort:</span>
+              {(['series', 'release_date', 'confidence', 'status', 'title'] as SortField[]).map((f) => {
+                const labels: Record<SortField, string> = {
+                  series: 'Series', release_date: 'Release', confidence: 'Confidence',
+                  status: 'Status', title: 'Title',
+                }
+                const active = sortField === f
+                const Icon = active ? (sortDir === 'asc' ? ArrowUp : ArrowDown) : ArrowUpDown
+                return (
+                  <button
+                    key={f}
+                    onClick={() => cycleSort(f)}
+                    className={cn(
+                      'inline-flex items-center gap-0.5 rounded px-1.5 py-0.5 hover:bg-muted transition-colors',
+                      active && 'bg-muted text-foreground font-medium',
+                    )}
+                  >
+                    <Icon size={10} />
+                    {labels[f]}
+                  </button>
+                )
+              })}
+            </div>
+          )}
+
           {/* Books table */}
           {!booksLoading && !booksError && (
             <BooksTable
               books={displayBooks}
-              totalCount={totalCount}
               page={page}
               onPageChange={setPage}
+              activeFilterSummary={
+                displayBooks.length === 0
+                  ? [
+                      filter.missing_only && 'showing missing only',
+                      filter.confidence_band !== 'all' && `confidence = ${filter.confidence_band}`,
+                      filter.english_only && 'English only',
+                    ].filter(Boolean).join(', ') || undefined
+                  : undefined
+              }
             />
           )}
         </>

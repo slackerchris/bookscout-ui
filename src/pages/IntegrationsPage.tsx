@@ -1,5 +1,7 @@
+import { useState } from 'react'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
+import { Input } from '@/components/ui/input'
 import {
   BookOpen,
   Search,
@@ -12,13 +14,18 @@ import {
   Circle,
   RefreshCw,
   UserPlus,
+  Plus,
+  Trash2,
+  TestTube,
 } from 'lucide-react'
 import { useAbsImport, useAbsImportResult } from '@/features/integrations/useAbsImport'
 import { useSearchStatus } from '@/features/integrations/useSearchStatus'
 import type { ServiceStatus } from '@/lib/api/search'
-import { useMutation } from '@tanstack/react-query'
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { scansApi } from '@/lib/api/scans'
 import { useHealth } from '@/hooks/useHealth'
+import { webhooksApi, type WebhookCreate } from '@/lib/api/webhooks'
+import { toast } from 'sonner'
 
 function formatDate(iso: string) {
   return new Date(iso).toLocaleString(undefined, {
@@ -47,6 +54,148 @@ function ServiceStatusBadge({ svc, loading }: { svc?: ServiceStatus; loading: bo
       <Circle size={7} className="fill-destructive" />
       {svc.detail ?? 'Unreachable'}
     </span>
+  )
+}
+
+function WebhooksCard() {
+  const qc = useQueryClient()
+  const { data: webhooks = [], isLoading } = useQuery({
+    queryKey: ['webhooks'],
+    queryFn: () => webhooksApi.list(),
+  })
+  const [newUrl, setNewUrl] = useState('')
+  const [testStates, setTestStates] = useState<Record<number, 'idle' | 'loading' | 'ok' | 'error'>>({})
+
+  const createMutation = useMutation({
+    mutationFn: (body: WebhookCreate) => webhooksApi.create(body),
+    onSuccess: () => { qc.invalidateQueries({ queryKey: ['webhooks'] }); setNewUrl('') },
+    onError: () => toast.error('Failed to add webhook'),
+  })
+
+  const removeMutation = useMutation({
+    mutationFn: (id: number) => webhooksApi.remove(id),
+    onSuccess: () => qc.invalidateQueries({ queryKey: ['webhooks'] }),
+  })
+
+  const reactivateMutation = useMutation({
+    mutationFn: (id: number) => webhooksApi.reactivate(id),
+    onSuccess: () => qc.invalidateQueries({ queryKey: ['webhooks'] }),
+  })
+
+  async function testWebhook(id: number) {
+    setTestStates((s) => ({ ...s, [id]: 'loading' }))
+    try {
+      const result = await webhooksApi.test(id)
+      setTestStates((s) => ({ ...s, [id]: result.success ? 'ok' : 'error' }))
+      toast[result.success ? 'success' : 'error'](
+        result.success ? `Test ping succeeded (HTTP ${result.status_code})` : `Test ping failed (HTTP ${result.status_code ?? 'no response'})`
+      )
+    } catch {
+      setTestStates((s) => ({ ...s, [id]: 'error' }))
+      toast.error('Test request failed')
+    }
+  }
+
+  return (
+    <Card>
+      <CardHeader className="pb-3">
+        <div className="flex items-center gap-2.5">
+          <div className="flex size-8 items-center justify-center rounded-md bg-muted">
+            <Webhook size={15} className="text-muted-foreground" />
+          </div>
+          <div>
+            <CardTitle className="text-sm font-medium">Webhooks</CardTitle>
+            <p className="text-xs text-muted-foreground">Receive events when books are discovered or scans complete</p>
+          </div>
+        </div>
+      </CardHeader>
+      <CardContent className="pt-0 flex flex-col gap-3">
+        {isLoading && <Loader2 size={14} className="animate-spin text-muted-foreground" />}
+        {webhooks.length === 0 && !isLoading && (
+          <p className="text-xs text-muted-foreground">No webhooks registered.</p>
+        )}
+        {webhooks.map((wh) => (
+          <div key={wh.id} className="flex items-center justify-between gap-2 rounded-md border border-border px-3 py-2">
+            <div className="flex-1 min-w-0">
+              <p className="text-sm font-mono truncate text-foreground">{wh.url}</p>
+              <div className="flex items-center gap-2 mt-0.5">
+                {wh.active ? (
+                  <span className="flex items-center gap-1 text-xs text-emerald-500">
+                    <Circle size={6} className="fill-emerald-500" />Active
+                  </span>
+                ) : (
+                  <span className="flex items-center gap-1 text-xs text-muted-foreground">
+                    <Circle size={6} className="fill-muted-foreground" />
+                    Disabled
+                    {wh.failure_count > 0 && ` · ${wh.failure_count} failures`}
+                  </span>
+                )}
+                {wh.description && <span className="text-xs text-muted-foreground">· {wh.description}</span>}
+              </div>
+            </div>
+            <div className="flex items-center gap-1 shrink-0">
+              {!wh.active && (
+                <Button
+                  size="sm"
+                  variant="outline"
+                  className="h-7 text-xs"
+                  onClick={() => reactivateMutation.mutate(wh.id)}
+                  disabled={reactivateMutation.isPending}
+                >
+                  Re-enable
+                </Button>
+              )}
+              <Button
+                size="sm"
+                variant="ghost"
+                className="h-7 w-7 p-0 text-muted-foreground hover:text-foreground"
+                title="Send test ping"
+                onClick={() => testWebhook(wh.id)}
+                disabled={testStates[wh.id] === 'loading'}
+              >
+                {testStates[wh.id] === 'loading'
+                  ? <Loader2 size={12} className="animate-spin" />
+                  : testStates[wh.id] === 'ok'
+                    ? <CheckCircle2 size={12} className="text-emerald-500" />
+                    : testStates[wh.id] === 'error'
+                      ? <AlertCircle size={12} className="text-destructive" />
+                      : <TestTube size={12} />}
+              </Button>
+              <Button
+                size="sm"
+                variant="ghost"
+                className="h-7 w-7 p-0 text-muted-foreground hover:text-destructive"
+                title="Remove webhook"
+                onClick={() => removeMutation.mutate(wh.id)}
+                disabled={removeMutation.isPending}
+              >
+                <Trash2 size={12} />
+              </Button>
+            </div>
+          </div>
+        ))}
+
+        <form
+          className="flex gap-2"
+          onSubmit={(e) => {
+            e.preventDefault()
+            const url = newUrl.trim()
+            if (url) createMutation.mutate({ url })
+          }}
+        >
+          <Input
+            value={newUrl}
+            onChange={(e) => setNewUrl(e.target.value)}
+            placeholder="https://…"
+            className="h-8 text-sm flex-1"
+          />
+          <Button type="submit" size="sm" className="h-8 gap-1.5 shrink-0" disabled={!newUrl.trim() || createMutation.isPending}>
+            {createMutation.isPending ? <Loader2 size={12} className="animate-spin" /> : <Plus size={12} />}
+            Add
+          </Button>
+        </form>
+      </CardContent>
+    </Card>
   )
 }
 
@@ -187,6 +336,8 @@ export default function IntegrationsPage() {
           )}
         </CardContent>
       </Card>
+
+      <WebhooksCard />
 
       {/* Service integrations — live status */}
       <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-4">

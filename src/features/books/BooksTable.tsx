@@ -9,7 +9,10 @@ import {
 } from '@/components/ui/table'
 import { Button } from '@/components/ui/button'
 import { ConfidenceBadge, BookStateBadge } from '@/components/StatusBadge'
-import { Search, Trash2, ChevronLeft, ChevronRight, BookCheck, BookX, ExternalLink, Languages } from 'lucide-react'
+import {
+  Search, Trash2, ChevronLeft, ChevronRight, BookCheck, BookX,
+  ExternalLink, Pencil, Calendar, Globe, TrendingUp,
+} from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { useMutation, useQueryClient } from '@tanstack/react-query'
 import { booksApi } from '@/lib/api/books'
@@ -17,6 +20,7 @@ import { bookKeys } from './useBooks'
 import type { Book } from '@/types'
 import type { BooksParams } from '@/lib/api/books'
 import SearchDownloadDrawer from './SearchDownloadDrawer'
+import EditBookDrawer from './EditBookDrawer'
 import {
   Tooltip,
   TooltipContent,
@@ -72,19 +76,15 @@ interface Props {
   page?: number
   /** Called when the user clicks prev/next. */
   onPageChange?: (page: number) => void
+  /** Describe which filters are active so empty-state can explain the absence of results. */
+  activeFilterSummary?: string
 }
 
 function bookState(b: BookRow): 'have_it' | 'missing' {
   return b.have_it ? 'have_it' : 'missing'
 }
 
-function isEnglishLanguageTag(language: string | null | undefined): boolean {
-  if (!language) return false
-  const normalized = language.trim().toLowerCase().replace(/_/g, '-')
-  return normalized === 'en' || normalized.startsWith('en-') || normalized === 'eng' || normalized === 'english'
-}
-
-function formatReleaseDate(releaseDate: string | null, publishedYear: number | null): string {
+export function formatReleaseDate(releaseDate: string | null, publishedYear: number | null): string {
   if (releaseDate) {
     const trimmed = releaseDate.trim()
     if (/^\d{4}$/.test(trimmed)) return trimmed
@@ -105,8 +105,53 @@ function formatReleaseDate(releaseDate: string | null, publishedYear: number | n
   return publishedYear ? String(publishedYear) : '—'
 }
 
-function BooksTable({ books, grouped, totalCount, page = 0, onPageChange }: Props) {
+function isFutureRelease(releaseDate: string | null): boolean {
+  if (!releaseDate) return false
+  const today = new Date().toISOString().slice(0, 10)
+  if (/^\d{4}$/.test(releaseDate.trim())) return releaseDate.trim() > today.slice(0, 4)
+  return releaseDate.trim() > today
+}
+
+function BookBadges({ book }: { book: BookRow }) {
+  const badges: React.ReactNode[] = []
+
+  if (isFutureRelease(book.release_date)) {
+    badges.push(
+      <span key="upcoming" className="inline-flex items-center gap-0.5 rounded-sm bg-blue-500/10 px-1 py-0.5 text-[10px] font-medium text-blue-500">
+        <Calendar size={9} />Upcoming
+      </span>
+    )
+  } else if (!book.release_date && !book.published_year) {
+    badges.push(
+      <span key="no-date" className="inline-flex items-center gap-0.5 rounded-sm bg-muted px-1 py-0.5 text-[10px] font-medium text-muted-foreground">
+        <Calendar size={9} />No date
+      </span>
+    )
+  }
+
+  if (book.language && book.language !== 'en' && !book.language.startsWith('en')) {
+    badges.push(
+      <span key="lang" className="inline-flex items-center gap-0.5 rounded-sm bg-amber-500/10 px-1 py-0.5 text-[10px] font-medium text-amber-600">
+        <Globe size={9} />{book.language.toUpperCase()}
+      </span>
+    )
+  }
+
+  if (book.confidence_band === 'low') {
+    badges.push(
+      <span key="low-conf" className="inline-flex items-center gap-0.5 rounded-sm bg-rose-500/10 px-1 py-0.5 text-[10px] font-medium text-rose-500">
+        <TrendingUp size={9} />Low conf
+      </span>
+    )
+  }
+
+  if (!badges.length) return null
+  return <div className="flex flex-wrap gap-1 mt-0.5">{badges}</div>
+}
+
+function BooksTable({ books, grouped, totalCount, page = 0, onPageChange, activeFilterSummary }: Props) {
   const [selectedBook, setSelectedBook] = useState<BookRow | null>(null)
+  const [editBook, setEditBook] = useState<BookRow | null>(null)
   const [confirmDeleteId, setConfirmDeleteId] = useState<number | null>(null)
   const queryClient = useQueryClient()
 
@@ -114,7 +159,6 @@ function BooksTable({ books, grouped, totalCount, page = 0, onPageChange }: Prop
     mutationFn: (id: number) => booksApi.remove(id),
     onSuccess: (_, id) => {
       const authorId = books.find((b) => b.id === id)?.author_id
-      // Only invalidate lists for the affected author, not all authors' cached pages.
       queryClient.invalidateQueries({
         queryKey: bookKeys.lists(),
         predicate: (query) => {
@@ -131,7 +175,6 @@ function BooksTable({ books, grouped, totalCount, page = 0, onPageChange }: Prop
     mutationFn: ({ id, have_it }: { id: number; have_it: boolean }) =>
       booksApi.update(id, { have_it }),
     onSuccess: (_, { id, have_it }) => {
-      // Update the toggled field in every cached book list rather than refetching all pages.
       queryClient.setQueriesData<Book[]>(
         { queryKey: bookKeys.lists() },
         (old) => old?.map((b) => b.id === id ? { ...b, have_it } : b),
@@ -140,34 +183,23 @@ function BooksTable({ books, grouped, totalCount, page = 0, onPageChange }: Prop
     },
   })
 
-  const languageMutation = useMutation({
-    mutationFn: ({ id, language }: { id: number; language: string }) =>
-      booksApi.update(id, { language }),
-    onSuccess: (_, { id, language }) => {
-      queryClient.setQueriesData<Book[]>(
-        { queryKey: bookKeys.lists() },
-        (old) => old?.map((b) => b.id === id ? { ...b, language } : b),
-      )
-    },
-  })
-
   if (books.length === 0) {
     return (
       <div className="flex flex-col items-center justify-center py-20 text-muted-foreground gap-2">
         <p className="text-sm">No books match your filters.</p>
+        {activeFilterSummary && (
+          <p className="text-xs text-muted-foreground/70 max-w-sm text-center">{activeFilterSummary}</p>
+        )}
       </div>
     )
   }
 
-  // When totalCount is provided, pagination is driven externally (server-side).
-  // Otherwise fall back to slicing the provided array locally.
   const isServerPaged = totalCount !== undefined && onPageChange !== undefined
   const effectiveTotal = isServerPaged ? totalCount : books.length
   const totalPages = Math.ceil(effectiveTotal / PAGE_SIZE)
   const displayBooks = isServerPaged ? books : books.slice(page * PAGE_SIZE, (page + 1) * PAGE_SIZE)
   const showAuthor = !grouped && displayBooks.some((b) => b.author_name)
 
-  // Build author groups from the visible slice
   const groups: { author_name: string; author_id: number; books: BookRow[] }[] = []
   if (grouped) {
     for (const book of displayBooks) {
@@ -197,6 +229,7 @@ function BooksTable({ books, grouped, totalCount, page = 0, onPageChange }: Prop
             {book.series_position ? ` · #${book.series_position}` : ''}
           </div>
         )}
+        <BookBadges book={book} />
         <div className="text-xs text-muted-foreground/60 mt-0.5 font-mono">ID: {book.id}</div>
       </TableCell>
       <TableCell className="text-center align-top">
@@ -228,17 +261,11 @@ function BooksTable({ books, grouped, totalCount, page = 0, onPageChange }: Prop
           <Button
             variant="ghost"
             size="sm"
-            className={cn(
-              'h-7 w-7 p-0',
-              isEnglishLanguageTag(book.language)
-                ? 'text-emerald-500 hover:text-emerald-600'
-                : 'text-muted-foreground hover:text-foreground',
-            )}
-            title={isEnglishLanguageTag(book.language) ? 'Language is English' : 'Set language to English'}
-            onClick={() => languageMutation.mutate({ id: book.id, language: 'en' })}
-            disabled={languageMutation.isPending || isEnglishLanguageTag(book.language)}
+            className="h-7 w-7 p-0 text-muted-foreground hover:text-foreground"
+            title="Edit metadata"
+            onClick={() => setEditBook(book)}
           >
-            <Languages size={13} />
+            <Pencil size={13} />
           </Button>
           {book.asin && (
             <Button
@@ -307,7 +334,7 @@ function BooksTable({ books, grouped, totalCount, page = 0, onPageChange }: Prop
               <TableHead className="w-[110px] text-center">Confidence</TableHead>
               <TableHead className="w-[120px]">Release</TableHead>
               <TableHead className="w-[90px]">Status</TableHead>
-              <TableHead className="w-[80px]"></TableHead>
+              <TableHead className="w-[100px]"></TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
@@ -362,6 +389,11 @@ function BooksTable({ books, grouped, totalCount, page = 0, onPageChange }: Prop
       <SearchDownloadDrawer
         book={selectedBook}
         onClose={() => setSelectedBook(null)}
+      />
+
+      <EditBookDrawer
+        book={editBook}
+        onClose={() => setEditBook(null)}
       />
     </>
   )
