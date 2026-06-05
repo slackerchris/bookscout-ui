@@ -1,10 +1,11 @@
-import type { Author, AuthorDetail, Coauthor } from '@/types'
+import type { Author, AuthorDetail, AuthorPreferences, Coauthor } from '@/types'
 import type { components } from './generated'
 import { api } from './client'
 
 export type AuthorUpdate = components['schemas']['AuthorUpdate']
 
 export type WatchlistSettings = components['schemas']['WatchlistSettings']
+export type AuthorPreferencesUpdate = components['schemas']['AuthorPreferencesUpdate']
 
 export const authorsApi = {
   list: (params: { active_only?: boolean; search?: string } = {}) => {
@@ -31,6 +32,9 @@ export const authorsApi = {
   unwatched: () => api.get<Author[]>('/authors/unwatched'),
   watch: (id: number) => api.post<Author>(`/authors/${id}/watch`),
   coauthors: (id: number) => api.get<Coauthor[]>(`/authors/${id}/coauthors`),
+  preferences: (id: number) => api.get<AuthorPreferences>(`/authors/${id}/preferences`),
+  updatePreferences: (id: number, patch: AuthorPreferencesUpdate) =>
+    api.patch<AuthorPreferences>(`/authors/${id}/preferences`, patch),
   favorites: () => api.get<{ author_ids: number[] }>('/authors/favorites'),
   addFavorite: (id: number) => api.post<void>(`/authors/${id}/favorite`),
   removeFavorite: (id: number) => api.delete<void>(`/authors/${id}/favorite`),

@@ -252,7 +252,7 @@ export default function AuthorsPage() {
 
   const { data: authors = [], isLoading, isError } = useAuthors()
   const { data: unwatched = [], isLoading: unwatchedLoading } = useUnwatchedAuthors(tab === 'all' || tab === 'unwatched')
-  const { add, remove, scan, watch, watchMany } = useAuthorMutations()
+  const { add, remove, scan, scanMany, watch, watchMany } = useAuthorMutations()
   const { favorites, toggle: toggleFavorite } = useFavoriteAuthors()
   const [search, setSearch] = useState('')
   const [sortDir, setSortDir] = useState<'asc' | 'desc'>('asc')
@@ -260,7 +260,7 @@ export default function AuthorsPage() {
   const [addOpen, setAddOpen] = useState(false)
   const [coauthorTarget, setCoauthorTarget] = useState<{ id: number; name: string } | null>(null)
   const [removeTarget, setRemoveTarget] = useState<Author | null>(null)
-  const [scanningId, setScanningId] = useState<number | null>(null)
+  const [scanningIds, setScanningIds] = useState<Set<number>>(() => new Set())
   const [watchingId, setWatchingId] = useState<number | null>(null)
   const [allVisible, setAllVisible] = useState(INITIAL_RENDER_COUNT)
   const [watchingVisible, setWatchingVisible] = useState(INITIAL_RENDER_COUNT)
@@ -323,18 +323,35 @@ export default function AuthorsPage() {
 
   useBookScoutSSE((event: BookScoutEvent) => {
     if (event.event_type === 'scan.complete') {
-      const aid = event.payload.author_id
-      setScanningId((cur) => (cur === aid ? null : cur))
+      const aid = Number(event.payload.author_id)
+      if (!Number.isFinite(aid)) return
+      setScanningIds((cur) => {
+        const next = new Set(cur)
+        next.delete(aid)
+        return next
+      })
     }
   })
 
   function handleScan(author: Author) {
-    setScanningId(author.id)
+    setScanningIds((cur) => new Set(cur).add(author.id))
     // Clear on error; otherwise wait for scan.complete SSE event.
     scan.mutate(author.id, {
-      onError: () => setScanningId(null),
+      onError: () => {
+        setScanningIds((cur) => {
+          const next = new Set(cur)
+          next.delete(author.id)
+          return next
+        })
+      },
     })
-    setTimeout(() => setScanningId((cur) => (cur === author.id ? null : cur)), 10 * 60 * 1000)
+    setTimeout(() => {
+      setScanningIds((cur) => {
+        const next = new Set(cur)
+        next.delete(author.id)
+        return next
+      })
+    }, 10 * 60 * 1000)
   }
 
   function handleWatch(author: Author) {
@@ -345,6 +362,28 @@ export default function AuthorsPage() {
   function handleWatchAll() {
     if (filteredUnwatched.length === 0) return
     watchMany.mutate(filteredUnwatched.map((author) => author.id))
+  }
+
+  function handleScanVisible() {
+    if (filtered.length === 0) return
+    const ids = filtered.map((author) => author.id)
+    setScanningIds((cur) => new Set([...cur, ...ids]))
+    scanMany.mutate(ids, {
+      onError: () => {
+        setScanningIds((cur) => {
+          const next = new Set(cur)
+          ids.forEach((id) => next.delete(id))
+          return next
+        })
+      },
+    })
+    setTimeout(() => {
+      setScanningIds((cur) => {
+        const next = new Set(cur)
+        ids.forEach((id) => next.delete(id))
+        return next
+      })
+    }, 10 * 60 * 1000)
   }
 
   function handleRemoveConfirm() {
@@ -474,6 +513,16 @@ export default function AuthorsPage() {
               <ArrowUpDown size={12} />
               {sortDir === 'asc' ? 'A → Z' : 'Z → A'}
             </Button>
+            <Button
+              variant="outline"
+              size="sm"
+              className="h-8 gap-1.5 text-xs"
+              onClick={handleScanVisible}
+              disabled={filtered.length === 0 || scanMany.isPending}
+            >
+              {scanMany.isPending ? <Loader2 size={12} className="animate-spin" /> : <ScanLine size={12} />}
+              Scan visible ({filtered.length})
+            </Button>
           </>
         )}
 
@@ -507,6 +556,12 @@ export default function AuthorsPage() {
         <div className="rounded-md border border-destructive/30 bg-destructive/10 px-4 py-3 text-sm text-destructive flex items-center gap-2">
           <AlertCircle size={14} className="shrink-0" />
           Scan failed: {scan.error instanceof Error ? scan.error.message : 'Unknown error'}
+        </div>
+      )}
+      {scanMany.isError && (
+        <div className="rounded-md border border-destructive/30 bg-destructive/10 px-4 py-3 text-sm text-destructive flex items-center gap-2">
+          <AlertCircle size={14} className="shrink-0" />
+          Bulk scan failed: {scanMany.error instanceof Error ? scanMany.error.message : 'Unknown error'}
         </div>
       )}
       {watchMany.isError && (
@@ -543,7 +598,7 @@ export default function AuthorsPage() {
                       key={author.id}
                       author={author}
                       isFavorite={favorites.has(author.id)}
-                      isScanning={scanningId === author.id}
+                      isScanning={scanningIds.has(author.id)}
                       isNew={isNewAuthor(author.created_at)}
                       onFavorite={() => toggleFavorite(author.id)}
                       onScan={() => handleScan(author)}
@@ -615,7 +670,7 @@ export default function AuthorsPage() {
                     key={author.id}
                     author={author}
                     isFavorite={favorites.has(author.id)}
-                    isScanning={scanningId === author.id}
+                    isScanning={scanningIds.has(author.id)}
                     isNew={isNewAuthor(author.created_at)}
                     onFavorite={() => toggleFavorite(author.id)}
                     onScan={() => handleScan(author)}

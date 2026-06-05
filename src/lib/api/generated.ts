@@ -278,6 +278,24 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/authors/{author_id}/preferences": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get author notes and ignore rules */
+        get: operations["get_author_preferences_api_v1_authors__author_id__preferences_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        /** Update author notes and ignore rules */
+        patch: operations["update_author_preferences_api_v1_authors__author_id__preferences_patch"];
+        trace?: never;
+    };
     "/api/v1/authors/{author_id}/watch": {
         parameters: {
             query?: never;
@@ -353,6 +371,26 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/books/recently-discovered": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Books most recently discovered
+         * @description Return recently created catalog rows, newest first.
+         */
+        get: operations["recently_discovered_api_v1_books_recently_discovered_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/books/recently-imported": {
         parameters: {
             query?: never;
@@ -368,6 +406,43 @@ export interface paths {
          *     changes on any subsequent metadata update and would produce incorrect ordering.
          */
         get: operations["recently_imported_api_v1_books_recently_imported_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/books/summary": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Book catalog summary */
+        get: operations["book_summary_api_v1_books_summary_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/books/upcoming": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Upcoming audiobook releases
+         * @description Return books with release dates today or later, ordered by release date.
+         */
+        get: operations["upcoming_books_api_v1_books_upcoming_get"];
         put?: never;
         post?: never;
         delete?: never;
@@ -897,6 +972,26 @@ export interface components {
             /** Openlibrary Key */
             openlibrary_key?: string | null;
         };
+        /** AuthorPreferences */
+        AuthorPreferences: {
+            /**
+             * Ignore Rules
+             * @default []
+             */
+            ignore_rules: string[];
+            /**
+             * Notes
+             * @default
+             */
+            notes: string;
+        };
+        /** AuthorPreferencesUpdate */
+        AuthorPreferencesUpdate: {
+            /** Ignore Rules */
+            ignore_rules?: string[] | null;
+            /** Notes */
+            notes?: string | null;
+        };
         /** AuthorUpdate */
         AuthorUpdate: {
             /** Active */
@@ -983,6 +1078,69 @@ export interface components {
             series_position?: string | null;
             /** Subtitle */
             subtitle?: string | null;
+        };
+        /** BookWithAuthorOut */
+        BookWithAuthorOut: {
+            /** Asin */
+            asin?: string | null;
+            /** Author Id */
+            author_id: number;
+            /** Author Name */
+            author_name: string;
+            /** Confidence Band */
+            confidence_band: string;
+            /** Cover Url */
+            cover_url?: string | null;
+            /**
+             * Created At
+             * Format: date-time
+             */
+            created_at: string;
+            /** Deleted */
+            deleted: boolean;
+            /** Description */
+            description?: string | null;
+            /** Format */
+            format?: string | null;
+            /** Have It */
+            have_it: boolean;
+            /** Id */
+            id: number;
+            /** Isbn */
+            isbn?: string | null;
+            /** Isbn13 */
+            isbn13?: string | null;
+            /** Language */
+            language?: string | null;
+            /** Match Method */
+            match_method: string;
+            /** Narrator */
+            narrator?: string | null;
+            /** Published Year */
+            published_year?: number | null;
+            /** Release Date */
+            release_date?: string | null;
+            /** Score */
+            score: number;
+            /** Score Reasons */
+            score_reasons?: string | null;
+            /** Series Name */
+            series_name?: string | null;
+            /** Series Position */
+            series_position?: string | null;
+            /** Source */
+            source?: string | null;
+            /** Subtitle */
+            subtitle?: string | null;
+            /** Title */
+            title: string;
+            /** Title Sort */
+            title_sort: string;
+            /**
+             * Updated At
+             * Format: date-time
+             */
+            updated_at: string;
         };
         /** CoAuthorOut */
         CoAuthorOut: {
@@ -1658,6 +1816,72 @@ export interface operations {
             };
         };
     };
+    get_author_preferences_api_v1_authors__author_id__preferences_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                author_id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AuthorPreferences"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    update_author_preferences_api_v1_authors__author_id__preferences_patch: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                author_id: number;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["AuthorPreferencesUpdate"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AuthorPreferences"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
     watch_author_api_v1_authors__author_id__watch_post: {
         parameters: {
             query?: never;
@@ -1814,6 +2038,38 @@ export interface operations {
             };
         };
     };
+    recently_discovered_api_v1_books_recently_discovered_get: {
+        parameters: {
+            query?: {
+                limit?: number;
+                missing_only?: boolean;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["BookWithAuthorOut"][];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
     recently_imported_api_v1_books_recently_imported_get: {
         parameters: {
             query?: {
@@ -1832,6 +2088,62 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["BookOut"][];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    book_summary_api_v1_books_summary_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        [key: string]: unknown;
+                    };
+                };
+            };
+        };
+    };
+    upcoming_books_api_v1_books_upcoming_get: {
+        parameters: {
+            query?: {
+                limit?: number;
+                missing_only?: boolean;
+                /** @description high | medium | low */
+                confidence_band?: string | null;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["BookWithAuthorOut"][];
                 };
             };
             /** @description Validation Error */

@@ -7,6 +7,7 @@ export const authorKeys = {
   unwatched: () => ['authors', 'unwatched'] as const,
   detail: (id: number) => ['authors', 'detail', id] as const,
   coauthors: (id: number) => ['authors', 'coauthors', id] as const,
+  preferences: (id: number) => ['authors', 'preferences', id] as const,
 }
 
 export function useAuthors() {
@@ -42,6 +43,14 @@ export function useCoauthors(authorId: number | null) {
   })
 }
 
+export function useAuthorPreferences(authorId: number) {
+  return useQuery({
+    queryKey: authorKeys.preferences(authorId),
+    queryFn: () => authorsApi.preferences(authorId),
+    enabled: !isNaN(authorId),
+  })
+}
+
 export function useAuthorMutations() {
   const qc = useQueryClient()
 
@@ -65,6 +74,17 @@ export function useAuthorMutations() {
   // scan: enqueues a background job — only invalidate the list (last_scanned timestamp)
   const scan = useMutation({
     mutationFn: authorsApi.scan,
+    onSuccess: () => qc.invalidateQueries({ queryKey: authorKeys.list() }),
+  })
+
+  const scanMany = useMutation({
+    mutationFn: async (ids: number[]) => {
+      const results = await Promise.allSettled(ids.map((id) => authorsApi.scan(id)))
+      const rejected = results.filter((r): r is PromiseRejectedResult => r.status === 'rejected')
+      if (rejected.length > 0) {
+        throw new Error(`Failed to scan ${rejected.length} author${rejected.length === 1 ? '' : 's'}`)
+      }
+    },
     onSuccess: () => qc.invalidateQueries({ queryKey: authorKeys.list() }),
   })
 
@@ -92,5 +112,13 @@ export function useAuthorMutations() {
     },
   })
 
-  return { add, remove, scan, watch, watchMany }
+  const updatePreferences = useMutation({
+    mutationFn: ({ id, patch }: { id: number; patch: Parameters<typeof authorsApi.updatePreferences>[1] }) =>
+      authorsApi.updatePreferences(id, patch),
+    onSuccess: (_data, vars) => {
+      qc.invalidateQueries({ queryKey: authorKeys.preferences(vars.id) })
+    },
+  })
+
+  return { add, remove, scan, scanMany, watch, watchMany, updatePreferences }
 }

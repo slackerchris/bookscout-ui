@@ -4,7 +4,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import {
-  Download, FileDown, Loader2, Settings, Trash2, CheckCircle2, AlertCircle,
+  Download, FileDown, Loader2, Settings, Trash2, CheckCircle2,
 } from 'lucide-react'
 import { booksApi } from '@/lib/api/books'
 import type { DownloadPreferences } from '@/lib/api/books'

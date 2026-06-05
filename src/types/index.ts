@@ -10,6 +10,10 @@ export type Book = Required<ApiSchemas['BookOut']> & {
   confidence_band: ConfidenceBand
 }
 
+export type BookWithAuthor = Required<ApiSchemas['BookWithAuthorOut']> & {
+  confidence_band: ConfidenceBand
+}
+
 // ---- Authors --------------------------------------------------------------
 
 export type Author = Required<ApiSchemas['AuthorOut']>
@@ -18,6 +22,8 @@ export type Author = Required<ApiSchemas['AuthorOut']>
 export type AuthorDetail = Required<ApiSchemas['AuthorDetailOut']>
 
 export type Coauthor = ApiSchemas['CoAuthorOut']
+
+export type AuthorPreferences = ApiSchemas['AuthorPreferences']
 
 // ---- SSE Events -----------------------------------------------------------
 
