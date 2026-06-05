@@ -7,6 +7,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [0.68.1] — 2026-06-05
+
+### Removed
+- **"N books hidden by English only" banner** — removed the amber info banner on the Author Detail page that appeared when the English only filter was hiding books.
+
+---
+
 ## [0.68.0] — 2026-06-04
 
 ### Added
