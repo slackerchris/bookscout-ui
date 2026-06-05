@@ -259,14 +259,6 @@ export default function AuthorDetailPage() {
     return rows
   }, [booksRaw, author?.name, authorId, filter.english_only, sortField, sortDir])
 
-  const englishHiddenCount = useMemo(() => {
-    if (!filter.english_only) return 0
-    return booksRaw.reduce((count, b) => {
-      const keep = b.language ? isEnglishLanguageTag(b.language) : !isNonLatinTitle(b.title)
-      return keep ? count : count + 1
-    }, 0)
-  }, [booksRaw, filter.english_only])
-
   const filteredOwnedCount = useMemo(
     () => displayBooks.reduce((count, book) => count + (book.have_it ? 1 : 0), 0),
     [displayBooks],
@@ -420,19 +412,6 @@ export default function AuthorDetailPage() {
             defaultFilter={PAGE_DEFAULT}
           />
 
-          {filter.english_only && englishHiddenCount > 0 && (
-            <div className="rounded-md border border-amber-500/30 bg-amber-500/10 px-3 py-2 text-xs text-amber-700 flex items-center justify-between gap-2">
-              <span>{englishHiddenCount} book{englishHiddenCount !== 1 ? 's are' : ' is'} hidden by "English only" on this page.</span>
-              <Button
-                variant="outline"
-                size="sm"
-                className="h-7 text-xs"
-                onClick={() => handleFilterChange({ ...filter, english_only: false })}
-              >
-                Show all languages
-              </Button>
-            </div>
-          )}
 
           {!booksLoading && (
             <p className="text-sm text-muted-foreground -mt-1">
