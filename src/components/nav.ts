@@ -6,6 +6,7 @@ import {
   Plug,
   Settings,
   Users,
+  UsersRound,
   type LucideIcon,
 } from 'lucide-react'
 
@@ -22,5 +23,6 @@ export const nav: NavItem[] = [
   { to: '/downloads', label: 'Downloads', icon: Download },
   { to: '/activity', label: 'Activity', icon: Activity },
   { to: '/integrations', label: 'Integrations', icon: Plug },
+  { to: '/co-authors', label: 'Co-authors', icon: UsersRound },
   { to: '/settings', label: 'Settings', icon: Settings },
 ]

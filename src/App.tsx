@@ -18,6 +18,7 @@ const DownloadsPage = lazy(() => import('@/pages/DownloadsPage'))
 const ActivityPage = lazy(() => import('@/pages/ActivityPage'))
 const IntegrationsPage = lazy(() => import('@/pages/IntegrationsPage'))
 const ConfigPage = lazy(() => import('@/pages/ConfigPage'))
+const CoAuthorManagementPage = lazy(() => import('@/pages/CoAuthorManagementPage'))
 
 function isImportCompletePayload(p: unknown): p is ImportCompletePayload {
   return (
@@ -79,6 +80,7 @@ export default function App() {
                     <Route path="activity" element={<ActivityPage />} />
                     <Route path="integrations" element={<IntegrationsPage />} />
                     <Route path="settings" element={<ConfigPage />} />
+                    <Route path="co-authors" element={<CoAuthorManagementPage />} />
                   </Route>
                 </Routes>
               </Suspense>

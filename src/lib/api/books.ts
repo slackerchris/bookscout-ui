@@ -16,12 +16,26 @@ export type BookUpdate = components['schemas']['BookUpdate'] & {
   title?: string | null
   narrator?: string | null
   release_date?: string | null
+  primary_author_id?: number | null
+  canonical_book_id?: number | null
 }
 
 export interface DuplicateGroup {
   author_id: number
   author_name: string
   books: Array<import('@/types').Book & { author_id: number; author_name: string }>
+}
+
+export interface CoAuthorEntry {
+  author_id: number
+  author_name: string
+  author_order: number | null
+}
+
+export type CoAuthorConflict = Book & {
+  primary_author_id: number
+  primary_author_name: string
+  all_authors: CoAuthorEntry[]
 }
 
 export interface DownloadHistoryItem {
@@ -107,6 +121,7 @@ export const booksApi = {
   rescan: (id: number) => api.post<{ job_id: string; author_id: number; book_id: number; status: string }>(`/books/${id}/rescan`),
   export: () => fetch('/api/v1/books/export').then((r) => r.blob()),
   duplicates: () => api.get<DuplicateGroup[]>('/books/duplicates'),
+  coAuthorConflicts: () => api.get<CoAuthorConflict[]>('/books/co-author-conflicts'),
   downloadHistory: (limit = 100) => api.get<DownloadHistoryItem[]>(`/download-history/?limit=${limit}`),
   clearDownloadHistory: () => api.delete<{ deleted: number }>('/download-history/'),
   getDownloadPreferences: () => api.get<DownloadPreferences>('/settings/download-preferences'),
