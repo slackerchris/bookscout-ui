@@ -21,6 +21,8 @@ export function useKeyboardShortcuts(shortcuts: Shortcut[]) {
   useEffect(() => {
     function onKeyDown(e: KeyboardEvent) {
       for (const s of shortcuts) {
+        // Never intercept browser/OS chords (Ctrl+F find, Cmd+S save, ...)
+        if (e.ctrlKey || e.metaKey) continue
         const keyMatches = e.key.toLowerCase() === s.key.toLowerCase()
         const altOk = s.alt ? e.altKey : !e.altKey
         const shiftOk = s.shift ? e.shiftKey : true  // shift is optional unless required

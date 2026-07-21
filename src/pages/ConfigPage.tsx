@@ -68,7 +68,7 @@ function DownloadPrefsCard() {
   })
 
   const [local, setLocal] = useState<Partial<DownloadPreferences>>({})
-  const effective: DownloadPreferences = { min_seeders: 1, preferred_format: '', language: 'en', require_unabridged: false, max_size_gb: 0, ...prefs, ...local }
+  const effective: DownloadPreferences = { min_seeders: 1, preferred_format: '', language: 'en', require_unabridged: false, max_size_gb: 0, auto_download_mode: 'approval', ...prefs, ...local }
 
   const updateMutation = useMutation({
     mutationFn: () => booksApi.updateDownloadPreferences(effective),
@@ -131,6 +131,20 @@ function DownloadPrefsCard() {
               className="h-8 text-sm w-24"
               placeholder="en"
             />
+          </div>
+          <div className="flex flex-col gap-1.5">
+            <label className="text-xs font-medium text-muted-foreground">Auto-download mode</label>
+            <select
+              value={effective.auto_download_mode}
+              onChange={(e) => set('auto_download_mode', e.target.value)}
+              className="h-8 rounded-md border border-input bg-transparent px-2 text-sm outline-none focus-visible:border-ring"
+            >
+              <option value="approval">Queue for approval</option>
+              <option value="auto">Send immediately</option>
+            </select>
+            <p className="text-[10px] text-muted-foreground/70">
+              For authors with auto-download enabled on their page
+            </p>
           </div>
           <div className="flex flex-col gap-1.5">
             <label className="text-xs font-medium text-muted-foreground">Max file size (GB)</label>

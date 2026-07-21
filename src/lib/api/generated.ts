@@ -350,6 +350,33 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/books/co-author-conflicts": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Books with multiple watched co-authors as primary authors
+         * @description Return books where 2+ watched (watchlisted) authors all have role='author'.
+         *
+         *     These are co-authored books where BookScout is tracking multiple credited
+         *     authors.  The management UI uses this to let the user designate which author
+         *     is truly primary so the book appears only once in list views.
+         *
+         *     Each group contains the book's data, the current primary author, and the full
+         *     list of co-primary authors with their billing order (author_order) if known.
+         */
+        get: operations["co_author_conflicts_api_v1_books_co_author_conflicts_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/books/count": {
         parameters: {
             query?: never;
@@ -371,6 +398,46 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/books/duplicates": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Find likely duplicate book entries
+         * @description Return groups of 2+ books that share the same normalised title + primary author.
+         */
+        get: operations["find_duplicates_api_v1_books_duplicates_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/books/export": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Export all books as a downloadable JSON file
+         * @description Download all non-deleted books with author info as a JSON file.
+         */
+        get: operations["export_books_api_v1_books_export_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/books/recently-discovered": {
         parameters: {
             query?: never;
@@ -381,6 +448,9 @@ export interface paths {
         /**
          * Books most recently discovered
          * @description Return recently created catalog rows, newest first.
+         *
+         *     Joins via primary_author_id so each book appears exactly once regardless of
+         *     how many watched co-authors it has.  Canonical duplicates are excluded.
          */
         get: operations["recently_discovered_api_v1_books_recently_discovered_get"];
         put?: never;
@@ -441,6 +511,10 @@ export interface paths {
         /**
          * Upcoming audiobook releases
          * @description Return books with release dates today or later, ordered by release date.
+         *
+         *     Joins via primary_author_id so co-authored books appear once under their
+         *     primary author only.  Canonical duplicates (canonical_book_id IS NOT NULL)
+         *     are excluded.
          */
         get: operations["upcoming_books_api_v1_books_upcoming_get"];
         put?: never;
@@ -494,6 +568,26 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/books/{book_id}/rescan": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Re-queue a metadata scan for this book's author
+         * @description Enqueue a full author scan so metadata for this book is refreshed.
+         */
+        post: operations["rescan_book_api_v1_books__book_id__rescan_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/books/{book_id}/search": {
         parameters: {
             query?: never;
@@ -510,6 +604,59 @@ export interface paths {
          *     Returns the same result shape as ``POST /api/v1/search/``.
          */
         post: operations["search_for_book_api_v1_books__book_id__search_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/download-history/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** List recent download attempts */
+        get: operations["list_history_api_v1_download_history__get"];
+        put?: never;
+        /** Record a download attempt */
+        post: operations["create_attempt_api_v1_download_history__post"];
+        /** Clear all download history */
+        delete: operations["clear_history_api_v1_download_history__delete"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/download-history/{attempt_id}/approve": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Approve a pending auto-download and send it to the client */
+        post: operations["approve_attempt_api_v1_download_history__attempt_id__approve_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/download-history/{attempt_id}/dismiss": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Dismiss a pending auto-download without sending it */
+        post: operations["dismiss_attempt_api_v1_download_history__attempt_id__dismiss_post"];
         delete?: never;
         options?: never;
         head?: never;
@@ -782,6 +929,41 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/series/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Series with ownership and gaps */
+        get: operations["list_series_api_v1_series__get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/settings/download-preferences": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get download quality preferences */
+        get: operations["get_download_prefs_api_v1_settings_download_preferences_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        /** Update download quality preferences */
+        patch: operations["update_download_prefs_api_v1_settings_download_preferences_patch"];
+        trace?: never;
+    };
     "/api/v1/webhooks/": {
         parameters: {
             query?: never;
@@ -931,6 +1113,11 @@ export interface components {
             /** Asin */
             asin?: string | null;
             /**
+             * Auto Download
+             * @default false
+             */
+            auto_download: boolean;
+            /**
              * Book Count
              * @default 0
              */
@@ -996,6 +1183,8 @@ export interface components {
         AuthorUpdate: {
             /** Active */
             active?: boolean | null;
+            /** Auto Download */
+            auto_download?: boolean | null;
             /** Name */
             name?: string | null;
         };
@@ -1003,6 +1192,8 @@ export interface components {
         BookOut: {
             /** Asin */
             asin?: string | null;
+            /** Canonical Book Id */
+            canonical_book_id?: number | null;
             /** Confidence Band */
             confidence_band: string;
             /** Cover Url */
@@ -1032,6 +1223,13 @@ export interface components {
             match_method: string;
             /** Narrator */
             narrator?: string | null;
+            /** Primary Author Id */
+            primary_author_id?: number | null;
+            /**
+             * Primary Author Manual
+             * @default false
+             */
+            primary_author_manual: boolean;
             /** Published Year */
             published_year?: number | null;
             /** Release Date */
@@ -1062,6 +1260,8 @@ export interface components {
         BookUpdate: {
             /** Asin */
             asin?: string | null;
+            /** Canonical Book Id */
+            canonical_book_id?: number | null;
             /** Deleted */
             deleted?: boolean | null;
             /** Have It */
@@ -1072,12 +1272,22 @@ export interface components {
             isbn13?: string | null;
             /** Language */
             language?: string | null;
+            /** Narrator */
+            narrator?: string | null;
+            /** Primary Author Id */
+            primary_author_id?: number | null;
+            /** Primary Author Manual */
+            primary_author_manual?: boolean | null;
+            /** Release Date */
+            release_date?: string | null;
             /** Series Name */
             series_name?: string | null;
             /** Series Position */
             series_position?: string | null;
             /** Subtitle */
             subtitle?: string | null;
+            /** Title */
+            title?: string | null;
         };
         /** BookWithAuthorOut */
         BookWithAuthorOut: {
@@ -1087,6 +1297,8 @@ export interface components {
             author_id: number;
             /** Author Name */
             author_name: string;
+            /** Canonical Book Id */
+            canonical_book_id?: number | null;
             /** Confidence Band */
             confidence_band: string;
             /** Cover Url */
@@ -1116,6 +1328,13 @@ export interface components {
             match_method: string;
             /** Narrator */
             narrator?: string | null;
+            /** Primary Author Id */
+            primary_author_id?: number | null;
+            /**
+             * Primary Author Manual
+             * @default false
+             */
+            primary_author_manual: boolean;
             /** Published Year */
             published_year?: number | null;
             /** Release Date */
@@ -1168,6 +1387,118 @@ export interface components {
             status_code?: number | null;
             /** Success */
             success?: boolean | null;
+        };
+        /** DownloadAttemptCreate */
+        DownloadAttemptCreate: {
+            /** Book Id */
+            book_id?: number | null;
+            /** Book Title */
+            book_title?: string | null;
+            /** Download Url */
+            download_url?: string | null;
+            /** Error Detail */
+            error_detail?: string | null;
+            /** Indexer */
+            indexer?: string | null;
+            /** Query */
+            query?: string | null;
+            /** Release Title */
+            release_title: string;
+            /** Seeders */
+            seeders?: number | null;
+            /** Size Bytes */
+            size_bytes?: number | null;
+            /** Source */
+            source?: string | null;
+            /**
+             * Status
+             * @default queued
+             */
+            status: string;
+            /** Type */
+            type?: string | null;
+        };
+        /** DownloadAttemptOut */
+        DownloadAttemptOut: {
+            /** Book Id */
+            book_id?: number | null;
+            /** Book Title */
+            book_title?: string | null;
+            /**
+             * Created At
+             * Format: date-time
+             */
+            created_at: string;
+            /** Download Url */
+            download_url?: string | null;
+            /** Error Detail */
+            error_detail?: string | null;
+            /** Id */
+            id: number;
+            /** Indexer */
+            indexer?: string | null;
+            /** Query */
+            query?: string | null;
+            /** Release Title */
+            release_title: string;
+            /** Seeders */
+            seeders?: number | null;
+            /** Size Bytes */
+            size_bytes?: number | null;
+            /** Source */
+            source?: string | null;
+            /** Status */
+            status: string;
+            /** Type */
+            type?: string | null;
+        };
+        /** DownloadPreferences */
+        DownloadPreferences: {
+            /**
+             * Auto Download Mode
+             * @default approval
+             */
+            auto_download_mode: string;
+            /**
+             * Language
+             * @default en
+             */
+            language: string;
+            /**
+             * Max Size Gb
+             * @default 0
+             */
+            max_size_gb: number;
+            /**
+             * Min Seeders
+             * @default 1
+             */
+            min_seeders: number;
+            /**
+             * Preferred Format
+             * @default
+             */
+            preferred_format: string;
+            /**
+             * Require Unabridged
+             * @default false
+             */
+            require_unabridged: boolean;
+        };
+        /** DownloadPreferencesUpdate */
+        DownloadPreferencesUpdate: {
+            /** Auto Download Mode */
+            auto_download_mode?: string | null;
+            /** Language */
+            language?: string | null;
+            /** Max Size Gb */
+            max_size_gb?: number | null;
+            /** Min Seeders */
+            min_seeders?: number | null;
+            /** Preferred Format */
+            preferred_format?: string | null;
+            /** Require Unabridged */
+            require_unabridged?: boolean | null;
         };
         /** DownloadRequest */
         DownloadRequest: {
@@ -1232,6 +1563,45 @@ export interface components {
              * @description Search query forwarded to Prowlarr/Jackett (max 500 chars, alphanumeric + common punctuation).
              */
             query: string;
+        };
+        /** SeriesBookOut */
+        SeriesBookOut: {
+            /** Confidence Band */
+            confidence_band: string;
+            /** Cover Url */
+            cover_url?: string | null;
+            /** Have It */
+            have_it: boolean;
+            /** Id */
+            id: number;
+            /** Position */
+            position?: number | null;
+            /** Release Date */
+            release_date?: string | null;
+            /** Series Position */
+            series_position?: string | null;
+            /** Title */
+            title: string;
+        };
+        /** SeriesOut */
+        SeriesOut: {
+            /** Author Id */
+            author_id?: number | null;
+            /** Author Name */
+            author_name?: string | null;
+            /** Books */
+            books: components["schemas"]["SeriesBookOut"][];
+            /** Owned */
+            owned: number;
+            /** Series Name */
+            series_name: string;
+            /** Total */
+            total: number;
+            /**
+             * Unknown Gaps
+             * @default []
+             */
+            unknown_gaps: number[];
         };
         /** ValidationError */
         ValidationError: {
@@ -1995,6 +2365,28 @@ export interface operations {
             };
         };
     };
+    co_author_conflicts_api_v1_books_co_author_conflicts_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        [key: string]: unknown;
+                    }[];
+                };
+            };
+        };
+    };
     count_books_api_v1_books_count_get: {
         parameters: {
             query?: {
@@ -2034,6 +2426,48 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    find_duplicates_api_v1_books_duplicates_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        [key: string]: unknown;
+                    }[];
+                };
+            };
+        };
+    };
+    export_books_api_v1_books_export_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": unknown;
                 };
             };
         };
@@ -2287,6 +2721,39 @@ export interface operations {
             };
         };
     };
+    rescan_book_api_v1_books__book_id__rescan_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                book_id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        [key: string]: unknown;
+                    };
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
     search_for_book_api_v1_books__book_id__search_post: {
         parameters: {
             query?: never;
@@ -2307,6 +2774,156 @@ export interface operations {
                     "application/json": {
                         [key: string]: unknown;
                     }[];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    list_history_api_v1_download_history__get: {
+        parameters: {
+            query?: {
+                limit?: number;
+                /** @description Filter: queued | pending | failed | dismissed */
+                status?: string | null;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["DownloadAttemptOut"][];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    create_attempt_api_v1_download_history__post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["DownloadAttemptCreate"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["DownloadAttemptOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    clear_history_api_v1_download_history__delete: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        [key: string]: unknown;
+                    };
+                };
+            };
+        };
+    };
+    approve_attempt_api_v1_download_history__attempt_id__approve_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                attempt_id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["DownloadAttemptOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    dismiss_attempt_api_v1_download_history__attempt_id__dismiss_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                attempt_id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["DownloadAttemptOut"];
                 };
             };
             /** @description Validation Error */
@@ -2722,6 +3339,94 @@ export interface operations {
                     "application/json": {
                         [key: string]: unknown;
                     };
+                };
+            };
+        };
+    };
+    list_series_api_v1_series__get: {
+        parameters: {
+            query?: {
+                /** @description Only series with unowned books */
+                missing_only?: boolean;
+                author_id?: number | null;
+                /** @description Hide series with fewer catalog entries */
+                min_books?: number;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SeriesOut"][];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    get_download_prefs_api_v1_settings_download_preferences_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["DownloadPreferences"];
+                };
+            };
+        };
+    };
+    update_download_prefs_api_v1_settings_download_preferences_patch: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["DownloadPreferencesUpdate"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["DownloadPreferences"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
                 };
             };
         };

@@ -1,7 +1,7 @@
 import { useMemo, useState } from 'react'
 import { useLocalStorage } from '@/hooks/useLocalStorage'
 import { useParams, useNavigate } from 'react-router-dom'
-import { useQueryClient } from '@tanstack/react-query'
+import { useMutation, useQueryClient } from '@tanstack/react-query'
 import { useAuthorDetail, useAuthorMutations, useAuthorPreferences, authorKeys } from '@/features/authors/useAuthors'
 import { useFavoriteAuthors } from '@/features/authors/useFavoriteAuthors'
 import CoauthorsDrawer from '@/features/authors/CoauthorsDrawer'
@@ -11,13 +11,15 @@ import { DEFAULT_BOOKS_FILTER, isNonLatinTitle, type BooksFilter } from '@/featu
 import BooksTable, { type BookRow } from '@/features/books/BooksTable'
 import { useBooks, bookKeys } from '@/features/books/useBooks'
 import { useBookScoutSSE } from '@/lib/sse/useBookScoutSSE'
+import { authorsApi } from '@/lib/api'
+import { toast } from 'sonner'
 import { useKeyboardShortcuts } from '@/hooks/useKeyboardShortcuts'
 import type { BookScoutEvent } from '@/types'
 import { Button } from '@/components/ui/button'
 import { cn } from '@/lib/utils'
 import {
   ArrowLeft, ScanLine, Star, Users, Trash2, Loader2, AlertCircle,
-  BookX, CheckCircle2, Save, ArrowUpDown, ArrowUp, ArrowDown,
+  BookX, CheckCircle2, Save, ArrowUpDown, ArrowUp, ArrowDown, Zap,
 } from 'lucide-react'
 
 type SortField = 'series' | 'release_date' | 'confidence' | 'status' | 'title'
@@ -182,6 +184,19 @@ export default function AuthorDetailPage() {
   }
   const [coauthorsOpen, setCoauthorsOpen] = useState(false)
   const [confirmRemove, setConfirmRemove] = useState(false)
+
+  const autoDownloadMutation = useMutation({
+    mutationFn: (enabled: boolean) => authorsApi.update(authorId, { auto_download: enabled }),
+    onSuccess: (_data, enabled) => {
+      qc.invalidateQueries({ queryKey: authorKeys.detail(authorId) })
+      toast.success(
+        enabled
+          ? 'Auto-download on — new high-confidence books will be grabbed after each scan'
+          : 'Auto-download off',
+      )
+    },
+    onError: (err: Error) => toast.error(`Could not update auto-download: ${err.message}`),
+  })
 
   function handleFilterChange(next: BooksFilter) {
     setFilter((prev) => {
@@ -371,6 +386,20 @@ export default function AuthorDetailPage() {
                 >
                   <Star size={12} className={cn(isFavorite && 'fill-amber-400')} />
                   {isFavorite ? 'Favorited' : 'Favorite'}
+                </Button>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className={cn(
+                    'h-7 text-xs gap-1.5',
+                    author.auto_download && 'border-emerald-400/70 text-emerald-500',
+                  )}
+                  disabled={autoDownloadMutation.isPending}
+                  onClick={() => autoDownloadMutation.mutate(!author.auto_download)}
+                  title="Automatically grab new HIGH-confidence released books after each scan"
+                >
+                  <Zap size={12} className={cn(author.auto_download && 'fill-emerald-400/40')} />
+                  {author.auto_download ? 'Auto-download on' : 'Auto-download'}
                 </Button>
                 <Button variant="outline" size="sm" className="h-7 text-xs gap-1.5" onClick={() => setCoauthorsOpen(true)}>
                   <Users size={12} />

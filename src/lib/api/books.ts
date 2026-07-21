@@ -50,7 +50,7 @@ export interface DownloadHistoryItem {
   size_bytes: number | null
   seeders: number | null
   download_url: string | null
-  status: 'queued' | 'failed'
+  status: 'queued' | 'pending' | 'failed' | 'dismissed'
   error_detail: string | null
   created_at: string
 }
@@ -61,6 +61,8 @@ export interface DownloadPreferences {
   language: string
   require_unabridged: boolean
   max_size_gb: number
+  /** "approval" = queue best match for one-click approval; "auto" = send immediately */
+  auto_download_mode: 'approval' | 'auto'
 }
 
 export interface BooksCountParams {
@@ -122,7 +124,12 @@ export const booksApi = {
   export: () => fetch('/api/v1/books/export').then((r) => r.blob()),
   duplicates: () => api.get<DuplicateGroup[]>('/books/duplicates'),
   coAuthorConflicts: () => api.get<CoAuthorConflict[]>('/books/co-author-conflicts'),
-  downloadHistory: (limit = 100) => api.get<DownloadHistoryItem[]>(`/download-history/?limit=${limit}`),
+  downloadHistory: (limit = 100, status?: DownloadHistoryItem['status']) =>
+    api.get<DownloadHistoryItem[]>(
+      `/download-history/?limit=${limit}${status ? `&status=${status}` : ''}`,
+    ),
+  approveDownload: (id: number) => api.post<DownloadHistoryItem>(`/download-history/${id}/approve`),
+  dismissDownload: (id: number) => api.post<DownloadHistoryItem>(`/download-history/${id}/dismiss`),
   clearDownloadHistory: () => api.delete<{ deleted: number }>('/download-history/'),
   getDownloadPreferences: () => api.get<DownloadPreferences>('/settings/download-preferences'),
   updateDownloadPreferences: (patch: Partial<DownloadPreferences>) =>

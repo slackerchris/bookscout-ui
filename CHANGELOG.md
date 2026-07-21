@@ -7,6 +7,23 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [0.69.0] — 2026-07-21
+
+### Added
+- **Series page** — new nav entry showing every series with a completion bar, per-position chips (green = owned, amber = missing, dashed = a numeric hole the metadata sources haven't surfaced), and an expandable missing-book list with a Search button that opens the download drawer. Defaults to incomplete series only.
+- **Auto-download toggle** — ⚡ button on the Author Detail page enables per-author auto-downloading (backend 0.69.0 feature): after each scan, the best indexer match for new HIGH-confidence released books is grabbed automatically or queued for approval.
+- **Pending approval tab** — the Downloads page gained a tab listing auto-download finds awaiting a decision, with one-click Download / Dismiss.
+- **Auto-download mode setting** — Settings → Download preferences now has a "Queue for approval" vs "Send immediately" selector.
+
+### Fixed
+- **Keyboard shortcuts hijacked browser chords** — plain-key shortcuts (`s` scan, `f` filter) also fired on Ctrl/Cmd combinations, so Ctrl+S triggered an author scan and Ctrl+F suppressed find-in-page. Modifier chords are now ignored.
+- **Regenerated API types** from the current backend OpenAPI schema — adds `primary_author_manual`, `auto_download`, previously missing endpoints, and the primary-author/canonical fields to `BookOut`.
+
+### Removed
+- **n8n qBittorrent poller workflow JSON** — the poller is now built into the BookScout backend (v0.69.0); the workflow export (which also contained credentials) is gone from the repo. Rotate the qBittorrent password if you haven't already.
+
+---
+
 ## [0.68.1] — 2026-06-05
 
 ### Removed

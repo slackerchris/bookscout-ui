@@ -14,6 +14,7 @@ const DashboardPage = lazy(() => import('@/pages/DashboardPage'))
 const AuthorsPage = lazy(() => import('@/pages/AuthorsPage'))
 const AuthorDetailPage = lazy(() => import('@/pages/AuthorDetailPage'))
 const ReleasesPage = lazy(() => import('@/pages/ReleasesPage'))
+const SeriesPage = lazy(() => import('@/pages/SeriesPage'))
 const DownloadsPage = lazy(() => import('@/pages/DownloadsPage'))
 const ActivityPage = lazy(() => import('@/pages/ActivityPage'))
 const IntegrationsPage = lazy(() => import('@/pages/IntegrationsPage'))
@@ -76,6 +77,7 @@ export default function App() {
                     <Route path="authors" element={<AuthorsPage />} />
                     <Route path="authors/:id" element={<AuthorDetailPage />} />
                     <Route path="releases" element={<ReleasesPage />} />
+                    <Route path="series" element={<SeriesPage />} />
                     <Route path="downloads" element={<DownloadsPage />} />
                     <Route path="activity" element={<ActivityPage />} />
                     <Route path="integrations" element={<IntegrationsPage />} />

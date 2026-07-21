@@ -2,7 +2,10 @@ import type { Author, AuthorDetail, AuthorPreferences, Coauthor } from '@/types'
 import type { components } from './generated'
 import { api } from './client'
 
-export type AuthorUpdate = components['schemas']['AuthorUpdate']
+export type AuthorUpdate = components['schemas']['AuthorUpdate'] & {
+  /** Watchlist flag: auto-grab new HIGH-confidence released books after each scan */
+  auto_download?: boolean | null
+}
 
 export type WatchlistSettings = components['schemas']['WatchlistSettings']
 export type AuthorPreferencesUpdate = components['schemas']['AuthorPreferencesUpdate']

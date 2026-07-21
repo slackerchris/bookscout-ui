@@ -13,7 +13,7 @@ import {
 import { cn } from '@/lib/utils'
 import { toast } from 'sonner'
 
-type Tab = 'queue' | 'history' | 'imported'
+type Tab = 'queue' | 'pending' | 'history' | 'imported'
 
 function humanizeBytes(bytes: number | null): string {
   if (!bytes) return '—'
@@ -150,6 +150,33 @@ export default function DownloadsPage() {
     staleTime: 30_000,
   })
 
+  const {
+    data: pending = [],
+    isLoading: pendingLoading,
+    isError: pendingError,
+  } = useQuery({
+    queryKey: ['download-history', 'pending'],
+    queryFn: () => booksApi.downloadHistory(100, 'pending'),
+    staleTime: 15_000,
+    refetchInterval: 60_000,
+  })
+
+  const approveMutation = useMutation({
+    mutationFn: (id: number) => booksApi.approveDownload(id),
+    onSuccess: (attempt) => {
+      qc.invalidateQueries({ queryKey: ['download-history'] })
+      qc.invalidateQueries({ queryKey: ['downloads', 'queue'] })
+      toast.success(`Sent to download client: ${attempt.release_title}`)
+    },
+    onError: (err: Error) => toast.error(`Approve failed: ${err.message}`),
+  })
+
+  const dismissMutation = useMutation({
+    mutationFn: (id: number) => booksApi.dismissDownload(id),
+    onSuccess: () => qc.invalidateQueries({ queryKey: ['download-history'] }),
+    onError: (err: Error) => toast.error(`Dismiss failed: ${err.message}`),
+  })
+
   const clearHistoryMutation = useMutation({
     mutationFn: () => booksApi.clearDownloadHistory(),
     onSuccess: (data) => {
@@ -181,6 +208,7 @@ export default function DownloadsPage() {
 
   const tabs: { id: Tab; label: string; count?: number }[] = [
     { id: 'queue', label: 'Queue', count: audiobookQueue.length || undefined },
+    { id: 'pending', label: 'Pending approval', count: pending.length || undefined },
     { id: 'history', label: 'History', count: history.length || undefined },
     { id: 'imported', label: 'Imported', count: recentImports.length || undefined },
   ]
@@ -278,6 +306,64 @@ export default function DownloadsPage() {
           {!queueLoading && !queueError && queue.length > 0 && audiobookQueue.length === 0 && (
             <div className="mt-3 rounded-xl border border-dashed border-border bg-muted/20 px-4 py-5 text-sm text-muted-foreground">
               Queue is reachable, but none of the current items look like audiobook downloads.
+            </div>
+          )}
+        </section>
+      )}
+
+      {tab === 'pending' && (
+        <section>
+          {pendingLoading && (
+            <div className="flex items-center gap-2 text-sm text-muted-foreground py-6">
+              <Loader2 size={14} className="animate-spin" />Loading…
+            </div>
+          )}
+          {pendingError && !pendingLoading && (
+            <div className="rounded-md border border-destructive/30 bg-destructive/10 px-4 py-3 text-sm text-destructive flex items-center gap-2">
+              <AlertCircle size={14} className="shrink-0" />
+              Could not load pending downloads.
+            </div>
+          )}
+          {!pendingLoading && !pendingError && pending.length === 0 && (
+            <div className="rounded-xl border border-dashed border-border bg-muted/20 px-4 py-6 text-sm text-muted-foreground">
+              Nothing awaiting approval. Auto-download finds go here when the mode is
+              &ldquo;approval&rdquo; (Settings → Download preferences).
+            </div>
+          )}
+          {pending.length > 0 && (
+            <div className="overflow-hidden rounded-xl border border-border bg-card">
+              {pending.map((item) => (
+                <div
+                  key={item.id}
+                  className="flex items-center gap-3 border-b border-border/60 px-4 py-3 last:border-b-0"
+                >
+                  <div className="min-w-0 flex-1">
+                    <p className="truncate text-sm text-foreground">{item.release_title}</p>
+                    <p className="mt-0.5 truncate text-xs text-muted-foreground">
+                      {item.book_title ?? 'Unknown book'}
+                      {item.indexer ? ` · ${item.indexer}` : ''}
+                      {item.seeders != null ? ` · ${item.seeders} seeders` : ''}
+                      {` · ${humanizeBytes(item.size_bytes)}`}
+                      {` · ${formatRelTime(item.created_at)}`}
+                    </p>
+                  </div>
+                  <button
+                    onClick={() => dismissMutation.mutate(item.id)}
+                    disabled={dismissMutation.isPending}
+                    className="shrink-0 rounded-md border border-input px-2.5 py-1.5 text-xs text-muted-foreground hover:bg-accent hover:text-foreground disabled:opacity-50"
+                  >
+                    Dismiss
+                  </button>
+                  <button
+                    onClick={() => approveMutation.mutate(item.id)}
+                    disabled={approveMutation.isPending}
+                    className="flex shrink-0 items-center gap-1.5 rounded-md bg-primary px-2.5 py-1.5 text-xs font-medium text-primary-foreground hover:bg-primary/90 disabled:opacity-50"
+                  >
+                    <Download size={12} />
+                    Download
+                  </button>
+                </div>
+              ))}
             </div>
           )}
         </section>
