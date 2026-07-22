@@ -129,6 +129,10 @@ export const booksApi = {
       `/download-history/?limit=${limit}${status ? `&status=${status}` : ''}`,
     ),
   approveDownload: (id: number) => api.post<DownloadHistoryItem>(`/download-history/${id}/approve`),
+  requestDownloads: (bookIds: number[]) =>
+    api.post<{ job_id: string; requested: number; status: string }>('/download-history/request', {
+      book_ids: bookIds,
+    }),
   dismissDownload: (id: number) => api.post<DownloadHistoryItem>(`/download-history/${id}/dismiss`),
   clearDownloadHistory: () => api.delete<{ deleted: number }>('/download-history/'),
   getDownloadPreferences: () => api.get<DownloadPreferences>('/settings/download-preferences'),

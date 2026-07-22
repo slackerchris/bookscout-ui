@@ -1,3 +1,4 @@
+import { useLocalStorage } from '@/hooks/useLocalStorage'
 import { memo, useDeferredValue, useMemo, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { useAuthors, useUnwatchedAuthors, useAuthorMutations } from '@/features/authors/useAuthors'
@@ -248,7 +249,7 @@ const UnwatchedRow = memo(function UnwatchedRow({ author, isWatching, onWatch, o
 // ── Page ────────────────────────────────────────────────────────────────────
 
 export default function AuthorsPage() {
-  const [tab, setTab] = useState<'all' | 'watching' | 'unwatched'>('all')
+  const [tab, setTab] = useLocalStorage<'all' | 'watching' | 'unwatched'>('authors-tab', 'all')
 
   const { data: authors = [], isLoading, isError } = useAuthors()
   const { data: unwatched = [], isLoading: unwatchedLoading } = useUnwatchedAuthors(tab === 'all' || tab === 'unwatched')

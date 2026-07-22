@@ -1,5 +1,8 @@
 import { useMemo, useState } from 'react'
-import { useQuery } from '@tanstack/react-query'
+import { useMutation, useQuery } from '@tanstack/react-query'
+import { toast } from 'sonner'
+import { useLocalStorage } from '@/hooks/useLocalStorage'
+import { booksApi } from '@/lib/api'
 import { Link } from 'react-router-dom'
 import { ChevronDown, ChevronRight, Download, RefreshCw } from 'lucide-react'
 import { seriesApi, type Series, type SeriesBook } from '@/lib/api/series'
@@ -48,6 +51,43 @@ function seriesKey(s: Series): string {
   return `${s.author_id ?? 'none'}:${s.series_name.toLowerCase()}`
 }
 
+/** True when the release date parses and is strictly in the future. */
+function isUnreleased(releaseDate: string | null): boolean {
+  if (!releaseDate) return false
+  const iso = /^\d{4}-\d{2}-\d{2}/.exec(releaseDate)?.[0]
+  const yearOnly = /^\d{4}$/.test(releaseDate.trim())
+  const date = iso ? new Date(iso) : yearOnly ? new Date(`${releaseDate.trim()}-01-01`) : null
+  if (!date || isNaN(date.getTime())) return false
+  return date.getTime() > Date.now()
+}
+
+type SeriesSort = 'author' | 'name' | 'completion' | 'missing'
+
+const SORT_OPTIONS: { id: SeriesSort; label: string }[] = [
+  { id: 'author', label: 'Author' },
+  { id: 'name', label: 'Series name' },
+  { id: 'completion', label: 'Least complete' },
+  { id: 'missing', label: 'Most missing' },
+]
+
+function sortSeries(list: Series[], sort: SeriesSort): Series[] {
+  const sorted = [...list]
+  switch (sort) {
+    case 'name':
+      sorted.sort((a, b) => a.series_name.localeCompare(b.series_name))
+      break
+    case 'completion':
+      sorted.sort((a, b) => a.owned / a.total - b.owned / b.total)
+      break
+    case 'missing':
+      sorted.sort((a, b) => (b.total - b.owned) - (a.total - a.owned))
+      break
+    default: // author (backend default order)
+      break
+  }
+  return sorted
+}
+
 function PositionChips({ series }: { series: Series }) {
   const chips: Array<{ label: string; state: 'owned' | 'missing' | 'gap' }> = []
   for (const b of series.books) {
@@ -85,14 +125,19 @@ function SeriesCard({
   expanded,
   onToggle,
   onSearch,
+  onSearchAll,
+  searchAllPending,
 }: {
   series: Series
   expanded: boolean
   onToggle: () => void
   onSearch: (book: SeriesBook) => void
+  onSearchAll: (books: SeriesBook[]) => void
+  searchAllPending: boolean
 }) {
   const pct = series.total ? Math.round((series.owned / series.total) * 100) : 0
   const missing = series.books.filter((b) => !b.have_it)
+  const released = missing.filter((b) => !isUnreleased(b.release_date))
   return (
     <div className="rounded-lg border border-border bg-card">
       <button
@@ -143,26 +188,50 @@ function SeriesCard({
           {missing.length === 0 ? (
             <p className="py-1 text-xs text-muted-foreground">Series complete 🎉</p>
           ) : (
-            <ul className="divide-y divide-border/60">
-              {missing.map((b) => (
-                <li key={b.id} className="flex items-center gap-2 py-1.5">
-                  <span className="w-8 shrink-0 text-right text-xs tabular-nums text-muted-foreground">
-                    {b.series_position || '—'}
-                  </span>
-                  <span className="min-w-0 flex-1 truncate text-sm text-foreground">{b.title}</span>
-                  {b.release_date && (
-                    <span className="shrink-0 text-xs text-muted-foreground">{b.release_date}</span>
-                  )}
+            <>
+              {released.length > 1 && (
+                <div className="flex justify-end py-1.5">
                   <button
-                    onClick={() => onSearch(b)}
-                    className="flex shrink-0 items-center gap-1 rounded-md border border-input px-2 py-1 text-xs text-muted-foreground hover:bg-accent hover:text-foreground"
+                    onClick={() => onSearchAll(released)}
+                    disabled={searchAllPending}
+                    title="Find the best indexer match for every released missing book and queue them under Downloads → Pending approval"
+                    className="flex items-center gap-1.5 rounded-md border border-input px-2.5 py-1 text-xs text-muted-foreground hover:bg-accent hover:text-foreground disabled:opacity-50"
                   >
                     <Download size={11} />
-                    Search
+                    Search all missing ({released.length})
                   </button>
-                </li>
-              ))}
-            </ul>
+                </div>
+              )}
+              <ul className="divide-y divide-border/60">
+                {missing.map((b) => {
+                  const upcoming = isUnreleased(b.release_date)
+                  return (
+                    <li key={b.id} className="flex items-center gap-2 py-1.5">
+                      <span className="w-8 shrink-0 text-right text-xs tabular-nums text-muted-foreground">
+                        {b.series_position || '—'}
+                      </span>
+                      <span className="min-w-0 flex-1 truncate text-sm text-foreground">{b.title}</span>
+                      {b.release_date && (
+                        <span className="shrink-0 text-xs text-muted-foreground">{b.release_date}</span>
+                      )}
+                      {upcoming ? (
+                        <span className="shrink-0 rounded-md bg-blue-500/10 px-2 py-1 text-xs font-medium text-blue-500">
+                          Upcoming
+                        </span>
+                      ) : (
+                        <button
+                          onClick={() => onSearch(b)}
+                          className="flex shrink-0 items-center gap-1 rounded-md border border-input px-2 py-1 text-xs text-muted-foreground hover:bg-accent hover:text-foreground"
+                        >
+                          <Download size={11} />
+                          Search
+                        </button>
+                      )}
+                    </li>
+                  )
+                })}
+              </ul>
+            </>
           )}
         </div>
       )}
@@ -171,15 +240,27 @@ function SeriesCard({
 }
 
 export default function SeriesPage() {
-  const [missingOnly, setMissingOnly] = useState(true)
+  const [missingOnly, setMissingOnly] = useLocalStorage('series-missing-only', true)
+  const [sort, setSort] = useLocalStorage<SeriesSort>('series-sort', 'author')
   const [expanded, setExpanded] = useState<Set<string>>(new Set())
   const [searchTarget, setSearchTarget] = useState<BookRow | null>(null)
 
-  const { data: series = [], isLoading, isError, refetch } = useQuery({
+  const requestAll = useMutation({
+    mutationFn: (bookIds: number[]) => booksApi.requestDownloads(bookIds),
+    onSuccess: (res) =>
+      toast.success(`Searching for ${res.requested} books`, {
+        description: 'Best matches will appear under Downloads → Pending approval.',
+        duration: 6000,
+      }),
+    onError: (err: Error) => toast.error(`Request failed: ${err.message}`),
+  })
+
+  const { data: rawSeries = [], isLoading, isError, refetch } = useQuery({
     queryKey: ['series', missingOnly],
     queryFn: () => seriesApi.list({ missing_only: missingOnly }),
     staleTime: 60_000,
   })
+  const series = useMemo(() => sortSeries(rawSeries, sort), [rawSeries, sort])
 
   const stats = useMemo(() => {
     const incomplete = series.filter((s) => s.owned < s.total)
@@ -207,6 +288,16 @@ export default function SeriesPage() {
           </p>
         </div>
         <div className="flex items-center gap-3">
+          <select
+            value={sort}
+            onChange={(e) => setSort(e.target.value as SeriesSort)}
+            aria-label="Sort series"
+            className="h-7 rounded-md border border-input bg-transparent px-2 text-xs text-muted-foreground outline-none focus-visible:border-ring"
+          >
+            {SORT_OPTIONS.map((o) => (
+              <option key={o.id} value={o.id}>Sort: {o.label}</option>
+            ))}
+          </select>
           <label className="flex items-center gap-1.5 text-xs text-muted-foreground">
             <input
               type="checkbox"
@@ -247,6 +338,8 @@ export default function SeriesPage() {
               expanded={expanded.has(seriesKey(s))}
               onToggle={() => toggle(seriesKey(s))}
               onSearch={(b) => setSearchTarget(toBookRow(b, s))}
+              onSearchAll={(books) => requestAll.mutate(books.map((b) => b.id))}
+              searchAllPending={requestAll.isPending}
             />
           ))}
         </div>

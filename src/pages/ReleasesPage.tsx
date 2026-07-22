@@ -1,4 +1,5 @@
-import { useMemo, useState, type ElementType } from 'react'
+import { useMemo, type ElementType } from 'react'
+import { useLocalStorage } from '@/hooks/useLocalStorage'
 import { Link } from 'react-router-dom'
 import {
   CalendarDays,
@@ -106,9 +107,9 @@ function ReleaseRow({ book, mode }: { book: BookWithAuthor; mode: ReleaseTab }) 
 }
 
 export default function ReleasesPage() {
-  const [tab, setTab] = useState<ReleaseTab>('upcoming')
-  const [missingOnly, setMissingOnly] = useState(true)
-  const [confidence, setConfidence] = useState<ConfidenceFilter>('all')
+  const [tab, setTab] = useLocalStorage<ReleaseTab>('releases-tab', 'upcoming')
+  const [missingOnly, setMissingOnly] = useLocalStorage('releases-missing-only', true)
+  const [confidence, setConfidence] = useLocalStorage<ConfidenceFilter>('releases-confidence', 'all')
 
   const { data: summary, isLoading: summaryLoading } = useBookSummary()
   const upcomingParams = {
