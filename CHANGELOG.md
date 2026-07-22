@@ -7,6 +7,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [0.75.3] — 2026-07-22
+
+### Fixed
+- **Dropdown readability, round two** — `color-scheme` is now scoped to the active theme (dark class) instead of forced globally, and `<option>` elements get explicit theme-matched colors as a fallback for platforms whose popup lists ignore `color-scheme` entirely.
+
+---
+
 ## [0.75.2] — 2026-07-22
 
 ### Fixed

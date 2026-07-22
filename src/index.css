@@ -1,8 +1,26 @@
 @import "tailwindcss";
 
-/* Native controls (select dropdowns, scrollbars, pickers) render dark */
+/* Native controls (select dropdowns, scrollbars, pickers) follow the theme */
 :root {
+  color-scheme: light;
+}
+:root.dark {
   color-scheme: dark;
+}
+
+/* Fallback for platforms that ignore color-scheme on popup lists:
+   style the options directly (honored by Chrome/Firefox on Win/Linux). */
+.dark select option {
+  background-color: #18181b;
+  color: #fafafa;
+}
+select option {
+  background-color: #ffffff;
+  color: #18181b;
+}
+.dark select option {
+  background-color: #18181b;
+  color: #fafafa;
 }
 
 @theme inline {
