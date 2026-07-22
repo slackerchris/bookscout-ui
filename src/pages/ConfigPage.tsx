@@ -68,7 +68,7 @@ function DownloadPrefsCard() {
   })
 
   const [local, setLocal] = useState<Partial<DownloadPreferences>>({})
-  const effective: DownloadPreferences = { min_seeders: 1, preferred_format: '', language: 'en', require_unabridged: false, max_size_gb: 0, auto_download_mode: 'approval', preferred_indexers: '', fallback_indexers: '', ...prefs, ...local }
+  const effective: DownloadPreferences = { min_seeders: 1, preferred_format: '', language: 'en', require_unabridged: false, max_size_gb: 0, auto_download_mode: 'approval', preferred_indexers: '', fallback_indexers: '', search_cooldown_hours: 6, search_delay_seconds: 3, max_searches_per_run: 5, ...prefs, ...local }
 
   const updateMutation = useMutation({
     mutationFn: () => booksApi.updateDownloadPreferences(effective),
@@ -180,6 +180,46 @@ function DownloadPrefsCard() {
             />
             <p className="text-[10px] text-muted-foreground/70">
               Public/last-resort — only win when nothing better exists
+            </p>
+          </div>
+          <div className="flex flex-col gap-1.5">
+            <label className="text-xs font-medium text-muted-foreground">Search cooldown (hours)</label>
+            <Input
+              type="number"
+              min={1}
+              value={effective.search_cooldown_hours}
+              onChange={(e) => set('search_cooldown_hours', parseInt(e.target.value) || 6)}
+              className="h-8 text-sm w-24"
+            />
+            <p className="text-[10px] text-muted-foreground/70">
+              Wait this long before re-searching a book that had no results
+            </p>
+          </div>
+          <div className="flex flex-col gap-1.5">
+            <label className="text-xs font-medium text-muted-foreground">Delay between searches (s)</label>
+            <Input
+              type="number"
+              min={0}
+              step={0.5}
+              value={effective.search_delay_seconds}
+              onChange={(e) => set('search_delay_seconds', parseFloat(e.target.value) || 0)}
+              className="h-8 text-sm w-24"
+            />
+            <p className="text-[10px] text-muted-foreground/70">
+              Pause between indexer queries in one pass — be polite to trackers
+            </p>
+          </div>
+          <div className="flex flex-col gap-1.5">
+            <label className="text-xs font-medium text-muted-foreground">Max searches per pass</label>
+            <Input
+              type="number"
+              min={1}
+              value={effective.max_searches_per_run}
+              onChange={(e) => set('max_searches_per_run', parseInt(e.target.value) || 5)}
+              className="h-8 text-sm w-24"
+            />
+            <p className="text-[10px] text-muted-foreground/70">
+              Auto-download searches at most this many books per scan; the rest wait for the next pass
             </p>
           </div>
           <div className="flex items-center gap-2 pt-5">

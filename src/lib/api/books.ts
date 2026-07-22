@@ -50,7 +50,7 @@ export interface DownloadHistoryItem {
   size_bytes: number | null
   seeders: number | null
   download_url: string | null
-  status: 'queued' | 'pending' | 'failed' | 'dismissed'
+  status: 'queued' | 'pending' | 'failed' | 'dismissed' | 'nomatch'
   error_detail: string | null
   created_at: string
 }
@@ -67,6 +67,12 @@ export interface DownloadPreferences {
   preferred_indexers: string
   /** Comma-separated indexer names penalised to last-resort (public trackers) */
   fallback_indexers: string
+  /** Re-search an unfound book at most every N hours */
+  search_cooldown_hours: number
+  /** Pause between consecutive automatic searches (seconds) */
+  search_delay_seconds: number
+  /** Max books searched per automatic pass */
+  max_searches_per_run: number
 }
 
 export interface BooksCountParams {

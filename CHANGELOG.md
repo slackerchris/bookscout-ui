@@ -7,6 +7,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [0.76.0] — 2026-07-22
+
+### Added
+- **Auto-download tuning dials** — Settings → Download preferences gained Search cooldown (hours), Delay between searches (seconds), and Max searches per pass, controlling how politely the automatic pass treats your indexers (backend 0.76.0).
+
+---
+
 ## [0.75.3] — 2026-07-22
 
 ### Fixed
