@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from 'react'
-import { useMutation } from '@tanstack/react-query'
+import { useMutation, useQuery } from '@tanstack/react-query'
 import {
   Sheet,
   SheetContent,
@@ -10,6 +10,7 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Search, Download, Loader2, CheckCircle2, AlertCircle, Star } from 'lucide-react'
 import { searchApi, type SearchResult } from '@/lib/api/search'
+import { booksApi, type DownloadPreferences } from '@/lib/api/books'
 import { cn } from '@/lib/utils'
 import type { BookRow } from './BooksTable'
 
@@ -28,7 +29,11 @@ function dlKey(r: SearchResult): string {
 // Scoring
 // ---------------------------------------------------------------------------
 
-function scoreResult(result: SearchResult, book: BookRow): number {
+function csvNames(value: string | undefined): string[] {
+  return (value ?? '').split(',').map((s) => s.trim().toLowerCase()).filter(Boolean)
+}
+
+function scoreResult(result: SearchResult, book: BookRow, prefs?: DownloadPreferences): number {
   let score = 0
   const t = result.title.toLowerCase()
   const bookTitle = book.title.toLowerCase()
@@ -71,6 +76,13 @@ function scoreResult(result: SearchResult, book: BookRow): number {
     const gb = bytes / 1_073_741_824
     if (gb > 8) score -= 15
     if (bytes < 5_000_000) score -= 20
+  }
+
+  // Indexer trust: preferred (private trackers) up, fallback (public) down
+  if (prefs) {
+    const blob = `${result.indexer ?? ''} ${result.source ?? ''}`.toLowerCase()
+    if (csvNames(prefs.preferred_indexers).some((n) => blob.includes(n))) score += 15
+    if (csvNames(prefs.fallback_indexers).some((n) => blob.includes(n))) score -= 10
   }
 
   return Math.round(score)
@@ -138,7 +150,13 @@ function SearchDownloadContent({ book }: { book: BookRow }) {
   }
 
   // Score all results and find the top one
-  const scored = results.map((r) => ({ result: r, score: scoreResult(r, book) }))
+  const { data: prefs } = useQuery({
+    queryKey: ['download-preferences'],
+    queryFn: () => booksApi.getDownloadPreferences(),
+    staleTime: 5 * 60_000,
+  })
+
+  const scored = results.map((r) => ({ result: r, score: scoreResult(r, book, prefs) }))
   scored.sort((a, b) => b.score - a.score)
   const topScore = scored[0]?.score ?? 0
   const topKey = scored[0] ? dlKey(scored[0].result) : null

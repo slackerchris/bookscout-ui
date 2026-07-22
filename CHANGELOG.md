@@ -7,6 +7,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [0.75.0] — 2026-07-22
+
+### Added
+- **Indexer trust preferences** — Settings gained "Preferred indexers" (private trackers — results score a bonus) and "Fallback indexers" (public/last-resort — penalised so they only win when nothing better exists). Applied identically by the backend's automatic selection and the search drawer's star ranking, which now loads your saved preferences.
+
+### Fixed
+- **0.71.0 was never published** — a truncated `package.json` broke that release's image build; this release restores it and carries the 0.71.0 retry-button changes with it.
+
+---
+
 ## [0.71.0] — 2026-07-22
 
 ### Added

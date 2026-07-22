@@ -68,7 +68,7 @@ function DownloadPrefsCard() {
   })
 
   const [local, setLocal] = useState<Partial<DownloadPreferences>>({})
-  const effective: DownloadPreferences = { min_seeders: 1, preferred_format: '', language: 'en', require_unabridged: false, max_size_gb: 0, auto_download_mode: 'approval', ...prefs, ...local }
+  const effective: DownloadPreferences = { min_seeders: 1, preferred_format: '', language: 'en', require_unabridged: false, max_size_gb: 0, auto_download_mode: 'approval', preferred_indexers: '', fallback_indexers: '', ...prefs, ...local }
 
   const updateMutation = useMutation({
     mutationFn: () => booksApi.updateDownloadPreferences(effective),
@@ -157,6 +157,30 @@ function DownloadPrefsCard() {
               className="h-8 text-sm w-24"
               placeholder="0 = no limit"
             />
+          </div>
+          <div className="flex flex-col gap-1.5">
+            <label className="text-xs font-medium text-muted-foreground">Preferred indexers</label>
+            <Input
+              value={effective.preferred_indexers}
+              onChange={(e) => set('preferred_indexers', e.target.value)}
+              className="h-8 text-sm"
+              placeholder="ABtorrents, MyAnonamouse"
+            />
+            <p className="text-[10px] text-muted-foreground/70">
+              Private trackers — results score a bonus (comma-separated)
+            </p>
+          </div>
+          <div className="flex flex-col gap-1.5">
+            <label className="text-xs font-medium text-muted-foreground">Fallback indexers</label>
+            <Input
+              value={effective.fallback_indexers}
+              onChange={(e) => set('fallback_indexers', e.target.value)}
+              className="h-8 text-sm"
+              placeholder="Jackett"
+            />
+            <p className="text-[10px] text-muted-foreground/70">
+              Public/last-resort — only win when nothing better exists
+            </p>
           </div>
           <div className="flex items-center gap-2 pt-5">
             <input

@@ -63,6 +63,10 @@ export interface DownloadPreferences {
   max_size_gb: number
   /** "approval" = queue best match for one-click approval; "auto" = send immediately */
   auto_download_mode: 'approval' | 'auto'
+  /** Comma-separated indexer names that get a scoring bonus (private trackers) */
+  preferred_indexers: string
+  /** Comma-separated indexer names penalised to last-resort (public trackers) */
+  fallback_indexers: string
 }
 
 export interface BooksCountParams {
