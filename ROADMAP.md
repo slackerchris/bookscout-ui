@@ -19,7 +19,13 @@ Display groups of books identified by `GET /books/duplicates` and allow merging 
 For a selected book, show a side-by-side comparison of what each metadata source (Audnexus, OpenLibrary, Google Books, ISBNdb) returned, so the user can see why a field has its current value and override it if needed.
 
 ### Retry failed downloads
-Surface the "failed" entries in the download history with a one-click retry that pre-fills the search drawer for that book.
+Surface the "failed" entries in the download history with a one-click retry that pre-fills the search drawer for that book. Also surface failed auto-imports (`bs-failed`-tagged torrents) with a retry that clears the tag.
+
+### Bearer-token auth support
+Send `Authorization: Bearer` headers from the API client (and handle the SSE token query-param) so the backend's `secret_key` auth can be enabled while using the UI.
+
+### Pin indicator for primary author
+Show `primary_author_manual` as a pin badge on the Co-authors page with an explicit unpin control (the backend pins automatically when a primary is chosen).
 
 ### Author `active` toggle
 UI control to deactivate / reactivate an author and optionally show inactive authors in a separate tab.

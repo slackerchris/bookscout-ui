@@ -22,15 +22,18 @@ A React control panel for [BookScout](https://github.com/slackerchris/bookscout)
 - **Inline badges** — upcoming releases, non-English, low-confidence, and missing-date badges displayed directly in book rows
 - **Filter presets** — four built-in presets (Upcoming, High conf missing, Owned only, Needs cleanup) plus save/delete custom presets
 - **Empty-state reasons** — when no books match, the UI explains which filter is responsible
+- **Series page** (v0.69.0) — every series with a completion bar, per-position ownership chips, catalog-gap detection, and per-book search from the missing list
+- **Co-authors page** — books credited to multiple watched authors; pick the true primary (choices are pinned against scan reassignment)
 
 ### Search & Downloads
 - **Find Download drawer** — searches Prowlarr + Jackett for any book; results scored by relevance (title + author + year + narrator + format + seeders) with the best match highlighted
-- **Downloads page** — Queue / History / Imported tabs; queue polls every 5 s; History lists every past download attempt with status and clear-all
-- **Settings page** — download quality preferences (min seeders, preferred format, language, require unabridged, max size) stored server-side and used by the search scorer
+- **Auto-download toggle** (v0.69.0) — ⚡ button per author: new HIGH-confidence released books are grabbed automatically after each scan, or queued for approval
+- **Downloads page** — Queue / Pending approval / History / Imported tabs; pending auto-downloads get one-click Download / Dismiss
+- **Settings page** — download quality preferences (min seeders, preferred format, language, require unabridged, max size, auto-download mode) stored server-side
 
 ### Operations
 - **Health banner** — visible at the top of every page when the API or a required service is degraded
-- **Integrations page** — live status cards for BookScout API, Prowlarr, Jackett, qBittorrent/Transmission/SABnzbd, and n8n; full webhook manager (add/remove/reactivate/test)
+- **Integrations page** — live status cards for BookScout API, Prowlarr, Jackett, and qBittorrent/Transmission/SABnzbd; full webhook manager (add/remove/reactivate/test)
 - **Activity** — real-time SSE event log (up to 200 events) with a "Scan all authors" button
 - **Settings page** — one-click JSON export of the full catalog; config.yaml reference
 - **Keyboard shortcuts** — `s` = scan, `f` = toggle missing-only (Author Detail page)
@@ -115,13 +118,19 @@ nginx inside the container proxies `/api/` → `http://bookscout:8765` (the Book
 
 ## API Compatibility
 
-Requires BookScout **v0.68.0** or later. Key endpoints used:
+Requires BookScout **v0.69.0** or later. Key endpoints used:
 
 | Endpoint | Used by |
 |---|---|
 | `GET /api/v1/books/` | Author Detail |
 | `GET /api/v1/books/export` | Settings page export |
 | `GET /api/v1/books/duplicates` | (future merge UI) |
+| `GET /api/v1/books/co-author-conflicts` | Co-authors page |
+| `GET /api/v1/series/` | Series page |
+| `PATCH /api/v1/authors/{id}` | Auto-download toggle |
+| `GET /api/v1/download-history/?status=pending` | Downloads › Pending approval tab |
+| `POST /api/v1/download-history/{id}/approve` | Pending approval › Download |
+| `POST /api/v1/download-history/{id}/dismiss` | Pending approval › Dismiss |
 | `PATCH /api/v1/books/{id}` | Edit book drawer |
 | `POST /api/v1/books/{id}/rescan` | Edit book drawer rescan button |
 | `GET /api/v1/authors/` | Authors page, Dashboard |
