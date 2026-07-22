@@ -7,6 +7,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [0.71.0] — 2026-07-22
+
+### Added
+- **Retry button on failed downloads** — History tab rows with status *failed* get a one-click Retry that re-sends the release to the download client (backend 0.71.0). The History tab also now renders pending/dismissed statuses distinctly.
+
+---
+
 ## [0.70.1] — 2026-07-22
 
 ### Changed

@@ -30,7 +30,7 @@ function formatRelTime(iso: string): string {
   return `${Math.floor(diff / 86400)}d ago`
 }
 
-function HistoryTable({ items, onClear }: { items: DownloadHistoryItem[]; onClear: () => void }) {
+function HistoryTable({ items, onClear, onRetry, retryPending }: { items: DownloadHistoryItem[]; onClear: () => void; onRetry: (id: number) => void; retryPending: boolean }) {
   const [confirm, setConfirm] = useState(false)
 
   if (items.length === 0) {
@@ -44,17 +44,18 @@ function HistoryTable({ items, onClear }: { items: DownloadHistoryItem[]; onClea
   return (
     <div className="flex flex-col gap-3">
       <div className="overflow-hidden rounded-xl border border-border bg-card">
-        <div className="grid grid-cols-[minmax(0,1fr)_80px_80px_72px_80px] gap-2 border-b border-border bg-muted/30 px-4 py-2 text-[11px] font-medium uppercase tracking-wide text-muted-foreground">
+        <div className="grid grid-cols-[minmax(0,1fr)_80px_80px_72px_80px_64px] gap-2 border-b border-border bg-muted/30 px-4 py-2 text-[11px] font-medium uppercase tracking-wide text-muted-foreground">
           <span>Release</span>
           <span>Type</span>
           <span>Size</span>
           <span>Status</span>
           <span>When</span>
+          <span></span>
         </div>
         {items.map((item) => (
           <div
             key={item.id}
-            className="grid grid-cols-[minmax(0,1fr)_80px_80px_72px_80px] gap-2 items-center border-b border-border last:border-0 px-4 py-2.5 text-sm"
+            className="grid grid-cols-[minmax(0,1fr)_80px_80px_72px_80px_64px] gap-2 items-center border-b border-border last:border-0 px-4 py-2.5 text-sm"
           >
             <div>
               <p className="font-medium text-foreground truncate">{item.release_title}</p>
@@ -73,13 +74,29 @@ function HistoryTable({ items, onClear }: { items: DownloadHistoryItem[]; onClea
             </span>
             <span className={cn(
               'inline-flex items-center gap-1 text-xs font-medium',
-              item.status === 'queued' ? 'text-emerald-500' : 'text-destructive',
+              item.status === 'queued' && 'text-emerald-500',
+              item.status === 'pending' && 'text-amber-500',
+              item.status === 'dismissed' && 'text-muted-foreground',
+              item.status === 'failed' && 'text-destructive',
             )}>
-              {item.status === 'queued'
-                ? <><CheckCircle2 size={11} />Queued</>
-                : <><AlertCircle size={11} />Failed</>}
+              {item.status === 'queued' && <><CheckCircle2 size={11} />Queued</>}
+              {item.status === 'pending' && <><Clock size={11} />Pending</>}
+              {item.status === 'dismissed' && <>Dismissed</>}
+              {item.status === 'failed' && <><AlertCircle size={11} />Failed</>}
             </span>
             <span className="text-xs text-muted-foreground">{formatRelTime(item.created_at)}</span>
+            <span>
+              {item.status === 'failed' && item.download_url && (
+                <button
+                  onClick={() => onRetry(item.id)}
+                  disabled={retryPending}
+                  title="Send this release to the download client again"
+                  className="rounded-md border border-input px-2 py-1 text-xs text-muted-foreground hover:bg-accent hover:text-foreground disabled:opacity-50"
+                >
+                  Retry
+                </button>
+              )}
+            </span>
           </div>
         ))}
       </div>
@@ -379,6 +396,8 @@ export default function DownloadsPage() {
             <HistoryTable
               items={history}
               onClear={() => clearHistoryMutation.mutate()}
+              onRetry={(id) => approveMutation.mutate(id)}
+              retryPending={approveMutation.isPending}
             />
           )}
         </section>
