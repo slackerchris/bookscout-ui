@@ -7,6 +7,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [0.70.0] — 2026-07-22
+
+### Added
+- **Series sorting** — sort selector (Author / Series name / Least complete / Most missing), persisted across visits.
+- **"Search all missing (N)"** — one click per series queues the best indexer match for every *released* missing book under Downloads → Pending approval (backend 0.70.0 batch endpoint).
+- **Upcoming badges on Series** — unreleased missing books show a blue Upcoming badge instead of a Search button that cannot succeed.
+
+### Fixed
+- **Authors page tab resets** — the All / Watching / Not-watching tab now persists when navigating into an author and back.
+- **Releases page filters reset** — tab, missing-only, and confidence selections persist across navigation.
+
 ## [0.69.0] — 2026-07-21
 
 ### Added
