@@ -7,6 +7,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [0.75.1] — 2026-07-22
+
+### Fixed
+- **Unreadable native dropdowns** — `<select>` popups (Preferred format, sort selectors, auto-download mode) rendered white with light text on some platforms. `color-scheme: dark` now tells the browser to draw native controls (dropdown lists, scrollbars, pickers) in dark mode.
+
+---
+
 ## [0.75.0] — 2026-07-22
 
 ### Added
