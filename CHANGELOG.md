@@ -7,6 +7,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [0.70.1] — 2026-07-22
+
+### Changed
+- **CI: immutable version tags** — the image build fails if the current package.json version already exists on GHCR; docs-only commits no longer trigger builds.
+
+---
+
 ## [0.70.0] — 2026-07-22
 
 ### Added
