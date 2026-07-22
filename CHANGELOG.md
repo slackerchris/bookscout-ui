@@ -7,6 +7,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [0.75.2] — 2026-07-22
+
+### Fixed
+- **Saved indexer preferences didn't affect drawer ranking** — the search drawer cached download preferences under a different query key than the Settings page, so saves never refreshed the drawer's copy. Keys unified; the star ranking now reflects preference changes immediately after saving.
+
+---
+
 ## [0.75.1] — 2026-07-22
 
 ### Fixed

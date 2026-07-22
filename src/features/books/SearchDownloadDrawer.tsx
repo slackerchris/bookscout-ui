@@ -151,7 +151,7 @@ function SearchDownloadContent({ book }: { book: BookRow }) {
 
   // Score all results and find the top one
   const { data: prefs } = useQuery({
-    queryKey: ['download-preferences'],
+    queryKey: ['settings', 'download-preferences'],
     queryFn: () => booksApi.getDownloadPreferences(),
     staleTime: 5 * 60_000,
   })
